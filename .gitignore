@@ -13,3 +13,7 @@ android/
 .next/
 .vercel/
 next-env.d.ts
+
+# Claude Code and claude-flow local state
+.claude-flow/
+.claude/settings.local.json
