@@ -92,7 +92,7 @@ export const SETUP_COPY = {
     'Leave this off and the baseline stays an open marker until your first real test.',
   stepTwoGoalLabel: 'Goal jump height',
   stepTwoTargetLabel: 'Target date',
-  stepTwoTargetHelper: 'Use YYYY-MM-DD. At least 2 weeks out.',
+  stepTwoTargetHelper: 'At least 2 weeks out.',
   stepTwoWeekdays: 'Which days do you train?',
   stepTwoInventory: 'Equipment',
   stepTwoInventoryEdit: 'Edit equipment',
@@ -125,7 +125,7 @@ export const SETUP_COPY = {
   stepTwoBestSetAddedLoad: 'Added load',
   stepTwoBestSetRpe: 'Effort (RPE)',
   stepTwoBestSetDate: 'Date',
-  stepTwoBestSetDateHelper: 'Use YYYY-MM-DD. Defaults to today.',
+  stepTwoBestSetDateHelper: 'The day you did the set. Defaults to today.',
   stepTwoReadinessTest: 'Readiness test',
   stepTwoReadinessTestDetail:
     'The neuromuscular channel of the daily gate. The recovery score is the other one, and the two are never averaged.',

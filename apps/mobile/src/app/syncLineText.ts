@@ -1,9 +1,11 @@
 /**
  * The one line under the header on Today and Progress.
  *
- * v1 ships without a server, so the honest thing to render is nothing: a
- * "Synced" line with nothing to sync to would be a lie. `EXPO_PUBLIC_SERVER_URL`
- * is what turns the line on, and Settings reads the same flag.
+ * With no server to reach, the honest thing to render is nothing: a "Synced"
+ * line with nothing to sync to would be a lie. `EXPO_PUBLIC_SERVER_URL` is what
+ * turns the line on, and Settings reads the same flag. The web build sets it to
+ * "/", which means this origin rather than no server, because the bundle is
+ * served by the same deploy that answers `/api`.
  */
 
 const MIDDLE_DOT = '·';
@@ -13,7 +15,11 @@ export function serverUrl(
 ): string | null {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
-  return trimmed === '' ? null : trimmed;
+  if (trimmed === '') return null;
+  // Same rule as the transport's own reader: "/" is this origin, which is what
+  // the web build sets, and it reads back as a base of "" so every request goes
+  // out as a relative path.
+  return trimmed.replace(/\/+$/, '') || '';
 }
 
 export function serverConfigured(value?: string | undefined): boolean {

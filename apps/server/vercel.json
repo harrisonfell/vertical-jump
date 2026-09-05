@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "installCommand": "cd ../.. && npm install",
+  "buildCommand": "node scripts/build.mjs",
+  "outputDirectory": ".next",
+  "crons": [
+    {
+      "path": "/api/whoop/sync",
+      "schedule": "0 9 * * *"
+    }
+  ]
+}

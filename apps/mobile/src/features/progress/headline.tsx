@@ -1,5 +1,5 @@
-import { View } from 'react-native';
-import { Glyph, Hairline, Text, space, useTheme } from '@/ui';
+import { View, useWindowDimensions } from 'react-native';
+import { Glyph, Hairline, Text, breakpoint, space, useTheme } from '@/ui';
 import { Sparkline } from '@/ui/charts';
 import { NO_VALUE } from './derive';
 import type { HeadlineModel } from './types';
@@ -7,13 +7,14 @@ import type { HeadlineModel } from './types';
 interface FigureProps {
   readonly label: string;
   readonly value: string;
+  readonly phone: boolean;
 }
 
-function Figure({ label, value }: FigureProps) {
+function Figure({ label, value, phone }: FigureProps) {
   const missing = value === '';
 
   return (
-    <View style={{ gap: 2, minWidth: 72 }}>
+    <View style={{ gap: 2, minWidth: 72, ...(phone ? { flexBasis: '45%' } as const : {}) }}>
       <Text variant="label" color="ink3">
         {label}
       </Text>
@@ -54,6 +55,8 @@ export function Headline({
   compact = false,
 }: HeadlineProps) {
   const { colors } = useTheme();
+  const { width } = useWindowDimensions();
+  const phone = width < breakpoint.tablet;
 
   return (
     <View style={{ gap: space.md }} testID="progress-headline">
@@ -102,11 +105,11 @@ export function Headline({
       </View>
 
       <Hairline />
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.xl }}>
-        <Figure label="PR" value={model.prIn === null ? '' : `${model.prIn} in`} />
-        <Figure label="Goal" value={model.goalIn === '' ? '' : `${model.goalIn} in`} />
-        <Figure label="Gap" value={model.gapIn === '' ? '' : `${model.gapIn} in`} />
-        <Figure label="Weeks left" value={model.weeksLeft} />
+      <View style={{ flexDirection: 'row', flexWrap: phone ? 'wrap' : 'nowrap', gap: phone ? space.lg : space.xl }}>
+        <Figure phone={phone} label="PR" value={model.prIn === null ? '' : `${model.prIn} in`} />
+        <Figure phone={phone} label="Goal" value={model.goalIn === '' ? '' : `${model.goalIn} in`} />
+        <Figure phone={phone} label="Gap" value={model.gapIn === '' ? '' : `${model.gapIn} in`} />
+        <Figure phone={phone} label="Weeks left" value={model.weeksLeft} />
       </View>
       <Hairline />
 

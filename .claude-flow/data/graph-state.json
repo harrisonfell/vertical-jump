@@ -1,48 +1,48 @@
 {
   "version": 1,
-  "updatedAt": 1788642521120,
+  "updatedAt": 1788644857420,
   "nodeCount": 66,
   "nodes": {
     "mem-base44-prompts-structure-only-----0": {
       "id": "mem-base44-prompts-structure-only-----0",
       "category": "base44-prompts-structure-only",
-      "confidence": 0.495,
-      "accessCount": 0,
+      "confidence": 0.7800000000000002,
+      "accessCount": 6,
       "createdAt": 1788554083909
     },
     "mem-expo-testflight-facts-----0": {
       "id": "mem-expo-testflight-facts-----0",
       "category": "expo-testflight-facts",
-      "confidence": 0.495,
+      "confidence": 0.5,
       "accessCount": 0,
       "createdAt": 1788554083926
     },
     "mem-MEMORY----base44-prompts--structure-o-0": {
       "id": "mem-MEMORY----base44-prompts--structure-o-0",
       "category": "core",
-      "confidence": 0.495,
-      "accessCount": 0,
+      "confidence": 0.7800000000000002,
+      "accessCount": 6,
       "createdAt": 1788554083933
     },
     "mem-ovr-devices-facts-----0": {
       "id": "mem-ovr-devices-facts-----0",
       "category": "ovr-devices-facts",
-      "confidence": 0.495,
+      "confidence": 0.5,
       "accessCount": 0,
       "createdAt": 1788554083937
     },
     "mem-subagent-model-preference-----0": {
       "id": "mem-subagent-model-preference-----0",
       "category": "subagent-model-preference",
-      "confidence": 0.525,
-      "accessCount": 1,
+      "confidence": 0.5,
+      "accessCount": 0,
       "createdAt": 1788554083939
     },
     "mem-vertical-jump-product-context-----0": {
       "id": "mem-vertical-jump-product-context-----0",
       "category": "vertical-jump-product-context",
-      "confidence": 0.495,
-      "accessCount": 0,
+      "confidence": 0.7800000000000002,
+      "accessCount": 6,
       "createdAt": 1788554083940
     },
     "insight-1788583384436-f61r": {
@@ -447,22 +447,22 @@
     "insight-1788642521106-nlgv": {
       "id": "insight-1788642521106-nlgv",
       "category": "insights",
-      "confidence": 0.53,
-      "accessCount": 1,
+      "confidence": 0.5,
+      "accessCount": 0,
       "createdAt": 1788642521106
     },
     "insight-1788642521106-8w1m": {
       "id": "insight-1788642521106-8w1m",
       "category": "insights",
-      "confidence": 0.53,
-      "accessCount": 1,
+      "confidence": 0.7800000000000002,
+      "accessCount": 6,
       "createdAt": 1788642521106
     },
     "insight-1788642521106-zwq1": {
       "id": "insight-1788642521106-zwq1",
       "category": "insights",
-      "confidence": 0.55,
-      "accessCount": 1,
+      "confidence": 0.8500000000000003,
+      "accessCount": 7,
       "createdAt": 1788642521106
     }
   },

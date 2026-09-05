@@ -111,7 +111,6 @@ export {
   OWNER_STEP_ONE,
   OWNER_STEP_TWO,
   ownerAthletePatch,
-  ownerClearance,
 } from './ownerPrefill';
 export {
   stepTwoInitial,

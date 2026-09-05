@@ -1,11 +1,12 @@
 import { formatRest } from '@vert/engine/units';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { View } from 'react-native';
+import { useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '../text';
 import { space, useTheme } from '../theme';
 import { Button } from './button';
 import { Hairline } from './hairline';
+import { gutterFor, ScreenMeasureContext } from './screen';
 
 export interface RestBarProps {
   /** Seconds left. The bar renders the number, never a ring or a bar chart. */
@@ -49,6 +50,8 @@ export function RestBar({
 }: RestBarProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const measure = useContext(ScreenMeasureContext);
 
   const [announcement, setAnnouncement] = useState('');
   const started = useRef(false);
@@ -70,7 +73,8 @@ export function RestBar({
           flexDirection: 'row',
           alignItems: 'center',
           gap: space.md,
-          paddingHorizontal: space.lg,
+          ...(measure === undefined ? {} : { width: '100%', maxWidth: measure, alignSelf: 'center' } as const),
+          paddingHorizontal: measure === undefined ? space.lg : gutterFor(width),
           paddingVertical: space.sm,
           paddingBottom: safeArea ? Math.max(insets.bottom, space.sm) : space.sm,
           minHeight: 56,

@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import { inToMm, lbToKg } from '@vert/engine';
 import { formatInteger } from '@vert/engine';
-import { Chip, Field, Notice, Stepper, Text, space } from '@/ui';
+import { Chip, DateField, Field, Notice, Stepper, Text, space } from '@/ui';
 import {
   WALL_GAP_MAX,
   WALL_GAP_MIN,
@@ -102,12 +102,12 @@ export function ProgramSheetBody({
         }}
       />
 
-      <Field
+      <DateField
         label="Target date"
         value={draft.targetText}
         placeholder="2026-11-29"
-        helper="At least two weeks out."
-        {...(dateError === undefined ? null : { error: dateError })}
+        emptyLabel="Pick a date"
+        {...(dateError === undefined ? { helper: 'At least two weeks out.' } : { error: dateError })}
         onChangeText={(text) => {
           onDraft({ ...draft, targetText: text, targetDate: DATE_SHAPE.test(text) ? text : null });
         }}

@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@expo/metro-runtime": "~57.0.15",
+    "@react-native-community/datetimepicker": "9.1.0",
     "@tanstack/react-query": "^5.102.8",
     "@vert/engine": "^0.1.0",
     "d3-array": "^3.2.4",
@@ -44,6 +45,7 @@
     "react-native-svg": "15.15.4",
     "react-native-web": "^0.21.2",
     "sql.js": "^1.14.2",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
     "zustand": "^5.0.15"
   },
   "devDependencies": {

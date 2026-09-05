@@ -23,6 +23,17 @@ export {
 } from './readinessSection';
 export { RowDivider, SettingRow, SettingSection } from './row';
 export {
+  BUILD_PROGRAM_LABEL,
+  BUILD_PROGRAM_ROUTE,
+  NOT_BUILT_CAPTION,
+  NOT_BUILT_VALUE,
+  NO_PROFILE_LINE,
+  settingsView,
+  type ProgramShape,
+  type SettingsSectionId,
+  type SettingsView,
+} from './sections';
+export {
   CHANGES_YOUR_PROGRAM,
   PAIN_APPLIED_LINE,
   diffParams,

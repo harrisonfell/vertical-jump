@@ -7,7 +7,7 @@
  */
 import { analytics } from '@vert/engine';
 import type { LocalDate } from '@/data';
-import { isBlankRecord, parseCsv, toRecords, type CsvRecord } from './csv';
+import { isBlankRecord, parseCsv, toRecords, type CsvRecord, type SourceSheet } from './csv';
 import {
   applyManualMapping,
   mapSheet,
@@ -50,57 +50,92 @@ export interface ReadFile {
   readonly latestDate: LocalDate | null;
 }
 
+const UNMAPPED: MappingResult = { kind: 'unknown', mapping: {}, unrecognized: [], missing: [] };
+
+/**
+ * Read and map already-stringified sheets. Pure: the same sheets always read
+ * the same, whether they came from a CSV or a workbook.
+ *
+ * The first sheet decides what the file is and is the one the manual mapping
+ * step edits. A second sheet, which is only ever the workbook's velocity
+ * sheet, is mapped on its own headers and its rows join the same lists, so a
+ * two-sheet export previews and commits as one import.
+ */
+export function readSheets(
+  fileName: string,
+  hash: string,
+  sheets: readonly SourceSheet[],
+  manual?: Readonly<Partial<Record<CanonicalField, string>>>,
+): ReadFile {
+  const jumps: ParsedJumpRow[] = [];
+  const velocity: ParsedVelocityRow[] = [];
+  const skipped: SkippedRow[] = [];
+  const records: CsvRecord[] = [];
+
+  let primary: MappingResult | undefined;
+  let primaryHeader: readonly string[] = [];
+  let rowNumber = 0;
+
+  for (let index = 0; index < sheets.length; index += 1) {
+    const sheet = sheets[index];
+    if (sheet === undefined) continue;
+
+    const { header, records: parsed } = toRecords(sheet.rows);
+    const body = parsed.filter((record) => !isBlankRecord(record));
+
+    const auto = mapSheet(header);
+    const useManual = index === 0 && manual !== undefined && Object.keys(manual).length > 0;
+    const mapping = useManual ? applyManualMapping(auto, manual ?? {}, header) : auto;
+    if (index === 0) {
+      primary = mapping;
+      primaryHeader = header;
+    }
+
+    for (let line = 0; line < body.length; line += 1) {
+      const record = body[line];
+      if (record === undefined) continue;
+      rowNumber += 1;
+      records.push(record);
+
+      if (mapping.kind === 'jump') {
+        const read = readJumpRow(record, mapping.mapping, rowNumber, line + 1);
+        if (read.kind === 'jump') jumps.push(read);
+        else skipped.push(read);
+        continue;
+      }
+      if (mapping.kind === 'velocity') {
+        const read = readVelocityRow(record, mapping.mapping, rowNumber, 1, line + 1);
+        if (read.kind === 'velocity') velocity.push(read);
+        else skipped.push(read);
+        continue;
+      }
+      skipped.push({ kind: 'skipped', row: rowNumber, reason: 'columns not recognized' });
+    }
+  }
+
+  const dates = [...jumps.map((row) => row.date), ...velocity.map((row) => row.date)].sort();
+
+  return {
+    fileName,
+    hash,
+    header: primaryHeader,
+    records,
+    mapping: primary ?? UNMAPPED,
+    jumps,
+    velocity,
+    skipped,
+    rowCount: rowNumber,
+    latestDate: dates.length === 0 ? null : (dates[dates.length - 1] ?? null),
+  };
+}
+
 /** Read and map a file's text. Pure: the same text always reads the same. */
 export function readFile(
   fileName: string,
   text: string,
   manual?: Readonly<Partial<Record<CanonicalField, string>>>,
 ): ReadFile {
-  const rows = parseCsv(text);
-  const { header, records } = toRecords(rows);
-  const body = records.filter((record) => !isBlankRecord(record));
-
-  const auto = mapSheet(header);
-  const mapping =
-    manual === undefined || Object.keys(manual).length === 0
-      ? auto
-      : applyManualMapping(auto, manual, header);
-
-  const jumps: ParsedJumpRow[] = [];
-  const velocity: ParsedVelocityRow[] = [];
-  const skipped: SkippedRow[] = [];
-
-  body.forEach((record, index) => {
-    const rowNumber = index + 1;
-    if (mapping.kind === 'jump') {
-      const read = readJumpRow(record, mapping.mapping, rowNumber, index + 1);
-      if (read.kind === 'jump') jumps.push(read);
-      else skipped.push(read);
-      return;
-    }
-    if (mapping.kind === 'velocity') {
-      const read = readVelocityRow(record, mapping.mapping, rowNumber, 1, index + 1);
-      if (read.kind === 'velocity') velocity.push(read);
-      else skipped.push(read);
-      return;
-    }
-    skipped.push({ kind: 'skipped', row: rowNumber, reason: 'columns not recognized' });
-  });
-
-  const dates = [...jumps.map((row) => row.date), ...velocity.map((row) => row.date)].sort();
-
-  return {
-    fileName,
-    hash: fileHash(text),
-    header,
-    records: body,
-    mapping,
-    jumps,
-    velocity,
-    skipped,
-    rowCount: body.length,
-    latestDate: dates.length === 0 ? null : (dates[dates.length - 1] ?? null),
-  };
+  return readSheets(fileName, fileHash(text), [{ name: '', rows: parseCsv(text) }], manual);
 }
 
 /** What the database already holds, so the preview can say what is new. */

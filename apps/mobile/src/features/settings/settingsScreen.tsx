@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { Fragment, useCallback, useMemo, useState, type ReactNode } from 'react';
 import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { loadRuleset, validateWeekdays } from '@vert/engine';
@@ -34,6 +34,12 @@ import { ProgramSection } from './programSection';
 import { draftFrom, type ProgramDraft } from './programDraft';
 import { paramsOf, savedParams, sportOf } from './programParams';
 import { ReadinessSection } from './readinessSection';
+import {
+  BUILD_PROGRAM_ROUTE,
+  NO_PROFILE_LINE,
+  settingsView,
+  type SettingsSectionId,
+} from './sections';
 import { buildExportFiles, type ExportFile } from './exportData';
 import { SaveFailedError, saveFile } from './download';
 import { deleteAllData, clearDeviceSecret } from './deleteAll';
@@ -84,6 +90,7 @@ export function SettingsScreen() {
 
   const athlete = athleteQuery.data ?? null;
   const pain = painQuery.data ?? [];
+  const program = programQuery.data ?? null;
 
   const [answers, setAnswers] = useState<Partial<Athlete>>({});
   const [draft, setDraft] = useState<ProgramDraft | null>(null);
@@ -188,7 +195,7 @@ export function SettingsScreen() {
     [weeksQuery.data, today],
   );
 
-  const plan = confirming ? regenerationPlan(changes, fromWeek) : null;
+  const plan = confirming ? regenerationPlan(changes, fromWeek, program !== null) : null;
 
   const onAnswer = useCallback((answer: AthleteAnswer) => {
     setAnswers((current) => ({ ...current, [answer.field]: answer.value }));
@@ -231,14 +238,14 @@ export function SettingsScreen() {
       {
         athlete,
         pain,
-        program: programQuery.data ?? null,
+        program,
         patch,
         changes,
         fromWeek: needsRegeneration(changes) ? fromWeek : null,
       },
       { onSuccess: () => discard() },
     );
-  }, [athlete, activeDraft, answers, changes, discard, fromWeek, pain, programQuery.data, regenerate]);
+  }, [athlete, activeDraft, answers, changes, discard, fromWeek, pain, program, regenerate]);
 
   const onSave = useCallback(async (file: ExportFile) => {
     setSavingName(file.name);
@@ -259,7 +266,9 @@ export function SettingsScreen() {
     }
   }, []);
 
-  if (athleteQuery.isPending || db === null) {
+  const view = settingsView({ hasAthlete: athlete !== null, hasProgram: program !== null });
+
+  if (athleteQuery.isPending || programQuery.isPending || db === null) {
     return (
       <Screen header={<AppHeader title="Settings" showSettings={false} />} testID="settings-loading">
         <Skeleton skeletonFor="header" />
@@ -268,11 +277,11 @@ export function SettingsScreen() {
     );
   }
 
-  if (athlete === null || activeDraft === null) {
+  if (athlete === null || view.empty) {
     return (
       <Screen header={<AppHeader title="Settings" showSettings={false} />} testID="settings-empty">
         <EmptyState
-          body="No profile yet. Answer the setup questions and your settings appear here."
+          body={NO_PROFILE_LINE}
           actionLabel="Build program"
           onAction={() => router.push(href('/setup/gate'))}
         />
@@ -280,23 +289,11 @@ export function SettingsScreen() {
     );
   }
 
-  return (
-    <Screen
-      header={<AppHeader title="Settings" showSettings={false} />}
-      gap={space.xxl}
-      testID="settings-screen"
-    >
-      {athleteQuery.isError ? (
-        <Notice
-          text="Showing the saved copy. Retry to read the latest."
-          actionLabel="Retry"
-          onAction={() => void athleteQuery.refetch()}
-          live
-        />
-      ) : null}
-
-      {painNote === null ? null : <Notice text={painNote} live />}
-
+  // Answers exist, so every section reads from them; only the Program section
+  // changes shape while there is nothing built.
+  const programDraft = activeDraft ?? draftFrom(athlete);
+  const sections: Readonly<Record<SettingsSectionId, ReactNode>> = {
+    athlete: (
       <AthleteSection
         athlete={{ ...athlete, ...answers }}
         pain={pain}
@@ -304,10 +301,13 @@ export function SettingsScreen() {
         onReassessPain={setReassessing}
         onReportPain={() => router.push(href('/clearance'))}
       />
-
+    ),
+    program: (
       <ProgramSection
         athlete={{ ...athlete, ...answers }}
-        draft={activeDraft}
+        built={view.program === 'built'}
+        onBuild={() => router.push(href(BUILD_PROGRAM_ROUTE))}
+        draft={programDraft}
         onDraft={(next) => {
           setDraft(next);
           setConfirming(false);
@@ -319,16 +319,8 @@ export function SettingsScreen() {
         onConfirm={confirm}
         onDiscard={discard}
       />
-
-      {changes.length > 0 && !confirming ? (
-        <Notice
-          text={`${changes.length === 1 ? '1 change' : `${changes.length} changes`} not saved yet.`}
-          actionLabel="Review changes"
-          onAction={() => setConfirming(true)}
-          live
-        />
-      ) : null}
-
+    ),
+    lifts: (
       <LiftsSection
         lifts={facts.lifts}
         busyLiftId={busyLift}
@@ -352,21 +344,24 @@ export function SettingsScreen() {
         onSaveBestSets={saveBestSets}
         savingBestSets={updateAthlete.isPending}
       />
-
+    ),
+    readiness: (
       <ReadinessSection
         config={readinessConfig}
         tests={readinessTests.data ?? []}
         onSave={saveReadiness}
         saving={updateAthlete.isPending}
       />
-
+    ),
+    link: (
       <LinkSection
         whoopStatus={whoopQuery.data?.status ?? 'disconnected'}
         lastSyncAt={whoopQuery.data?.lastSyncAt ?? null}
         onWhoop={() => router.push(href('/settings/whoop'))}
         onImport={() => router.push(href('/settings/import'))}
       />
-
+    ),
+    autoregulation: (
       <AutoregulationSection
         gate={facts.gate}
         shadow={facts.shadow}
@@ -375,7 +370,8 @@ export function SettingsScreen() {
         busy={setAutoregulation.isPending}
         onToggle={(next) => setAutoregulation.mutate({ enabled: next })}
       />
-
+    ),
+    data: (
       <View onLayout={() => { if (!exportOpen) setExportOpen(true); }}>
         <DataSection
           files={files}
@@ -410,6 +406,38 @@ export function SettingsScreen() {
           appVersion={APP_VERSION}
         />
       </View>
+    ),
+  };
+
+  return (
+    <Screen
+      header={<AppHeader title="Settings" showSettings={false} />}
+      gap={space.xxl}
+      testID="settings-screen"
+    >
+      {athleteQuery.isError ? (
+        <Notice
+          text="Showing the saved copy. Retry to read the latest."
+          actionLabel="Retry"
+          onAction={() => void athleteQuery.refetch()}
+          live
+        />
+      ) : null}
+
+      {painNote === null ? null : <Notice text={painNote} live />}
+
+      {changes.length > 0 && !confirming ? (
+        <Notice
+          text={`${changes.length === 1 ? '1 change' : `${changes.length} changes`} not saved yet.`}
+          actionLabel="Review changes"
+          onAction={() => setConfirming(true)}
+          live
+        />
+      ) : null}
+
+      {view.sections.map((id) => (
+        <Fragment key={id}>{sections[id]}</Fragment>
+      ))}
 
       {exportQuery.isPending && exportOpen ? (
         <Text variant="caption" color="ink3">

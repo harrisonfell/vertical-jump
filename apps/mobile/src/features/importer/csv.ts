@@ -132,6 +132,16 @@ export function parseCsv(text: string, delimiter?: Delimiter): string[][] {
   return rows;
 }
 
+/**
+ * One sheet of a source file, already stringified. A CSV is one of these; a
+ * workbook is one per sheet the importer reads.
+ */
+export interface SourceSheet {
+  /** The workbook's own sheet name, or '' for a CSV, which has no name. */
+  readonly name: string;
+  readonly rows: readonly string[][];
+}
+
 /** One record: the header row zipped onto a body row, trimmed. */
 export type CsvRecord = ReadonlyMap<string, string>;
 

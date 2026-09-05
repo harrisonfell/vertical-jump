@@ -2,43 +2,34 @@
  * Picking the export file.
  *
  * Native uses the document picker, which is also what the OVR Connect share
- * sheet hands a file to; the web build takes a file input. Both return the
- * file's text, because everything downstream of here is pure.
- *
- * XLSX is recognised and refused rather than half-read: no spreadsheet parser
- * ships in this build, and guessing at a zipped XML container would produce
- * numbers the athlete cannot check.
+ * sheet hands a file to; the web build takes a file input. A CSV comes back as
+ * text and a workbook as bytes, and that is the only difference the rest of
+ * the importer sees: both are read into the same header-keyed rows one step
+ * later, so neither format gets a second code path.
  */
 import { Platform } from 'react-native';
 
-/** The one sentence an XLSX file gets. */
-export const XLSX_UNSUPPORTED = 'Export as CSV from OVR Connect for now';
-
 export type PickedFile =
-  | { readonly kind: 'file'; readonly name: string; readonly text: string }
-  | { readonly kind: 'cancelled' }
-  | { readonly kind: 'unsupported'; readonly name: string; readonly message: string };
+  | { readonly kind: 'text'; readonly name: string; readonly text: string }
+  | { readonly kind: 'workbook'; readonly name: string; readonly bytes: Uint8Array }
+  | { readonly kind: 'cancelled' };
 
-const CSV_TYPES = [
+const SHEET_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+const LEGACY_SHEET_MIME = 'application/vnd.ms-excel';
+
+const PICKABLE_TYPES = [
   'text/csv',
   'text/comma-separated-values',
   'application/csv',
   'text/plain',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  LEGACY_SHEET_MIME,
+  SHEET_MIME,
 ];
 
-/** True for a name or mime type this build cannot read. */
+/** True for a name or mime type that has to be read as a workbook. */
 export function isSpreadsheet(name: string, mimeType?: string | null): boolean {
   if (/\.xlsx?$/i.test(name)) return true;
-  return (
-    mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-    mimeType === 'application/vnd.ms-excel'
-  );
-}
-
-function unsupported(name: string): PickedFile {
-  return { kind: 'unsupported', name, message: XLSX_UNSUPPORTED };
+  return mimeType === SHEET_MIME || mimeType === LEGACY_SHEET_MIME;
 }
 
 async function pickOnWeb(): Promise<PickedFile> {
@@ -65,18 +56,24 @@ async function pickOnWeb(): Promise<PickedFile> {
         finish({ kind: 'cancelled' });
         return;
       }
+      const cancel = (): void => {
+        finish({ kind: 'cancelled' });
+      };
       if (isSpreadsheet(file.name, file.type)) {
-        finish(unsupported(file.name));
+        file
+          .arrayBuffer()
+          .then((buffer) => {
+            finish({ kind: 'workbook', name: file.name, bytes: new Uint8Array(buffer) });
+          })
+          .catch(cancel);
         return;
       }
       file
         .text()
         .then((text) => {
-          finish({ kind: 'file', name: file.name, text });
+          finish({ kind: 'text', name: file.name, text });
         })
-        .catch(() => {
-          finish({ kind: 'cancelled' });
-        });
+        .catch(cancel);
     });
     // A cancelled picker fires `cancel` in modern browsers and nothing at all
     // in older ones, so the promise also settles when focus comes back.
@@ -92,7 +89,7 @@ async function pickOnWeb(): Promise<PickedFile> {
 async function pickOnNative(): Promise<PickedFile> {
   const DocumentPicker = await import('expo-document-picker');
   const result = await DocumentPicker.getDocumentAsync({
-    type: CSV_TYPES,
+    type: PICKABLE_TYPES,
     copyToCacheDirectory: true,
     multiple: false,
   });
@@ -100,11 +97,14 @@ async function pickOnNative(): Promise<PickedFile> {
 
   const asset = result.assets[0];
   if (asset === undefined) return { kind: 'cancelled' };
-  if (isSpreadsheet(asset.name, asset.mimeType)) return unsupported(asset.name);
 
   const { File } = await import('expo-file-system');
-  const text = await new File(asset.uri).text();
-  return { kind: 'file', name: asset.name, text };
+  const handle = new File(asset.uri);
+  if (isSpreadsheet(asset.name, asset.mimeType)) {
+    const buffer = await handle.arrayBuffer();
+    return { kind: 'workbook', name: asset.name, bytes: new Uint8Array(buffer) };
+  }
+  return { kind: 'text', name: asset.name, text: await handle.text() };
 }
 
 /** Open the picker and read the chosen file. Never throws for a cancel. */

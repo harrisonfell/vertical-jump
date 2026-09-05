@@ -20,12 +20,12 @@ function hex32(value: number): string {
 }
 
 /** FNV-1a 64, in 16-bit limbs so nothing leaves the exact integer range. */
-export function fileHash(text: string): string {
+function digest(length: number, unitAt: (index: number) => number): string {
   let low = OFFSET_LOW;
   let high = OFFSET_HIGH;
 
-  for (let i = 0; i < text.length; i += 1) {
-    low = (low ^ (text.charCodeAt(i) & 0xffff)) >>> 0;
+  for (let i = 0; i < length; i += 1) {
+    low = (low ^ unitAt(i)) >>> 0;
 
     const a0 = low & 0xffff;
     const a1 = low >>> 16;
@@ -42,6 +42,20 @@ export function fileHash(text: string): string {
   }
 
   return `${hex32(high)}${hex32(low)}`;
+}
+
+/** The hash of a text file: its own characters, in order. */
+export function fileHash(text: string): string {
+  return digest(text.length, (index) => text.charCodeAt(index) & 0xffff);
+}
+
+/**
+ * The hash of a workbook: its own bytes. A spreadsheet is a zip container, so
+ * the same export saved twice is byte-identical and hashes the same, which is
+ * what makes a re-import a no-op rather than a second copy of the season.
+ */
+export function bytesHash(bytes: Uint8Array): string {
+  return digest(bytes.length, (index) => bytes[index] ?? 0);
 }
 
 /** A short, readable stamp for the batch row: "ovr-connect-1a2b3c4d". */

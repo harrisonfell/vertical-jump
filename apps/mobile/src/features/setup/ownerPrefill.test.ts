@@ -111,7 +111,16 @@ describe('the owner prefill', () => {
     await db.closeAsync();
   });
 
-  it('sends the owner to setup step 2, not to Today and not back to step 1', async () => {
+  it('leaves the self-screen for the owner to answer personally', async () => {
+    const db = await openMigratedTestDb();
+    await prefillOwnerIfEmpty(db, TODAY, ZONE, true);
+    const athlete = await getAthlete(db);
+
+    expect(athlete?.clearance).toBeNull();
+    await db.closeAsync();
+  });
+
+  it('sends the owner to the self-screen gate, not to Today and not to setup', async () => {
     const db = await openMigratedTestDb();
     await prefillOwnerIfEmpty(db, TODAY, ZONE, true);
     const athlete = await getAthlete(db);
@@ -132,7 +141,7 @@ describe('the owner prefill', () => {
         athlete: gateAthlete,
         hasProgram: false,
       }),
-    ).toBe('setupTwo');
+    ).toBe('setupGate');
     await db.closeAsync();
   });
 

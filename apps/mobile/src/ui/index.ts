@@ -93,6 +93,17 @@ export {
   type AnswerRowProps,
 } from './primitives/answerRow';
 export { Field, type FieldProps } from './primitives/field';
+export { DateField, type DateFieldProps } from './primitives/dateField';
+export {
+  clampDate,
+  dateFieldText,
+  dateToLocalDate,
+  formatFullDate,
+  localDateToDate,
+  pickerStart,
+  todayFromClock,
+  type PickerStartInput,
+} from './primitives/dateFieldModel';
 export { Stepper, type StepperProps } from './primitives/stepper';
 export {
   clampToBounds,

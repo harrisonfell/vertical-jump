@@ -38,7 +38,7 @@ const EMPTY_BODY =
 
 function PlanSkeletonView() {
   return (
-    <Screen header={<AppHeader title="Plan" />}>
+    <Screen wide header={<AppHeader title="Plan" />}>
       <Skeleton skeletonFor="line" count={2} />
       <Skeleton skeletonFor="strip" />
       <Skeleton skeletonFor="chartPanel" count={3} />
@@ -88,7 +88,7 @@ export function PlanScreen() {
 
   if (states.has('empty') || program.data === null || program.data === undefined) {
     return (
-      <Screen header={<AppHeader title="Plan" variant="headline" />}>
+      <Screen wide header={<AppHeader title="Plan" variant="headline" />}>
         <EmptyState
           body={EMPTY_BODY}
           actionLabel="Build program"
@@ -116,7 +116,7 @@ export function PlanScreen() {
   const latest = shown[0];
 
   return (
-    <Screen header={<AppHeader title={model.title} />}>
+    <Screen wide header={<AppHeader title={model.title} />}>
       <View style={{ gap: space.xs }}>
         <Text variant="body" color="ink" numeric>
           {model.headerLine}

@@ -265,8 +265,21 @@ export interface RegenerationPlan {
 export function regenerationPlan(
   changes: readonly ParamChange[],
   fromWeek: number | null,
+  built = true,
 ): RegenerationPlan {
   const lines = changes.map((change) => `${change.label}: ${change.from} to ${change.to}`);
+
+  // Nothing has been built, so nothing is being rebuilt: the answers are just
+  // saved, and the build reads them when it runs.
+  if (!built) {
+    return {
+      changes,
+      fromWeek: null,
+      title: 'Save your answers?',
+      lines: [...lines, 'No program is built yet. Your answers are used when you build one.'],
+      confirmLabel: 'Save answers',
+    };
+  }
 
   if (fromWeek === null) {
     return {

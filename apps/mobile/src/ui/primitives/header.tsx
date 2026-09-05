@@ -1,9 +1,9 @@
-import type { ReactNode } from 'react';
+import { useContext, type ReactNode } from 'react';
 import { View, useWindowDimensions } from 'react-native';
 import { Text } from '../text';
 import { space, useTheme } from '../theme';
 import { Hairline } from './hairline';
-import { gutterFor } from './screen';
+import { gutterFor, ScreenMeasureContext } from './screen';
 
 export interface HeaderProps {
   /** "Week 7 of 12 · Power block · Full Body Strength" or "Progress". */
@@ -39,42 +39,45 @@ export function Header({
   const { colors } = useTheme();
   const { width } = useWindowDimensions();
   const gutter = gutterFor(width);
+  const measure = useContext(ScreenMeasureContext);
 
   return (
     <View testID={testID} style={{ backgroundColor: colors.paper }}>
-      <View
-        style={{
-          paddingHorizontal: gutter,
-          paddingTop: space.md,
-          paddingBottom: variant === 'headline' ? space.sm : space.md,
-          flexDirection: 'row',
-          alignItems: variant === 'headline' ? 'flex-end' : 'center',
-          gap: space.md,
-          minHeight: 44,
-        }}
-      >
-        {back}
-        <View style={{ flex: 1, gap: space.xxs }}>
-          <Text
-            variant={variant}
-            color={variant === 'label' ? 'ink2' : 'ink'}
-            accessibilityRole="header"
-            numberOfLines={2}
-          >
-            {title}
-          </Text>
-          {subtitle === undefined ? null : (
-            <Text variant="caption" color="ink3">
-              {subtitle}
+      <View style={measure === undefined ? undefined : { width: '100%', maxWidth: measure, alignSelf: 'center' }}>
+        <View
+          style={{
+            paddingHorizontal: gutter,
+            paddingTop: space.md,
+            paddingBottom: variant === 'headline' ? space.sm : space.md,
+            flexDirection: 'row',
+            alignItems: variant === 'headline' ? 'flex-end' : 'center',
+            gap: space.md,
+            minHeight: 44,
+          }}
+        >
+          {back}
+          <View style={{ flex: 1, gap: space.xxs }}>
+            <Text
+              variant={variant}
+              color={variant === 'label' ? 'ink2' : 'ink'}
+              accessibilityRole="header"
+              numberOfLines={2}
+            >
+              {title}
+            </Text>
+            {subtitle === undefined ? null : (
+              <Text variant="caption" color="ink3">
+                {subtitle}
+              </Text>
+            )}
+          </View>
+          {trailingText === undefined ? null : (
+            <Text variant="label" color="ink2">
+              {trailingText}
             </Text>
           )}
+          {right}
         </View>
-        {trailingText === undefined ? null : (
-          <Text variant="label" color="ink2">
-            {trailingText}
-          </Text>
-        )}
-        {right}
       </View>
       <Hairline />
     </View>

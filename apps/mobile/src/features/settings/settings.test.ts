@@ -15,6 +15,13 @@ import { csvCell, toCsv, testsCsv, whoopCsv } from './exportData';
 import { deleteConfirmMatches, DELETE_CONFIRM_WORD } from './deleteAll';
 import { workingMaxRows, type LiftSource } from './lifts';
 import { wallWindowLabel } from './programDraft';
+import {
+  BUILD_PROGRAM_LABEL,
+  BUILD_PROGRAM_ROUTE,
+  NOT_BUILT_VALUE,
+  NO_PROFILE_LINE,
+  settingsView,
+} from './sections';
 
 const base: ProgramParams = {
   trainingAgeYears: 5,
@@ -246,5 +253,49 @@ describe('the climbing answers in Settings', () => {
     expect(wallWindowLabel('18:00', '20:00')).toBe('18:00 to 20:00');
     expect(wallWindowLabel('', '')).toBe('not set');
     expect(wallWindowLabel('18:00', '')).toBe('not set');
+  });
+});
+
+describe('what Settings shows', () => {
+  // Defect D-49: an athlete who had answered setup but not yet built a program
+  // was shown "No profile yet" over the top of the answers already on file.
+  it('shows every section, with the program not built yet, when there are answers but no program', () => {
+    const view = settingsView({ hasAthlete: true, hasProgram: false });
+    expect(view.empty).toBe(false);
+    expect(view.program).toBe('not_built');
+    expect(view.sections).toEqual([
+      'athlete',
+      'program',
+      'lifts',
+      'readiness',
+      'link',
+      'autoregulation',
+      'data',
+    ]);
+    expect(NOT_BUILT_VALUE).toBe('Not built yet');
+    expect(BUILD_PROGRAM_LABEL).toBe('Build program');
+    expect(BUILD_PROGRAM_ROUTE).toBe('/setup/two');
+  });
+
+  it('keeps the empty state for a device with no athlete row at all', () => {
+    const view = settingsView({ hasAthlete: false, hasProgram: false });
+    expect(view.empty).toBe(true);
+    expect(view.sections).toEqual([]);
+    expect(NO_PROFILE_LINE).toBe(
+      'No profile yet. Answer the setup questions and your settings appear here.',
+    );
+  });
+
+  it('shows the program parameters once a program exists', () => {
+    const view = settingsView({ hasAthlete: true, hasProgram: true });
+    expect(view.empty).toBe(false);
+    expect(view.program).toBe('built');
+  });
+
+  it('asks to save the answers, not to rebuild weeks, before a program exists', () => {
+    const plan = regenerationPlan(diffParams(base, { ...base, daysPerWeek: 3 }), null, false);
+    expect(plan.title).toBe('Save your answers?');
+    expect(plan.confirmLabel).toBe('Save answers');
+    expect(plan.lines).toContain('No program is built yet. Your answers are used when you build one.');
   });
 });

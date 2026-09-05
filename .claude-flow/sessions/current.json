@@ -6,16 +6,17 @@
     "lastMatchedPatterns": [
       "insight-1788642521106-zwq1",
       "insight-1788642521106-8w1m",
-      "insight-1788642521106-q24h",
-      "insight-1788642521106-nlgv",
-      "insight-1788583384436-euro"
+      "mem-MEMORY----base44-prompts--structure-o-0",
+      "mem-expo-testflight-facts-----0",
+      "insight-1788642521106-nlgv"
     ]
   },
   "metrics": {
-    "edits": 0,
+    "edits": 1,
     "commands": 0,
     "tasks": 0,
     "errors": 0
   },
-  "updatedAt": "2026-09-05T21:32:28.416Z"
+  "updatedAt": "2026-09-05T22:08:56.013Z",
+  "restoredAt": "2026-09-05T21:47:37.389Z"
 }

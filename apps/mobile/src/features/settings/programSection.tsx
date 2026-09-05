@@ -8,6 +8,11 @@ import { RowDivider, SettingRow, SettingSection } from './row';
 import { DATE_SHAPE, draftFrom, wallWindowLabel, type ProgramDraft } from './programDraft';
 import { ProgramSheetBody } from './programSheet';
 import {
+  BUILD_PROGRAM_LABEL,
+  NOT_BUILT_CAPTION,
+  NOT_BUILT_VALUE,
+} from './sections';
+import {
   CHANGES_YOUR_PROGRAM,
   formatCalendarDate,
   weekdaysLabel,
@@ -30,6 +35,10 @@ export { draftFrom, wallWindowLabel, type ProgramDraft };
 
 export interface ProgramSectionProps {
   readonly athlete: Athlete;
+  /** False before a program exists: the section becomes the row that builds one. */
+  readonly built: boolean;
+  /** Opens setup at the step that asks for the days, the goal and the date. */
+  readonly onBuild: () => void;
   /** The pending, unsaved edits laid over the athlete. */
   readonly draft: ProgramDraft;
   readonly onDraft: (draft: ProgramDraft) => void;
@@ -44,6 +53,8 @@ export interface ProgramSectionProps {
 
 export function ProgramSection({
   athlete,
+  built,
+  onBuild,
   draft,
   onDraft,
   weekdayRefusal,
@@ -56,6 +67,30 @@ export function ProgramSection({
   const [editing, setEditing] = useState(false);
   const climbing = climbingAnswersFrom(athlete);
   const showClimbing = showsGripBlock(athlete.sport, climbing.fingerHistory);
+
+  // Before a build there are no weeks to regenerate, so the parameters are not
+  // yet editable here: they are answered in setup, one step away.
+  if (!built) {
+    return (
+      <SettingSection title="Program" testID="settings-program">
+        <SettingRow
+          label="Program"
+          value={NOT_BUILT_VALUE}
+          caption={NOT_BUILT_CAPTION}
+          testID="settings-program-not-built"
+        >
+          <View style={{ paddingTop: space.sm }}>
+            <Button
+              label={BUILD_PROGRAM_LABEL}
+              variant="primary"
+              onPress={onBuild}
+              testID="settings-build-program"
+            />
+          </View>
+        </SettingRow>
+      </SettingSection>
+    );
+  }
 
   const goalError =
     draft.goalText !== '' && draft.goalHeightMm === null

@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
-import { formatInteger } from '@vert/engine';
+import { addDays, formatInteger } from '@vert/engine';
 import type { SessionWindow, WallWork } from '@vert/engine';
 import {
   AnswerGroup,
   Button,
   Chip,
+  DateField,
   Field,
   Notice,
   Text,
@@ -31,6 +32,7 @@ import { ReadinessBlock } from './readinessBlock';
 import { stepTwoDefaults, type StepTwoValues } from './stepTwoValues';
 import { defaultTargetDate, defaultTargetLabel, startAndTargetLine } from './startLine';
 import {
+  MIN_TARGET_DAYS,
   THREE_DAY_LINE,
   feasibilityLine,
   orderWeekdays,
@@ -144,6 +146,11 @@ export function SetupStepTwo({
     touch('weekdays');
   };
 
+  // The two-week floor, said once: the picker will not offer a day the
+  // refusal would turn down, and the same day is where it opens with no
+  // weekday picked yet.
+  const earliestTarget = addDays(today, MIN_TARGET_DAYS);
+
   const bestSetsRefused = bestSetsHaveErrors(values.bestSets, today);
 
   const setBestSet = (field: BestSetField, next: BestSetValues): void => {
@@ -246,13 +253,14 @@ export function SetupStepTwo({
         </Text>
       )}
 
-      <Field
+      <DateField
         label={SETUP_COPY.stepTwoTargetLabel}
         value={values.targetDate}
         onChangeText={(text) => set('targetDate', text)}
         onBlur={() => touch('targetDate')}
-        placeholder="YYYY-MM-DD"
-        maxLength={10}
+        minimumDate={earliestTarget}
+        defaultDate={picks.length === 0 ? earliestTarget : defaultTargetDate(today, picks)}
+        emptyLabel="Pick a date"
         testID="step-two-target"
         {...(errorFor('targetDate') === undefined
           ? { helper: SETUP_COPY.stepTwoTargetHelper }

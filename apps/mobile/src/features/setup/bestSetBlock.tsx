@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import { ChipRow, Field, Text, space } from '@/ui';
+import { ChipRow, DateField, Field, Text, space } from '@/ui';
 import type { LocalDate } from '@/data';
 import { SETUP_COPY } from './copy';
 import { Question } from './parts';
@@ -100,12 +100,12 @@ export function BestSetBlock({
                 testID={`best-set-rpe-${field}`}
               />
             </View>
-            <Field
+            <DateField
               label={SETUP_COPY.stepTwoBestSetDate}
               value={set.date}
               onChangeText={(text) => put({ date: text })}
-              placeholder="YYYY-MM-DD"
-              maxLength={10}
+              maximumDate={today}
+              defaultDate={today}
               testID={`best-set-date-${field}`}
               {...(show('date') === undefined
                 ? { helper: SETUP_COPY.stepTwoBestSetDateHelper }

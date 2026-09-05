@@ -4,6 +4,7 @@ import { View } from 'react-native';
 import { Button, ButtonRow } from '../primitives/button';
 import { AnswerGroup } from '../primitives/answerRow';
 import { ChipRow, type ChipOption } from '../primitives/chip';
+import { DateField } from '../primitives/dateField';
 import { Field } from '../primitives/field';
 import { Header } from '../primitives/header';
 import { Stepper } from '../primitives/stepper';
@@ -32,6 +33,8 @@ export function KitControls() {
   const [age, setAge] = useState<TrainingAgeAnswer>('1to3');
   const [bodyweight, setBodyweight] = useState('181');
   const [goal, setGoal] = useState('');
+  const [target, setTarget] = useState('2026-11-29');
+  const [setDate, setSetDate] = useState('');
   const [attempt, setAttempt] = useState(32.5);
   const [load, setLoad] = useState(205);
 
@@ -149,6 +152,50 @@ export function KitControls() {
             onChangeText={noop}
             multiline
             placeholder="Anything worth remembering next week"
+          />
+        </KitCase>
+      </KitSection>
+
+      <KitSection
+        title="DateField"
+        note="A picker on the phone, the typed field on the web. Stores YYYY-MM-DD either way."
+      >
+        <KitCase label="a chosen day, read back as a calendar day">
+          <DateField
+            label="Target date"
+            value={target}
+            onChangeText={setTarget}
+            minimumDate="2026-09-19"
+            helper="At least two weeks out."
+          />
+        </KitCase>
+        <KitCase label="nothing chosen yet, opening on the day it offers">
+          <DateField
+            label="Date"
+            value={setDate}
+            onChangeText={setSetDate}
+            maximumDate="2026-09-05"
+            defaultDate="2026-09-05"
+            emptyLabel="Pick a date"
+            helper="The day you did the set. Defaults to today."
+          />
+        </KitCase>
+        <KitCase label="error, with the chosen day kept">
+          <DateField
+            label="Target date"
+            value="2026-09-08"
+            onChangeText={noop}
+            minimumDate="2026-09-19"
+            error="That is 3 days out. Pick a date at least 2 weeks out."
+          />
+        </KitCase>
+        <KitCase label="disabled">
+          <DateField
+            label="Program start"
+            value="2026-09-08"
+            onChangeText={noop}
+            disabled
+            helper="Set when the program was built."
           />
         </KitCase>
       </KitSection>

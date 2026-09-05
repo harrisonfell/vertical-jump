@@ -1,10 +1,13 @@
-import type { ReactNode } from 'react';
+import { createContext, type ReactNode } from 'react';
 import { Platform, ScrollView, View, useWindowDimensions, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { breakpoint, space, useTheme } from '../theme';
 
 /** Content measures for the two layouts the system has. */
 export const CONTENT_WIDTH = { narrow: 640, wide: 1024 } as const;
+
+/** Headers and sticky controls share the body's measure. */
+export const ScreenMeasureContext = createContext<number | undefined>(undefined);
 
 /** The gutter for a viewport width. 16 on a phone, 24 from the tablet up. */
 export function gutterFor(width: number): number {
@@ -73,26 +76,28 @@ export function Screen({
   }
 
   return (
-    <View testID={testID} style={{ flex: 1, backgroundColor: colors.paper }}>
-      {header === undefined ? null : (
-        <View style={{ paddingTop: insets.top }}>{header}</View>
-      )}
-      {scroll ? (
-        <ScrollView
-          style={scrollStyle}
-          contentContainerStyle={{
-            paddingTop: header === undefined ? insets.top + space.lg : space.lg,
-            paddingBottom: space.xxxl,
-          }}
-          keyboardShouldPersistTaps="handled"
-        >
-          {body}
-        </ScrollView>
-      ) : (
-        <View style={{ flex: 1, paddingTop: header === undefined ? insets.top : 0 }}>{body}</View>
-      )}
-      {footer === undefined ? null : <View>{footer}</View>}
-    </View>
+    <ScreenMeasureContext.Provider value={measure}>
+      <View testID={testID} style={{ flex: 1, backgroundColor: colors.paper }}>
+        {header === undefined ? null : (
+          <View style={{ paddingTop: insets.top }}>{header}</View>
+        )}
+        {scroll ? (
+          <ScrollView
+            style={scrollStyle}
+            contentContainerStyle={{
+              paddingTop: header === undefined ? insets.top + space.lg : space.lg,
+              paddingBottom: space.xxxl,
+            }}
+            keyboardShouldPersistTaps="handled"
+          >
+            {body}
+          </ScrollView>
+        ) : (
+          <View style={{ flex: 1, paddingTop: header === undefined ? insets.top : 0 }}>{body}</View>
+        )}
+        {footer === undefined ? null : <View>{footer}</View>}
+      </View>
+    </ScreenMeasureContext.Provider>
   );
 }
 

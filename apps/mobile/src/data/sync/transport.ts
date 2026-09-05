@@ -23,16 +23,28 @@ import { WHOOP_START_TOKEN_PARAM } from './apiContract';
 /**
  * The configured server, without a trailing slash, or null.
  *
- * Null is a first-class state, not an error: v1 ships with no server, the sync
- * line renders nothing rather than claiming a state it cannot know, and the
- * Whoop screen serves the fixture client.
+ * Three states, not two. An absolute origin is a separate deploy, which is what
+ * the phone's build carries. A bare "/" is this origin, which the web build
+ * sets because it is served by the same Vercel project that answers `/api`: it
+ * reads back as a base of "", so every request goes out as a relative path and
+ * the session cookie stays first party. Null is no server at all, which is what
+ * a native build with nothing configured gets: the sync line renders nothing
+ * rather than claiming a state it cannot know, and the Whoop screen serves the
+ * fixture client.
  */
+export const SAME_ORIGIN = '';
+
 export function serverUrl(
   value: string | undefined = process.env['EXPO_PUBLIC_SERVER_URL'],
 ): string | null {
   if (typeof value !== 'string') return null;
-  const trimmed = value.trim().replace(/\/+$/, '');
-  return trimmed === '' ? null : trimmed;
+  const trimmed = value.trim();
+  if (trimmed === '') return null;
+  // "/" is how the web build says this origin. It cannot say it with an empty
+  // string: Metro inlines an empty EXPO_PUBLIC_ value as undefined, which is
+  // indistinguishable from not setting it at all, and not setting it is what a
+  // dev web server and a native build with no server both do.
+  return trimmed.replace(/\/+$/, '') || SAME_ORIGIN;
 }
 
 export function serverConfigured(value?: string | undefined): boolean {

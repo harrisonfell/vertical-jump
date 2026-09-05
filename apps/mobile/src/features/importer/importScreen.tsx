@@ -10,8 +10,9 @@ import {
 } from '@/data';
 import { Button, Disclosure, EmptyState, Notice, Screen, Table, Text, space } from '@/ui';
 import { RowDivider, SettingRow, SettingSection } from '../settings';
-import { buildPreview, readFile, OVR_CONNECT, type ImportPreview } from './preview';
-import { pickImportFile, XLSX_UNSUPPORTED } from './pick';
+import { buildPreview, readSheets, OVR_CONNECT, type ImportPreview } from './preview';
+import { pickImportFile } from './pick';
+import { openPickedFile, type ImportSource } from './workbook';
 import { batchLabel } from './hash';
 import { toJumpGroups, toVbtSets } from './commit';
 import { MappingStep } from './mappingStep';
@@ -25,6 +26,11 @@ import type { CanonicalField } from './headers';
  * commit does. A re-import of the same export is a no-op, announced rather
  * than silent, because the file is always full history and the athlete has no
  * way to tell from the outside.
+ *
+ * Reading the file is the one asynchronous step: a workbook is parsed off the
+ * frame and, past two megabytes, in chunks, so "Reading file…" is a real state
+ * rather than a frozen screen. Everything after it is synchronous, which is
+ * why changing a column in the mapping step re-reads instantly.
  */
 
 export function ImportScreen() {
@@ -32,16 +38,18 @@ export function ImportScreen() {
   const commit = useCommitImport();
   const history = useImports(5);
 
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [text, setText] = useState<string | null>(null);
+  const [source, setSource] = useState<ImportSource | null>(null);
   const [manual, setManual] = useState<Partial<Record<CanonicalField, string>>>({});
   const [error, setError] = useState<string | null>(null);
   const [picking, setPicking] = useState(false);
+  /** The name of the file currently being read, if one is. */
+  const [reading, setReading] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
 
   const file = useMemo(
-    () => (text === null || fileName === null ? null : readFile(fileName, text, manual)),
-    [fileName, text, manual],
+    () =>
+      source === null ? null : readSheets(source.fileName, source.hash, source.sheets, manual),
+    [source, manual],
   );
 
   const alreadyImported = useMemo(() => {
@@ -67,16 +75,14 @@ export function ImportScreen() {
     try {
       const picked = await pickImportFile();
       if (picked.kind === 'cancelled') return;
-      if (picked.kind === 'unsupported') {
-        setError(`${picked.name} is a spreadsheet. ${XLSX_UNSUPPORTED}.`);
-        return;
-      }
       setManual({});
-      setFileName(picked.name);
-      setText(picked.text);
+      setSource(null);
+      setReading(picked.name);
+      setSource(await openPickedFile(picked));
     } catch {
       setError('Could not read that file. Pick it again.');
     } finally {
+      setReading(null);
       setPicking(false);
     }
   }, []);
@@ -110,8 +116,7 @@ export function ImportScreen() {
               ? `Imported. ${result.testsWritten} ${result.testsWritten === 1 ? 'test' : 'tests'} and ${result.setsWritten} ${result.setsWritten === 1 ? 'set' : 'sets'} added.`
               : 'That export was already imported. Nothing changed.',
           );
-          setFileName(null);
-          setText(null);
+          setSource(null);
         },
       },
     );
@@ -125,12 +130,13 @@ export function ImportScreen() {
     >
       {preview === null ? (
         <EmptyState
-          body={`${OVR_CONNECT}s hold your full jump and velocity history. Pick the file and you will see exactly what is new before anything is written.`}
+          body={`${OVR_CONNECT}s hold your full jump and velocity history. Pick the file, CSV or Excel, and you will see exactly what is new before anything is written.`}
           actionLabel={picking ? 'Opening' : 'Choose export file'}
           onAction={() => void onPick()}
         />
       ) : null}
 
+      {reading === null ? null : <Notice text="Reading file…" detail={reading} live />}
       {error === null ? null : <Notice text={error} live />}
       {done === null ? null : <Notice text={done} live />}
       {commit.isError ? <Notice text="Could not write the import. Try Confirm again." live /> : null}
@@ -203,8 +209,7 @@ export function ImportScreen() {
               label="Cancel"
               variant="secondary"
               onPress={() => {
-                setFileName(null);
-                setText(null);
+                setSource(null);
                 setManual({});
               }}
               testID="import-cancel"

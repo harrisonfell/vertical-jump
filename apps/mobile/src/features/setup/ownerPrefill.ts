@@ -12,10 +12,11 @@
  * height. Nobody but the athlete knows those, and a program built on a guessed
  * baseline is a program built on nothing, so setup still stops at step 2.
  *
- * The clearance block carries the owner's own PAR-Q+ answers, which is what
- * makes this a saved profile rather than half of one. It is attested on the
- * day the profile is applied, and answering the self-screen again from
- * Settings > Health replaces it.
+ * The clearance block is deliberately absent too: the self-screen is medical
+ * and the owner answers it personally, every time, so the prefill never writes
+ * `isAdult` or `clearance`. With the prefill present and no clearance on file
+ * the gate lands on `/setup/gate`; once the owner answers there, step 1 and
+ * step 2 open prefilled exactly as before.
  */
 import { deriveLevel } from '@vert/engine';
 import type { Inventory } from '@vert/engine';
@@ -30,7 +31,6 @@ import { weightRoomAccess } from '@/lib/inventory';
 import { bestSetsFrom } from './bestSets';
 import { climbingPatchFrom, type ClimbingAnswers } from './climbing';
 import { workingMaxesFrom } from './enteredMaxes';
-import { RED_FLAG_KEYS } from './questions';
 import { readinessConfigDefaults, toReadinessTestConfig } from './readinessConfig';
 import type { StepOneValues } from './stepOne';
 import { stepTwoDefaults, type StepTwoValues } from './stepTwoValues';
@@ -106,13 +106,6 @@ export const OWNER_STEP_TWO: StepTwoValues = {
   readinessConfig: readinessConfigDefaults(),
 };
 
-/** The self-screen the owner has already answered, attested on the day it lands. */
-export function ownerClearance(today: LocalDate): Json {
-  const answers: Record<string, unknown> = { attestedAt: today, isAdult: true };
-  for (const key of RED_FLAG_KEYS) answers[key] = false;
-  return answers as Json;
-}
-
 /**
  * The athlete row the two answer sets add up to.
  *
@@ -129,8 +122,6 @@ export function ownerAthletePatch(today: LocalDate, timezone: string, at: string
     level: deriveLevel(OWNER_STEP_ONE.trainingAge),
     daysPerWeek: OWNER_STEP_ONE.daysPerWeek,
     weekdays: [...OWNER_STEP_TWO.weekdays],
-    isAdult: true,
-    clearance: ownerClearance(today),
     inventory: OWNER_INVENTORY as unknown as Json,
     weightRoomAccess: weightRoomAccess(OWNER_INVENTORY),
     bodyweightKg: null,
