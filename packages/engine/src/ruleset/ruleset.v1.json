@@ -1,0 +1,1535 @@
+{
+  "version": "1.0.0",
+  "houseRules": [
+    {
+      "id": "read.calendar_week",
+      "kind": "reading",
+      "title": "The training week runs from your first chosen weekday",
+      "text": "Your week starts on the first weekday you picked and ends six days later. The rule book uses a floating seven-day window from your first completed workout; this is the one place the app deviates, because the peak week has to contain your target date.",
+      "rules": [
+        94,
+        128
+      ],
+      "magnitude": "day 0 to day 6"
+    },
+    {
+      "id": "house.depth_jump_contacts",
+      "kind": "house",
+      "title": "A depth jump counts as two contacts",
+      "text": "Every landing counts, so one depth jump rep is two contacts, both high-intensity and high-amplitude. That makes ten reps the most you can do in a session once the test attempts are counted.",
+      "rules": [
+        52,
+        85
+      ],
+      "magnitude": "2 contacts per rep, 10 reps per session"
+    },
+    {
+      "id": "house.test_head_of_power",
+      "kind": "house",
+      "title": "The test sits at the head of the Power block",
+      "text": "The weekly jump test runs after a fixed primer and before anything else. Its attempts count as high-intensity contacts and as one of your two high-CNS exercises.",
+      "rules": [
+        38,
+        44,
+        85
+      ],
+      "magnitude": "5 attempts, 5 high-intensity contacts"
+    },
+    {
+      "id": "read.back_squat_kept",
+      "kind": "reading",
+      "title": "The back squat stays across the block change",
+      "text": "The rule book only says when a main lift may rotate, not that it must. Keeping the squat across the Strength to Power transition preserves its working-max history. Rotation happens on plateau.",
+      "rules": [
+        57,
+        108
+      ]
+    },
+    {
+      "id": "house.layout_table",
+      "kind": "house",
+      "title": "Block layout by program length",
+      "text": "How many Strength, Deload, Power, Taper and Peak weeks you get is fixed by how many weeks sit between today and your target date.",
+      "rules": [
+        57,
+        105,
+        106,
+        107,
+        108
+      ]
+    },
+    {
+      "id": "house.small_progression_volume",
+      "kind": "house",
+      "title": "A small step is volume only",
+      "text": "At 75 to 89 percent with all reps made, only your contact target moves. Starting percentages and ladder rungs hold.",
+      "rules": [
+        95
+      ],
+      "magnitude": "+5 extensive contacts, k += 0.5"
+    },
+    {
+      "id": "house.hold_outcome",
+      "kind": "house",
+      "title": "Missing reps holds the week instead of progressing it",
+      "text": "At 75 percent or more but with a set logged short, nothing rises, and the lift that fell short drops its working max.",
+      "rules": [
+        95,
+        96,
+        97
+      ],
+      "magnitude": "no raises; the lift drops 5 percent, 10 percent on a second week"
+    },
+    {
+      "id": "house.severe_pain_choices",
+      "kind": "house",
+      "title": "Severe pain shows the clearance screen with two choices",
+      "text": "Only the general screening questions block a program from being built. Severe pain at a site shows the clearance screen with two choices, and the exclusions apply whichever you pick. The screen returns every two weeks.",
+      "rules": [
+        2,
+        3,
+        7,
+        10,
+        13,
+        16
+      ],
+      "magnitude": "returns every 14 days"
+    },
+    {
+      "id": "read.soreness_pre_session",
+      "kind": "reading",
+      "title": "Soreness is asked before the session and applies to today",
+      "text": "The rule book says the next workout. You are asked at the top of Today, so the reduction lands on the session in front of you.",
+      "rules": [
+        27
+      ],
+      "magnitude": "+2 reps per set, 10 percentage points off, half the high-intensity contacts, no depth jumps, test deferred"
+    },
+    {
+      "id": "read.no_contrast_pairs",
+      "kind": "reading",
+      "title": "No interleaved contrast pairs",
+      "text": "The rule book's block order has no home for a heavy lift inside the Power block. The complex-training stimulus lives at the week level and in the primer's submaximal jumps.",
+      "rules": [
+        38,
+        120
+      ]
+    },
+    {
+      "id": "read.no_six_days",
+      "kind": "reading",
+      "title": "Two to five training days",
+      "text": "The rule book has templates for two through five days. Six-day weeks are not offered.",
+      "rules": [
+        133,
+        134,
+        135,
+        136
+      ]
+    },
+    {
+      "id": "read.no_elite_tier",
+      "kind": "reading",
+      "title": "Three levels, not four",
+      "text": "Beginner, intermediate and advanced. There is no elite tier.",
+      "rules": [
+        53,
+        54,
+        55
+      ]
+    },
+    {
+      "id": "override.ballistic_jump_squats",
+      "kind": "override",
+      "title": "Loaded jump squats never use the power scheme",
+      "text": "The rule book lists jump squats under power, which ascends to 90 percent and is exempt from every cap. Jump-squat peak power sits at 30 percent of max or less, and landing forces rise with bar load, so loaded jumps run a fixed light load that no progression rule can raise.",
+      "rules": [
+        62,
+        151,
+        154
+      ],
+      "magnitude": "bodyweight, 20 percent, 30 percent of squat max by level, rounded down"
+    },
+    {
+      "id": "override.olympic_lifts",
+      "kind": "override",
+      "title": "Olympic lifts take the level caps and never an Epley estimate",
+      "text": "Olympic lifts are technique-limited, so an Epley estimate from a working set is noise. They obey the same top-set caps as everything else and are not seeded without coached history.",
+      "rules": [
+        73,
+        151,
+        154
+      ]
+    },
+    {
+      "id": "override.frozen_working_max",
+      "kind": "override",
+      "title": "Your working max is frozen and only moves one way",
+      "text": "It is pinned at generation, rises only when a logged set beats it and by at most 5 percent a week, and falls only when you miss prescribed reps. Epley-only estimates carry a 0.95 factor until you log a hard set. The first percent week for a lift caps the top set at 80 percent.",
+      "rules": [
+        72,
+        73,
+        97,
+        107
+      ],
+      "magnitude": "Epley times 0.95, +5 percent per week ceiling, 80 percent week-2 guard"
+    },
+    {
+      "id": "override.hard_caps",
+      "kind": "override",
+      "title": "The contact and CNS caps cannot be raised",
+      "text": "Two high-CNS exercises a session and 20 high-amplitude contacts are hard caps. The Power block's instruction to add maximal jumps, and the instruction to add velocity work when you get stronger, both work inside them.",
+      "rules": [
+        44,
+        52,
+        85,
+        111,
+        120
+      ]
+    },
+    {
+      "id": "override.no_1rm_test_week",
+      "kind": "override",
+      "title": "The app never schedules a one-rep max attempt",
+      "text": "You train alone without a spotter, so the rule book's tested-week exemption from the top-set cap is switched off.",
+      "rules": [
+        154
+      ]
+    },
+    {
+      "id": "house.maximal_cns_definition",
+      "kind": "house",
+      "title": "What counts as a maximal CNS session",
+      "text": "A heavy top set at 85 percent or more or RPE 8.5 or more, or ten or more high-intensity contacts, or any session with depth jumps. The test day always counts.",
+      "rules": [
+        90,
+        91,
+        92,
+        93
+      ]
+    },
+    {
+      "id": "read.next_training_day",
+      "kind": "reading",
+      "title": "Next training day means the next calendar day",
+      "text": "The spacing rules are read against the calendar, not against your next scheduled session, so a rest day in between always counts.",
+      "rules": [
+        24,
+        90,
+        91
+      ]
+    },
+    {
+      "id": "house.maximal_spacing",
+      "kind": "house",
+      "title": "Maximal sessions sit at least two calendar days apart",
+      "text": "At four days a week or more the rule book asks for a non-CNS day between maximal lifts. This is read as two calendar days between maximal sessions.",
+      "rules": [
+        90,
+        93
+      ],
+      "magnitude": "2 calendar days"
+    },
+    {
+      "id": "read.rest_bounds",
+      "kind": "reading",
+      "title": "One rest number, read at the end of the range that fits",
+      "text": "Main and secondary lifts, maximal jumps and sprints take the upper bound; accessories and hypertrophy the lower; prehab and mobility 60 seconds. When several rules apply, the longest wins.",
+      "rules": [
+        69,
+        70,
+        71,
+        77,
+        88,
+        104,
+        164
+      ],
+      "magnitude": "180 s main and maximal, 120 s accessory, 60 s prehab"
+    },
+    {
+      "id": "house.epley_confidence",
+      "kind": "house",
+      "title": "Estimated maxes are discounted until you log a hard set",
+      "text": "An Epley estimate from submaximal work is multiplied by 0.95 until you log a set at RPE 8 or higher with six reps or fewer.",
+      "rules": [
+        73
+      ],
+      "magnitude": "times 0.95"
+    },
+    {
+      "id": "house.r130_consistency",
+      "kind": "house",
+      "title": "Two consistent weeks add a little volume",
+      "text": "Two weeks in a row at 90 percent or more add five extensive contacts on top of the normal step.",
+      "rules": [
+        130
+      ],
+      "magnitude": "+5 extensive contacts"
+    },
+    {
+      "id": "house.r131_skips",
+      "kind": "house",
+      "title": "Two missed weeks cut the next week's volume",
+      "text": "Two weeks in a row under 75 percent cut next week's volume by a quarter on top of the repeat.",
+      "rules": [
+        131
+      ],
+      "magnitude": "25 percent volume cut"
+    },
+    {
+      "id": "house.plateau",
+      "kind": "house",
+      "title": "A plateau varies your exercise selection",
+      "text": "Five canonical tests inside the noise band, or a main lift whose working max has not risen across a block, rotates the plyometric and accessory variants next week and the main lift at the next block change.",
+      "rules": [
+        110
+      ],
+      "magnitude": "5 tests within 0.5 in"
+    },
+    {
+      "id": "house.r111_velocity",
+      "kind": "house",
+      "title": "Getting stronger swaps in velocity work",
+      "text": "When a working max is up 10 percent since the block started, the lowest-precedence accessory on the strength day is swapped for one strength-speed or speed-strength exercise. Nothing is added, so the eight-exercise and two-high-CNS caps hold.",
+      "rules": [
+        111,
+        44
+      ],
+      "magnitude": "+10 percent since block start; one swap"
+    },
+    {
+      "id": "house.pain_hamstring",
+      "kind": "house",
+      "title": "Hamstring pain: house rule, no rule-book rule exists",
+      "text": "Severe removes sprinting, maximal jumps and loaded hinges and shows the clearance screen. Moderate removes maximal-effort hinging and sprint work above 80 percent effort and adds eccentric hamstring work. Mild caps hinge intensity at 80 percent and adds eccentric hamstring work.",
+      "rules": []
+    },
+    {
+      "id": "house.pain_finger",
+      "kind": "house",
+      "title": "Finger pain: house rule, no rule-book rule exists",
+      "text": "Severe removes all pulling and hanging work and shows the clearance screen. Moderate removes hanging and vertical pulling and caps what is left at 80 percent. Mild caps pulling at 80 percent and keeps you in an open-hand grip.",
+      "rules": []
+    },
+    {
+      "id": "house.pain_hip",
+      "kind": "house",
+      "title": "Hip pain: house rule, no rule-book rule exists",
+      "text": "Severe removes deep squatting, sprinting and jumping and shows the clearance screen. Moderate removes deep bilateral squatting and adds hip mobility and glute work. Mild caps squat intensity at 80 percent and adds hip mobility every week.",
+      "rules": []
+    },
+    {
+      "id": "house.pain_other",
+      "kind": "house",
+      "title": "Pain elsewhere: house rule, no rule-book rule exists",
+      "text": "Severe shows the clearance screen and removes maximal work everywhere. Moderate and mild drop one intensity tier and cap loaded work at 80 percent until you reassess.",
+      "rules": []
+    },
+    {
+      "id": "house.knee_stress_high_reserved",
+      "kind": "house",
+      "title": "Knee stress high is reserved for three things",
+      "text": "Depth jumps, maximal bounds and heavy bilateral squats. Tagging ordinary work high would make the weekly joint budget oscillate week to week.",
+      "rules": [
+        20,
+        23,
+        26
+      ]
+    },
+    {
+      "id": "house.pr_threshold",
+      "kind": "house",
+      "title": "A personal record needs a full inch on the same device",
+      "text": "One inch above that stream's previous best. After three sessions on the device the app measures your own test noise; if twice that is more than an inch the threshold rises, rounded up to the half inch, and Progress says why.",
+      "rules": [],
+      "magnitude": "1.0 in, or twice your test noise"
+    },
+    {
+      "id": "read.pr_noise_residual",
+      "kind": "reading",
+      "title": "Test noise is the spread around your trend, not the spread of your bests",
+      "text": "PR threshold noise is measured as the spread around the trend of session bests, not the raw spread of bests, so a rising athlete is not punished for improving. With three sessions there is no trend to measure against, so the spread inside each session's own attempts is used instead, and no spread ever reads finer than the device's tenth of an inch.",
+      "rules": [],
+      "magnitude": "spread around the trend, floored at 0.1 in"
+    },
+    {
+      "id": "house.ladder_policy",
+      "kind": "house",
+      "title": "Jump ladders move one rung a week",
+      "text": "One rung a week and two a block, only after Good or OK landings, and they hold in deload, taper and peak weeks. Every ladder has a rank 0 that needs no equipment.",
+      "rules": [
+        89,
+        101
+      ],
+      "magnitude": "1 rung per week, 2 per block"
+    },
+    {
+      "id": "house.drop_height_caps",
+      "kind": "house",
+      "title": "Step-off height is capped",
+      "text": "At most 24 inches, and at most 18 inches over 220 lb of bodyweight or when your bodyweight is unknown.",
+      "rules": [],
+      "magnitude": "24 in, 18 in over 220 lb"
+    },
+    {
+      "id": "read.extensive_upper_half",
+      "kind": "reading",
+      "title": "Extensive contacts default to the upper half of your range",
+      "text": "The evidence puts a useful dose around 50 jumps, so the target starts in the upper half of the range for your level rather than at the floor.",
+      "rules": [
+        82,
+        83,
+        84
+      ]
+    },
+    {
+      "id": "house.r89_trade",
+      "kind": "house",
+      "title": "More intensity buys less volume",
+      "text": "The extensive target is the range bottom plus ten per progressed week, minus twice the planned high-intensity contacts, clamped inside the range.",
+      "rules": [
+        89
+      ],
+      "magnitude": "E = clamp(bottom + 10k - 2H, bottom, top)"
+    },
+    {
+      "id": "house.depth_jump_readiness",
+      "kind": "house",
+      "title": "Depth jumps have to be earned",
+      "text": "A squat at one and a half times bodyweight or twenty single-leg box squats, a clean landing from a twelve inch step-off, three months of consistent training, and no lower-limb pain. Never for beginners, never in a first block, never in the Strength block, never in a deload, and never within four days of your target date.",
+      "rules": []
+    },
+    {
+      "id": "house.deload_no_load_cut",
+      "kind": "house",
+      "title": "A deload cuts reps and contacts, not load",
+      "text": "Planned working reps and contacts drop to 40 to 50 percent of the previous week and the loads stay where they were.",
+      "rules": [
+        105,
+        106
+      ],
+      "magnitude": "40 to 50 percent of the prior week"
+    },
+    {
+      "id": "house.taper_policy",
+      "kind": "house",
+      "title": "The taper is the Power block's deload",
+      "text": "One taper week when the program is nine weeks or longer: volume halves, loads and box heights hold, and there are no depth jumps within four days of your target. Using the taper as the deload keeps three reduced weeks from stacking.",
+      "rules": [
+        105,
+        106
+      ],
+      "magnitude": "50 percent volume"
+    },
+    {
+      "id": "house.peak_policy",
+      "kind": "house",
+      "title": "The peak week is anchored to your target date",
+      "text": "The peak session sits five days before the target, mobility two days before, rest the day before, and the test on the day.",
+      "rules": [],
+      "magnitude": "at most 10 high-intensity contacts in the peak session"
+    },
+    {
+      "id": "house.week1_maximal_cns",
+      "kind": "house",
+      "title": "Week one has one maximal session",
+      "text": "The test day. The strength day's top set is held at 80 percent, or at RPE 6 to 7 when you have no max.",
+      "rules": [
+        76,
+        92
+      ]
+    },
+    {
+      "id": "read.contact_conventions",
+      "kind": "reading",
+      "title": "How contacts are counted",
+      "text": "Every landing counts. Test attempts are high-intensity but not high-amplitude. Each change-of-direction cut is one extensive contact. The warm-up carries none, and the primer's pogos count as extensive.",
+      "rules": [
+        52,
+        85
+      ]
+    },
+    {
+      "id": "read.rep_descent",
+      "kind": "reading",
+      "title": "Reps descend as load ascends",
+      "text": "The first set uses the top of the rep band and the last working set the bottom. When the cap is reached, the held sets repeat the lowest rep value. Advanced lifters may use 5/3/1 on heavy strength.",
+      "rules": [
+        155,
+        161
+      ]
+    },
+    {
+      "id": "read.test_day_position",
+      "kind": "reading",
+      "title": "The test sits on the third weekday you picked",
+      "text": "At two days it rides the Power day. At three, four and five days it sits on the third pick. A deferred test rides the next scheduled session, after the warm-up and before the main lift.",
+      "rules": [
+        133,
+        134,
+        135,
+        136,
+        137
+      ]
+    },
+    {
+      "id": "house.basketball_in_season",
+      "kind": "house",
+      "title": "In season, games count as your change-of-direction work",
+      "text": "When you are in season, games stand in for the change-of-direction session and jump contacts are halved.",
+      "rules": [
+        137
+      ],
+      "magnitude": "jump contacts halved"
+    },
+    {
+      "id": "house.sc.sport_requirements",
+      "kind": "house",
+      "title": "Speed climbing needs a jump day and an upper power day",
+      "text": "Every week carries one jump or reactive session and one upper-body power session. Your Power days carry short acceleration sprints, 10 to 30 m, because speed is your second goal and the wall is five to seven seconds off the floor; each one gets three minutes of rest and counts against the same jump budgets everything else does. No conditioning block is added: nothing in these goals asks for one. Change-of-direction cutting is not part of this sport, so none is programmed. Sideways and rotational movement on your jump days comes from the warm-up and the cool-down; the rotational throw carries it on your upper day.",
+      "rules": [
+        38,
+        102,
+        103,
+        104,
+        113
+      ],
+      "magnitude": "1 jump or reactive session and 1 upper power session per week, 10 to 30 m sprints on Power days, 0 conditioning blocks"
+    },
+    {
+      "id": "house.sc.upper_power_day",
+      "kind": "house",
+      "title": "Your upper day is a power day",
+      "text": "The weighted pull-up is the main lift, estimated from the load you add to bodyweight. Around it sit explosive or band-assisted pull-ups, a med-ball chest throw and a rotational throw, and a push press or dumbbell press so the pull has a push beside it. The day still holds to three strength movements and two high-effort movements, and the pull-up's top set is held one step below the heavy mark in every week, reduced weeks included. That cap is what keeps the day off the maximal list, so it counts as the clear day between your squat and your jumps; it is not a light day.",
+      "rules": [
+        44,
+        48,
+        50,
+        67,
+        90,
+        93,
+        117,
+        135
+      ],
+      "magnitude": "1 main lift, up to 3 strength movements, at most 2 high-CNS"
+    },
+    {
+      "id": "house.sc.open_hand_grip",
+      "kind": "house",
+      "title": "Open hand only on everything you pull",
+      "text": "A finger-pulley history means every pulling row is shown in an open-hand grip. Where a movement has a crimping variant, you get the open-hand one instead; nothing you pull on is ever prescribed in a full crimp.",
+      "rules": [
+        19,
+        58
+      ],
+      "magnitude": "open hand on every pulling row"
+    },
+    {
+      "id": "house.sc.hard_finger_spacing",
+      "kind": "house",
+      "title": "Hard finger work sits 48 hours apart",
+      "text": "A climbing session is a hard finger session, and so are weighted pull-ups, hangboard hangs and explosive pulls. Two of those never land inside 48 hours of each other, measured from the start of one to the start of the next. The one exception is your own: gym pulling and climbing on the SAME day are fine when the gym session ends at least six hours before you get on the wall, or starts six hours after you get off it. Anything else drops to light pulling for the day and says which climbing day moved it.",
+      "rules": [
+        90,
+        91,
+        93
+      ],
+      "magnitude": "48 h between hard finger sessions, start to start; 6 h on a shared day"
+    },
+    {
+      "id": "house.sc.finger_pain_ceiling",
+      "kind": "house",
+      "title": "Finger pain at four or higher takes the hard work out",
+      "text": "Before a session with hard finger work you are asked for a finger-pain number out of ten. Four or higher removes the hard finger rows from that session and writes down that it happened. Your ceiling is three.",
+      "rules": [
+        3,
+        20
+      ],
+      "magnitude": "4 out of 10 or above removes hard finger work for the day"
+    },
+    {
+      "id": "house.sc.rnt_valgus_control",
+      "kind": "house",
+      "title": "Knee alignment work twice a week, away from the wall",
+      "text": "A band pulls your knee inward and you resist it. Two of these a week, each at least six hours from a wall session, and every set ends when your alignment goes rather than at a rep count. If no session is far enough from the wall, the row moves to the next one that is and the week says why. The peak week carries fewer: its sessions are cut back to the main lift and the jumps, so only one of them has room for the row.",
+      "rules": [
+        40,
+        99,
+        121
+      ],
+      "magnitude": "2 sessions per week, 1 in the peak week, at least 6 h from wall work, sets end on alignment"
+    },
+    {
+      "id": "house.sc.weaker_side_first",
+      "kind": "house",
+      "title": "The weaker leg goes first",
+      "text": "Single-leg work starts on the weaker side, taken from your latest single-leg test or, when there is none, from your own answer. The row says which side that is.",
+      "rules": [
+        49,
+        121
+      ],
+      "magnitude": "weaker side first on every unilateral row"
+    },
+    {
+      "id": "house.sc.box_squat_main_lift",
+      "kind": "house",
+      "title": "The box squat is your lower main lift",
+      "text": "You entered a box squat max, so the box squat is the lower main lift for the block and its percentages come from the number you entered rather than from an earlier logged failure.",
+      "rules": [
+        57,
+        72,
+        108
+      ],
+      "magnitude": "box squat as the lower main lift"
+    },
+    {
+      "id": "house.sc.readiness_gate",
+      "kind": "house",
+      "title": "Two readiness channels, never averaged",
+      "text": "Your recovery score is one channel and a short output test is the other. They are read separately, because a split between them is the signal. Four combinations follow: both high runs the session as written; recovery low with output high holds the volume where it is; recovery high with output low drops power and maximal work one tier; both low drops everything one tier and offers to move a recovery day here. Every change is downward, is explained on the session, and applies to today only. The test itself is a setting you can change.",
+      "rules": [
+        27,
+        98
+      ],
+      "magnitude": "downward only, today's session only"
+    },
+    {
+      "id": "house.sc.asymmetry_tracking",
+      "kind": "house",
+      "title": "Single-leg tests track the gap, they are never a record",
+      "text": "Left and right single-leg jumps are their own test mode. The gap between them shows in Progress once two tests exist and it decides which leg goes first. It never counts as a canonical test and it never sets a personal record.",
+      "rules": [],
+      "magnitude": "never canonical, never a personal record"
+    },
+    {
+      "id": "house.sc.sequence_strength_rfd_reactive",
+      "kind": "house",
+      "title": "Max strength, then rate of force, then reactive",
+      "text": "The Strength block carries the concentric-biased jumps: seated jumps and depth pause jumps. The Power block carries the fast-contact jumps: approach jumps, and a loaded jump squat or barbell jump where the bar and the room are there for one. The order across the two blocks is strength first, then explosive, then reactive. Low-amplitude quick-contact hops are the exception and run in both blocks, because your weekly contact target has to be met in the Strength block too. A day may only carry two high-effort movements, so on a testing day the jump test and the block's own maximal jump take both; your vertical jump is the first goal and speed the second, so the short acceleration runs behind them as an easier row and steps aside when the day has no room for it.",
+      "rules": [
+        86,
+        87,
+        108,
+        120
+      ],
+      "magnitude": "seated and depth pause jumps in the Strength block, approach and loaded jumps in the Power block, quick-contact hops in both"
+    },
+    {
+      "id": "house.sc.calf_volume_low",
+      "kind": "house",
+      "title": "Calf volume stays low",
+      "text": "The heavy slow calf raise appears on one day a week and never runs more than two sets, because the jump work already loads the calf and the ankle hard.",
+      "rules": [
+        78,
+        99
+      ],
+      "magnitude": "at most 2 sets, 1 day per week"
+    }
+  ],
+  "constants": {
+    "levelTopSetCapPct": {
+      "beginner": 80,
+      "intermediate": 87,
+      "advanced": 92
+    },
+    "levelTopSetCapDisplayPct": {
+      "beginner": 80,
+      "intermediate": 85,
+      "advanced": 90
+    },
+    "rpeCap": {
+      "beginner": 8,
+      "intermediate": 8.5,
+      "advanced": 9
+    },
+    "rpeLadder": [
+      6,
+      7,
+      8
+    ],
+    "week1RpeLadder": [
+      6,
+      6.5,
+      7
+    ],
+    "week1RpeCap": 7,
+    "heavyLiftsPerSession": {
+      "beginner": 2,
+      "intermediate": 2,
+      "advanced": 3
+    },
+    "stabilityCeiling": {
+      "beginner": "moderate",
+      "intermediate": "high",
+      "advanced": "high"
+    },
+    "extensiveRange": {
+      "beginner": {
+        "bottom": 40,
+        "top": 70
+      },
+      "intermediate": {
+        "bottom": 60,
+        "top": 100
+      },
+      "advanced": {
+        "bottom": 80,
+        "top": 120
+      }
+    },
+    "loadedJumpCeilingPct": {
+      "beginner": 0,
+      "intermediate": 20,
+      "advanced": 30
+    },
+    "depthJumpEligible": {
+      "beginner": false,
+      "intermediate": true,
+      "advanced": true
+    },
+    "contactCaps": {
+      "highIntensityPerSession": 25,
+      "highAmplitudePerSession": 20,
+      "depthJumpContactsPerRep": 2,
+      "depthJumpRepCap": 10,
+      "testAttemptContacts": 5,
+      "primerJumpCapStrengthDay": 15,
+      "upperMobilityRange": {
+        "bottom": 0,
+        "top": 10
+      },
+      "recovery": 0
+    },
+    "highIntensitySchedule": {
+      "strengthLoadWeek": {
+        "testContacts": 5,
+        "maxFromIntensiveJumps": 10
+      },
+      "powerLoadWeekDepthJumpReps": [
+        6,
+        8,
+        10,
+        10,
+        10
+      ],
+      "deloadHalvesAndRemovesDepthJumps": true,
+      "taperMaxWithinFourDays": 10
+    },
+    "r89": {
+      "extensiveStepPerWeek": 10,
+      "highIntensityFactor": 2
+    },
+    "schemes": {
+      "heavy_strength": {
+        "startPct": 75,
+        "stepPct": 5,
+        "mode": "ascending",
+        "reps": {
+          "bottom": 1,
+          "top": 5
+        },
+        "repDescent": [
+          5,
+          4,
+          3
+        ],
+        "repDescentAdvanced": [
+          5,
+          3,
+          1
+        ],
+        "respectsLevelCap": true
+      },
+      "power": {
+        "startPct": 70,
+        "stepPct": 10,
+        "mode": "ascending",
+        "reps": {
+          "bottom": 1,
+          "top": 3
+        },
+        "repDescent": [
+          3,
+          2,
+          1
+        ],
+        "respectsLevelCap": true
+      },
+      "ballistic": {
+        "startPct": null,
+        "stepPct": 0,
+        "mode": "straight",
+        "reps": {
+          "bottom": 3,
+          "top": 3
+        },
+        "repDescent": [
+          3,
+          3,
+          3
+        ],
+        "respectsLevelCap": true
+      },
+      "hypertrophy": {
+        "startPct": 60,
+        "stepPct": 5,
+        "mode": "ascending",
+        "reps": {
+          "bottom": 8,
+          "top": 12
+        },
+        "repDescent": [
+          12,
+          10,
+          8
+        ],
+        "respectsLevelCap": true
+      },
+      "endurance": {
+        "startPct": 50,
+        "stepPct": 0,
+        "mode": "straight",
+        "reps": {
+          "bottom": 12,
+          "top": 15
+        },
+        "repDescent": [
+          15,
+          15,
+          15
+        ],
+        "respectsLevelCap": true
+      },
+      "speed_strength": {
+        "startPct": 50,
+        "stepPct": 5,
+        "mode": "ascending",
+        "reps": {
+          "bottom": 3,
+          "top": 5
+        },
+        "repDescent": [
+          5,
+          4,
+          3
+        ],
+        "respectsLevelCap": true
+      },
+      "strength_speed": {
+        "startPct": 60,
+        "stepPct": 5,
+        "mode": "ascending",
+        "reps": {
+          "bottom": 3,
+          "top": 5
+        },
+        "repDescent": [
+          5,
+          4,
+          3
+        ],
+        "respectsLevelCap": true
+      },
+      "prehab": {
+        "startPct": null,
+        "stepPct": 0,
+        "mode": "straight",
+        "reps": null,
+        "repDescent": null,
+        "holdSecondsRange": {
+          "bottom": 30,
+          "top": 45
+        },
+        "respectsLevelCap": false
+      },
+      "mobility": {
+        "startPct": null,
+        "stepPct": 0,
+        "mode": "none",
+        "reps": null,
+        "repDescent": null,
+        "respectsLevelCap": false
+      },
+      "bodyweight": {
+        "startPct": null,
+        "stepPct": 0,
+        "mode": "none",
+        "reps": null,
+        "repDescent": null,
+        "respectsLevelCap": false
+      }
+    },
+    "rampSetPct": [
+      60,
+      70
+    ],
+    "restBoundsS": {
+      "sets2to3": {
+        "bottom": 120,
+        "top": 150
+      },
+      "sets4to5": {
+        "bottom": 120,
+        "top": 180
+      },
+      "sets6to7": {
+        "bottom": 150,
+        "top": 240
+      },
+      "sprint": 180,
+      "maximalJump": 180,
+      "extensiveDrill": 120,
+      "accessory": 120,
+      "prehabMobility": 60
+    },
+    "deload": {
+      "volumeFactorMin": 0.4,
+      "volumeFactorMax": 0.5,
+      "holdLoads": true
+    },
+    "taper": {
+      "minProgramWeeks": 9,
+      "volumeFactor": 0.5,
+      "holdLoads": true,
+      "noDepthJumpsWithinDays": 4
+    },
+    "peak": {
+      "sessionOffsetDays": -5,
+      "mobilityOffsetDays": -2,
+      "restOffsetDays": -1,
+      "testOffsetDays": 0,
+      "mainLiftSets": 2,
+      "maxHighIntensityContacts": 10
+    },
+    "blockLengthWeeks": {
+      "bottom": 4,
+      "top": 6
+    },
+    "accessoryRotationWeeks": 3,
+    "ladderPolicy": {
+      "rungsPerWeek": 1,
+      "rungsPerBlock": 2,
+      "holdInReducedWeeks": true,
+      "rank0EquipmentFree": true
+    },
+    "dropHeight": {
+      "maxIn": 24,
+      "maxInWhenHeavyOrUnknownIn": 18,
+      "heavyBodyweightLb": 220
+    },
+    "adherenceThresholds": {
+      "repeatBelow": 0.75,
+      "smallFrom": 0.75,
+      "progressFrom": 0.9
+    },
+    "outcomeMagnitudes": {
+      "smallExtensiveAdd": 5,
+      "progressExtensiveAdd": 10,
+      "progressStartStepPct": 5,
+      "capMinusStartMinimum": 10,
+      "holdWorkingMaxDropPct": 5,
+      "secondFailureDropPct": 10,
+      "consecutiveHighAdd": 5,
+      "consecutiveLowVolumeCutPct": 25,
+      "kSmall": 0.5,
+      "kProgress": 1
+    },
+    "soreness": {
+      "threshold": 7,
+      "repsAdd": 2,
+      "percentDrop": 10,
+      "highIntensityFactor": 0.5,
+      "noDepthJumps": true,
+      "deferTest": true
+    },
+    "painCaps": {
+      "mildIntensityCapPct": 80,
+      "under18CapPct": 90,
+      "reassessDays": 14,
+      "acuteMaxWeeks": 12,
+      "moderateAsMildWeeks": 2,
+      "moderateKneeHighIntensityFactor": 0.5,
+      "shinModeratePct": 50,
+      "shinMildPct": 25
+    },
+    "workingMax": {
+      "epleyConfidence": 0.95,
+      "maxRaisePctPerWeek": 5,
+      "week2GuardPct": 80,
+      "epleyLookbackWeeks": 4,
+      "epleyMaxReps": 10,
+      "rpeQualifyMin": 8,
+      "rpeQualifyMaxReps": 6
+    },
+    "loadGrid": {
+      "barbellStepLb": 5,
+      "ballisticRounding": "down",
+      "dumbbellTies": "down"
+    },
+    "prThreshold": {
+      "defaultIn": 1,
+      "sessionsBeforeRecalibrate": 3,
+      "sdMultiplier": 2,
+      "roundUpToIn": 0.5
+    },
+    "noise": {
+      "residualSdFloorIn": 0.6,
+      "testsBeforeUnfloored": 8
+    },
+    "trend": {
+      "minTestsForTrend": 3,
+      "minTestsForStatedTrend": 4,
+      "minTestsForProjection": 6,
+      "method": "theil_sen",
+      "brokenGapDays": 21
+    },
+    "plateau": {
+      "tests": 5,
+      "bandIn": 0.5
+    },
+    "maxDisplayedExercises": 8,
+    "maxHighCnsPerSession": 2,
+    "maxJointHighStressPerSession": 2,
+    "jointHighStressWeekThreshold": 4,
+    "jointHighStressWeekReductionPct": 50,
+    "warmUp": {
+      "movementsMin": 2,
+      "movementsMax": 4,
+      "minutesMin": 5,
+      "minutesMax": 10
+    },
+    "fixedTestPrimer": {
+      "pogoSets": 2,
+      "pogoReps": 5,
+      "submaxCmjSets": 2,
+      "submaxCmjReps": 3,
+      "extensiveContacts": 16
+    },
+    "maximalSessionSpacingDays": 2,
+    "r111RaisePct": 10,
+    "chainProgramWeeks": 12,
+    "maxLayoutWeeks": 16,
+    "minProgramWeeks": 2,
+    "climbing": {
+      "readiness": {
+        "kind": "seated_mb_throw",
+        "metric": "distance_m",
+        "attempts": 3,
+        "baselineWindow": 7,
+        "lowThresholdPct": 5,
+        "whoopLowScore": 40
+      },
+      "readinessAdjustments": {
+        "both_high": {
+          "tierDown": false,
+          "holdVolume": false,
+          "removeMaximalJumps": false,
+          "jumpVolumeFactor": 1,
+          "loadFactor": 1,
+          "extraReps": 0,
+          "offerRecoverySwap": false
+        },
+        "autonomic_low": {
+          "tierDown": false,
+          "holdVolume": true,
+          "removeMaximalJumps": false,
+          "jumpVolumeFactor": 1,
+          "loadFactor": 1,
+          "extraReps": 0,
+          "offerRecoverySwap": false
+        },
+        "neuromuscular_low": {
+          "tierDown": true,
+          "holdVolume": true,
+          "removeMaximalJumps": true,
+          "jumpVolumeFactor": 0.75,
+          "loadFactor": 1,
+          "extraReps": 0,
+          "offerRecoverySwap": false
+        },
+        "both_low": {
+          "tierDown": true,
+          "holdVolume": true,
+          "removeMaximalJumps": true,
+          "jumpVolumeFactor": 0.5,
+          "loadFactor": 0.9,
+          "extraReps": 2,
+          "offerRecoverySwap": true
+        },
+        "unknown": {
+          "tierDown": false,
+          "holdVolume": false,
+          "removeMaximalJumps": false,
+          "jumpVolumeFactor": 1,
+          "loadFactor": 1,
+          "extraReps": 0,
+          "offerRecoverySwap": false
+        }
+      },
+      "fingerSpacingHours": 48,
+      "fingerPainCeiling": 3,
+      "rntSessionsPerWeek": 2,
+      "rntWallGapHours": 6,
+      "calfSetsCap": 2,
+      "calfDaysPerWeek": 1,
+      "jumpOrReactiveSessionsPerWeek": 1,
+      "upperPowerSessionsPerWeek": 1,
+      "asymmetryBandPct": 3
+    },
+    "layout": [
+      {
+        "W": 2,
+        "text": "Power 1 - Peak 2",
+        "spans": [
+          {
+            "blockType": "power",
+            "kind": "load",
+            "weekFrom": 1,
+            "weekTo": 1
+          },
+          {
+            "blockType": "power",
+            "kind": "peak",
+            "weekFrom": 2,
+            "weekTo": 2
+          }
+        ]
+      },
+      {
+        "W": 3,
+        "text": "Power 1-2 - Peak 3",
+        "spans": [
+          {
+            "blockType": "power",
+            "kind": "load",
+            "weekFrom": 1,
+            "weekTo": 2
+          },
+          {
+            "blockType": "power",
+            "kind": "peak",
+            "weekFrom": 3,
+            "weekTo": 3
+          }
+        ]
+      },
+      {
+        "W": 4,
+        "text": "Power 1-3 - Peak 4",
+        "spans": [
+          {
+            "blockType": "power",
+            "kind": "load",
+            "weekFrom": 1,
+            "weekTo": 3
+          },
+          {
+            "blockType": "power",
+            "kind": "peak",
+            "weekFrom": 4,
+            "weekTo": 4
+          }
+        ],
+        "beginnerText": "Strength 1-3 - Peak 4",
+        "beginnerSpans": [
+          {
+            "blockType": "strength",
+            "kind": "load",
+            "weekFrom": 1,
+            "weekTo": 3
+          },
+          {
+            "blockType": "power",
+            "kind": "peak",
+            "weekFrom": 4,
+            "weekTo": 4
+          }
+        ]
+      },
+      {
+        "W": 5,
+        "text": "Power 1-4 - Peak 5",
+        "spans": [
+          {
+            "blockType": "power",
+            "kind": "load",
+            "weekFrom": 1,
+            "weekTo": 4
+          },
+          {
+            "blockType": "power",
+            "kind": "peak",
+            "weekFrom": 5,
+            "weekTo": 5
+          }
+        ]
+      },
+      {
+        "W": 6,
+        "text": "Strength 1-3 - Power 4-5 - Peak 6",
+        "spans": [
+          {
+            "blockType": "strength",
+            "kind": "load",
+            "weekFrom": 1,
+            "weekTo": 3
+          },
+          {
+            "blockType": "power",
+            "kind": "load",
+            "weekFrom": 4,
+            "weekTo": 5
+          },
+          {
+            "blockType": "power",
+            "kind": "peak",
+            "weekFrom": 6,
+            "weekTo": 6
+          }
+        ]
+      },
+      {
+        "W": 7,
+        "text": "Strength 1-3 - Power 4-6 - Peak 7",
+        "spans": [
+          {
+            "blockType": "strength",
+            "kind": "load",
+            "weekFrom": 1,
+            "weekTo": 3
+          },
+          {
+            "blockType": "power",
+            "kind": "load",
+            "weekFrom": 4,
+            "weekTo": 6
+          },
+          {
+            "blockType": "power",
+            "kind": "peak",
+            "weekFrom": 7,
+            "weekTo": 7
+          }
+        ]
+      },
+      {
+        "W": 8,
+        "text": "Strength 1-3 - Power 4-7 - Peak 8",
+        "spans": [
+          {
+            "blockType": "strength",
+            "kind": "load",
+            "weekFrom": 1,
+            "weekTo": 3
+          },
+          {
+            "blockType": "power",
+            "kind": "load",
+            "weekFrom": 4,
+            "weekTo": 7
+          },
+          {
+            "blockType": "power",
+            "kind": "peak",
+            "weekFrom": 8,
+            "weekTo": 8
+          }
+        ]
+      },
+      {
+        "W": 9,
+        "text": "Strength 1-3 - Power 4-7 - Taper 8 - Peak 9",
+        "spans": [
+          {
+            "blockType": "strength",
+            "kind": "load",
+            "weekFrom": 1,
+            "weekTo": 3
+          },
+          {
+            "blockType": "power",
+            "kind": "load",
+            "weekFrom": 4,
+            "weekTo": 7
+          },
+          {
+            "blockType": "power",
+            "kind": "taper",
+            "weekFrom": 8,
+            "weekTo": 8
+          },
+          {
+            "blockType": "power",
+            "kind": "peak",
+            "weekFrom": 9,
+            "weekTo": 9
+          }
+        ]
+      },
+      {
+        "W": 10,
+        "text": "Strength 1-4 - Deload 5 - Power 6-8 - Taper 9 - Peak 10",
+        "spans": [
+          {
+            "blockType": "strength",
+            "kind": "load",
+            "weekFrom": 1,
+            "weekTo": 4
+          },
+          {
+            "blockType": "strength",
+            "kind": "deload",
+            "weekFrom": 5,
+            "weekTo": 5
+          },
+          {
+            "blockType": "power",
+            "kind": "load",
+            "weekFrom": 6,
+            "weekTo": 8
+          },
+          {
+            "blockType": "power",
+            "kind": "taper",
+            "weekFrom": 9,
+            "weekTo": 9
+          },
+          {
+            "blockType": "power",
+            "kind": "peak",
+            "weekFrom": 10,
+            "weekTo": 10
+          }
+        ]
+      },
+      {
+        "W": 11,
+        "text": "Strength 1-4 - Deload 5 - Power 6-9 - Taper 10 - Peak 11",
+        "spans": [
+          {
+            "blockType": "strength",
+            "kind": "load",
+            "weekFrom": 1,
+            "weekTo": 4
+          },
+          {
+            "blockType": "strength",
+            "kind": "deload",
+            "weekFrom": 5,
+            "weekTo": 5
+          },
+          {
+            "blockType": "power",
+            "kind": "load",
+            "weekFrom": 6,
+            "weekTo": 9
+          },
+          {
+            "blockType": "power",
+            "kind": "taper",
+            "weekFrom": 10,
+            "weekTo": 10
+          },
+          {
+            "blockType": "power",
+            "kind": "peak",
+            "weekFrom": 11,
+            "weekTo": 11
+          }
+        ]
+      },
+      {
+        "W": 12,
+        "text": "Strength 1-4 - Deload 5 - Power 6-10 - Taper 11 - Peak 12",
+        "spans": [
+          {
+            "blockType": "strength",
+            "kind": "load",
+            "weekFrom": 1,
+            "weekTo": 4
+          },
+          {
+            "blockType": "strength",
+            "kind": "deload",
+            "weekFrom": 5,
+            "weekTo": 5
+          },
+          {
+            "blockType": "power",
+            "kind": "load",
+            "weekFrom": 6,
+            "weekTo": 10
+          },
+          {
+            "blockType": "power",
+            "kind": "taper",
+            "weekFrom": 11,
+            "weekTo": 11
+          },
+          {
+            "blockType": "power",
+            "kind": "peak",
+            "weekFrom": 12,
+            "weekTo": 12
+          }
+        ]
+      },
+      {
+        "W": 13,
+        "text": "Strength 1-5 - Deload 6 - Power 7-11 - Taper 12 - Peak 13",
+        "spans": [
+          {
+            "blockType": "strength",
+            "kind": "load",
+            "weekFrom": 1,
+            "weekTo": 5
+          },
+          {
+            "blockType": "strength",
+            "kind": "deload",
+            "weekFrom": 6,
+            "weekTo": 6
+          },
+          {
+            "blockType": "power",
+            "kind": "load",
+            "weekFrom": 7,
+            "weekTo": 11
+          },
+          {
+            "blockType": "power",
+            "kind": "taper",
+            "weekFrom": 12,
+            "weekTo": 12
+          },
+          {
+            "blockType": "power",
+            "kind": "peak",
+            "weekFrom": 13,
+            "weekTo": 13
+          }
+        ]
+      },
+      {
+        "W": 14,
+        "text": "Strength 1-6 - Deload 7 - Power 8-12 - Taper 13 - Peak 14",
+        "spans": [
+          {
+            "blockType": "strength",
+            "kind": "load",
+            "weekFrom": 1,
+            "weekTo": 6
+          },
+          {
+            "blockType": "strength",
+            "kind": "deload",
+            "weekFrom": 7,
+            "weekTo": 7
+          },
+          {
+            "blockType": "power",
+            "kind": "load",
+            "weekFrom": 8,
+            "weekTo": 12
+          },
+          {
+            "blockType": "power",
+            "kind": "taper",
+            "weekFrom": 13,
+            "weekTo": 13
+          },
+          {
+            "blockType": "power",
+            "kind": "peak",
+            "weekFrom": 14,
+            "weekTo": 14
+          }
+        ]
+      },
+      {
+        "W": 15,
+        "text": "Strength 1-6 - Deload 7 - Power 8-13 - Taper 14 - Peak 15",
+        "spans": [
+          {
+            "blockType": "strength",
+            "kind": "load",
+            "weekFrom": 1,
+            "weekTo": 6
+          },
+          {
+            "blockType": "strength",
+            "kind": "deload",
+            "weekFrom": 7,
+            "weekTo": 7
+          },
+          {
+            "blockType": "power",
+            "kind": "load",
+            "weekFrom": 8,
+            "weekTo": 13
+          },
+          {
+            "blockType": "power",
+            "kind": "taper",
+            "weekFrom": 14,
+            "weekTo": 14
+          },
+          {
+            "blockType": "power",
+            "kind": "peak",
+            "weekFrom": 15,
+            "weekTo": 15
+          }
+        ]
+      },
+      {
+        "W": 16,
+        "text": "Strength 1-4 - Deload 5 - Strength 6-9 - Deload 10 - Power 11-14 - Taper 15 - Peak 16",
+        "spans": [
+          {
+            "blockType": "strength",
+            "kind": "load",
+            "weekFrom": 1,
+            "weekTo": 4
+          },
+          {
+            "blockType": "strength",
+            "kind": "deload",
+            "weekFrom": 5,
+            "weekTo": 5
+          },
+          {
+            "blockType": "strength",
+            "kind": "load",
+            "weekFrom": 6,
+            "weekTo": 9
+          },
+          {
+            "blockType": "strength",
+            "kind": "deload",
+            "weekFrom": 10,
+            "weekTo": 10
+          },
+          {
+            "blockType": "power",
+            "kind": "load",
+            "weekFrom": 11,
+            "weekTo": 14
+          },
+          {
+            "blockType": "power",
+            "kind": "taper",
+            "weekFrom": 15,
+            "weekTo": 15
+          },
+          {
+            "blockType": "power",
+            "kind": "peak",
+            "weekFrom": 16,
+            "weekTo": 16
+          }
+        ]
+      }
+    ]
+  }
+}

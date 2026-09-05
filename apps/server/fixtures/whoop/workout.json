@@ -1,0 +1,567 @@
+{
+  "records": [
+    {
+      "id": "5b9d3a18-77c4-4a02-91e6-b3f5c8d02e17",
+      "user_id": 100427,
+      "created_at": "2026-09-04T18:20:11.004Z",
+      "updated_at": "2026-09-04T18:20:11.004Z",
+      "start": "2026-09-04T18:02:55.000Z",
+      "end": "2026-09-04T18:44:10.000Z",
+      "timezone_offset": "-04:00",
+      "sport_name": "jumping rope",
+      "score_state": "PENDING_SCORE"
+    },
+    {
+      "id": "2f7c1e40-9b6a-4d31-8f52-0ac9e7b31d68",
+      "user_id": 100427,
+      "created_at": "2026-09-03T18:12:03.771Z",
+      "updated_at": "2026-09-03T19:31:44.210Z",
+      "start": "2026-09-03T17:58:12.000Z",
+      "end": "2026-09-03T19:12:47.000Z",
+      "timezone_offset": "-04:00",
+      "sport_name": "strength trainer",
+      "score_state": "SCORED",
+      "score": {
+        "strain": 11.2043,
+        "average_heart_rate": 118,
+        "max_heart_rate": 171,
+        "kilojoule": 2214.885,
+        "percent_recorded": 99.4,
+        "distance_meter": null,
+        "altitude_gain_meter": null,
+        "altitude_change_meter": null,
+        "zone_durations": {
+          "zone_zero_milli": 903000,
+          "zone_one_milli": 1284000,
+          "zone_two_milli": 1512000,
+          "zone_three_milli": 546000,
+          "zone_four_milli": 216000,
+          "zone_five_milli": 24000
+        }
+      }
+    },
+    {
+      "id": "b2d58983-97ff-46ea-a180-af29638b4394",
+      "user_id": 100427,
+      "created_at": "2026-08-27T20:18:00.567Z",
+      "updated_at": "2026-08-27T21:23:00.567Z",
+      "start": "2026-08-27T18:53:00.567Z",
+      "end": "2026-08-27T20:13:00.567Z",
+      "timezone_offset": "-04:00",
+      "sport_name": "functional fitness",
+      "score_state": "SCORED",
+      "score": {
+        "strain": 6.4214,
+        "average_heart_rate": 121,
+        "max_heart_rate": 172,
+        "kilojoule": 1509.661,
+        "percent_recorded": 97.1,
+        "distance_meter": null,
+        "altitude_gain_meter": null,
+        "altitude_change_meter": null,
+        "zone_durations": {
+          "zone_zero_milli": 912000,
+          "zone_one_milli": 1296000,
+          "zone_two_milli": 1488000,
+          "zone_three_milli": 672000,
+          "zone_four_milli": 336000,
+          "zone_five_milli": 96000
+        }
+      }
+    },
+    {
+      "id": "5e6bdbaa-ff3e-4c65-a336-4a86aed57642",
+      "user_id": 100427,
+      "created_at": "2026-08-22T18:45:28.384Z",
+      "updated_at": "2026-08-22T19:50:28.384Z",
+      "start": "2026-08-22T17:55:28.384Z",
+      "end": "2026-08-22T18:40:28.384Z",
+      "timezone_offset": "-04:00",
+      "sport_name": "jumping rope",
+      "score_state": "SCORED",
+      "score": {
+        "strain": 7.9147,
+        "average_heart_rate": 106,
+        "max_heart_rate": 173,
+        "kilojoule": 1721.548,
+        "percent_recorded": 97.3,
+        "distance_meter": null,
+        "altitude_gain_meter": null,
+        "altitude_change_meter": null,
+        "zone_durations": {
+          "zone_zero_milli": 513000,
+          "zone_one_milli": 729000,
+          "zone_two_milli": 837000,
+          "zone_three_milli": 378000,
+          "zone_four_milli": 189000,
+          "zone_five_milli": 54000
+        }
+      }
+    },
+    {
+      "id": "db938344-b2fa-4559-aa3f-ba54283e4c89",
+      "user_id": 100427,
+      "created_at": "2026-08-19T18:19:34.928Z",
+      "updated_at": "2026-08-19T19:24:34.928Z",
+      "start": "2026-08-19T17:19:34.928Z",
+      "end": "2026-08-19T18:14:34.928Z",
+      "timezone_offset": "-04:00",
+      "sport_name": "basketball",
+      "score_state": "SCORED",
+      "score": {
+        "strain": 10.407,
+        "average_heart_rate": 124,
+        "max_heart_rate": 174,
+        "kilojoule": 1868.552,
+        "percent_recorded": 97.9,
+        "distance_meter": null,
+        "altitude_gain_meter": null,
+        "altitude_change_meter": null,
+        "zone_durations": {
+          "zone_zero_milli": 627000,
+          "zone_one_milli": 891000,
+          "zone_two_milli": 1023000,
+          "zone_three_milli": 462000,
+          "zone_four_milli": 231000,
+          "zone_five_milli": 66000
+        }
+      }
+    },
+    {
+      "id": "8d144b75-a703-449a-af31-6b802523600f",
+      "user_id": 100427,
+      "created_at": "2026-08-15T18:58:11.186Z",
+      "updated_at": "2026-08-15T20:03:11.186Z",
+      "start": "2026-08-15T18:07:11.186Z",
+      "end": "2026-08-15T18:53:11.186Z",
+      "timezone_offset": "-04:00",
+      "sport_name": "hiit",
+      "score_state": "SCORED",
+      "score": {
+        "strain": 11.9974,
+        "average_heart_rate": 105,
+        "max_heart_rate": 171,
+        "kilojoule": 2207.18,
+        "percent_recorded": 99,
+        "distance_meter": null,
+        "altitude_gain_meter": null,
+        "altitude_change_meter": null,
+        "zone_durations": {
+          "zone_zero_milli": 524400,
+          "zone_one_milli": 745200,
+          "zone_two_milli": 855600,
+          "zone_three_milli": 386400,
+          "zone_four_milli": 193200,
+          "zone_five_milli": 55200
+        }
+      }
+    },
+    {
+      "id": "729ce56b-83a7-4151-a26c-a739107f3c93",
+      "user_id": 100427,
+      "created_at": "2026-08-10T18:40:56.054Z",
+      "updated_at": "2026-08-10T19:45:56.054Z",
+      "start": "2026-08-10T17:38:56.054Z",
+      "end": "2026-08-10T18:35:56.054Z",
+      "timezone_offset": "-04:00",
+      "sport_name": "track and field",
+      "score_state": "SCORED",
+      "score": {
+        "strain": 8.3738,
+        "average_heart_rate": 119,
+        "max_heart_rate": 167,
+        "kilojoule": 2355.591,
+        "percent_recorded": 98.2,
+        "distance_meter": null,
+        "altitude_gain_meter": null,
+        "altitude_change_meter": null,
+        "zone_durations": {
+          "zone_zero_milli": 649800,
+          "zone_one_milli": 923400,
+          "zone_two_milli": 1060200,
+          "zone_three_milli": 478800,
+          "zone_four_milli": 239400,
+          "zone_five_milli": 68400
+        }
+      }
+    },
+    {
+      "id": "611ae899-e8b3-4023-a011-8976c49f0193",
+      "user_id": 100427,
+      "created_at": "2026-08-07T18:57:56.044Z",
+      "updated_at": "2026-08-07T20:02:56.044Z",
+      "start": "2026-08-07T17:27:56.044Z",
+      "end": "2026-08-07T18:52:56.044Z",
+      "timezone_offset": "-04:00",
+      "sport_name": "activity",
+      "score_state": "SCORED",
+      "score": {
+        "strain": 13.5898,
+        "average_heart_rate": 124,
+        "max_heart_rate": 164,
+        "kilojoule": 2602.909,
+        "percent_recorded": 99.7,
+        "distance_meter": null,
+        "altitude_gain_meter": null,
+        "altitude_change_meter": null,
+        "zone_durations": {
+          "zone_zero_milli": 969000,
+          "zone_one_milli": 1377000,
+          "zone_two_milli": 1581000,
+          "zone_three_milli": 714000,
+          "zone_four_milli": 357000,
+          "zone_five_milli": 102000
+        }
+      }
+    },
+    {
+      "id": "3577774a-236e-4902-abe6-a3c309a8a9a2",
+      "user_id": 100427,
+      "created_at": "2026-08-03T19:20:09.685Z",
+      "updated_at": "2026-08-03T20:25:09.685Z",
+      "start": "2026-08-03T18:01:09.685Z",
+      "end": "2026-08-03T19:15:09.685Z",
+      "timezone_offset": "-04:00",
+      "sport_name": "other",
+      "score_state": "SCORED",
+      "score": {
+        "strain": 9.7547,
+        "average_heart_rate": 127,
+        "max_heart_rate": 169,
+        "kilojoule": 1946.509,
+        "percent_recorded": 98.5,
+        "distance_meter": null,
+        "altitude_gain_meter": null,
+        "altitude_change_meter": null,
+        "zone_durations": {
+          "zone_zero_milli": 843600,
+          "zone_one_milli": 1198800,
+          "zone_two_milli": 1376400,
+          "zone_three_milli": 621600,
+          "zone_four_milli": 310800,
+          "zone_five_milli": 88800
+        }
+      }
+    },
+    {
+      "id": "21b8fbb0-4357-4977-a2e9-de19f6645c92",
+      "user_id": 100427,
+      "created_at": "2026-07-29T20:18:08.196Z",
+      "updated_at": "2026-07-29T21:23:08.196Z",
+      "start": "2026-07-29T18:44:08.196Z",
+      "end": "2026-07-29T20:13:08.196Z",
+      "timezone_offset": "-04:00",
+      "sport_name": "volleyball",
+      "score_state": "SCORED",
+      "score": {
+        "strain": 12.6742,
+        "average_heart_rate": 126,
+        "max_heart_rate": 164,
+        "kilojoule": 1451.352,
+        "percent_recorded": 99.6,
+        "distance_meter": null,
+        "altitude_gain_meter": null,
+        "altitude_change_meter": null,
+        "zone_durations": {
+          "zone_zero_milli": 1014600,
+          "zone_one_milli": 1441800,
+          "zone_two_milli": 1655400,
+          "zone_three_milli": 747600,
+          "zone_four_milli": 373800,
+          "zone_five_milli": 106800
+        }
+      }
+    },
+    {
+      "id": "0782ea27-3f5a-4426-a461-a87ffe3074ee",
+      "user_id": 100427,
+      "created_at": "2026-07-26T19:07:11.984Z",
+      "updated_at": "2026-07-26T20:12:11.984Z",
+      "start": "2026-07-26T17:41:11.984Z",
+      "end": "2026-07-26T19:02:11.984Z",
+      "timezone_offset": "-04:00",
+      "sport_name": "strength trainer",
+      "score_state": "SCORED",
+      "score": {
+        "strain": 11.7163,
+        "average_heart_rate": 132,
+        "max_heart_rate": 155,
+        "kilojoule": 2725.508,
+        "percent_recorded": 98.3,
+        "distance_meter": null,
+        "altitude_gain_meter": null,
+        "altitude_change_meter": null,
+        "zone_durations": {
+          "zone_zero_milli": 923400,
+          "zone_one_milli": 1312200,
+          "zone_two_milli": 1506600,
+          "zone_three_milli": 680400,
+          "zone_four_milli": 340200,
+          "zone_five_milli": 97200
+        }
+      }
+    },
+    {
+      "id": "695db08b-131a-403f-ac38-eef96c2fffe6",
+      "user_id": 100427,
+      "created_at": "2026-07-22T18:29:52.848Z",
+      "updated_at": "2026-07-22T19:34:52.848Z",
+      "start": "2026-07-22T17:41:52.848Z",
+      "end": "2026-07-22T18:24:52.848Z",
+      "timezone_offset": "-04:00",
+      "sport_name": "weightlifting",
+      "score_state": "SCORED",
+      "score": {
+        "strain": 13.7264,
+        "average_heart_rate": 122,
+        "max_heart_rate": 156,
+        "kilojoule": 2795.93,
+        "percent_recorded": 97,
+        "distance_meter": null,
+        "altitude_gain_meter": null,
+        "altitude_change_meter": null,
+        "zone_durations": {
+          "zone_zero_milli": 490200,
+          "zone_one_milli": 696600,
+          "zone_two_milli": 799800,
+          "zone_three_milli": 361200,
+          "zone_four_milli": 180600,
+          "zone_five_milli": 51600
+        }
+      }
+    },
+    {
+      "id": "abd61918-437c-404c-aa0f-44f22c3d2841",
+      "user_id": 100427,
+      "created_at": "2026-07-17T18:47:30.815Z",
+      "updated_at": "2026-07-17T19:52:30.815Z",
+      "start": "2026-07-17T17:35:30.815Z",
+      "end": "2026-07-17T18:42:30.815Z",
+      "timezone_offset": "-04:00",
+      "sport_name": "functional fitness",
+      "score_state": "SCORED",
+      "score": {
+        "strain": 14.8627,
+        "average_heart_rate": 111,
+        "max_heart_rate": 179,
+        "kilojoule": 1660.159,
+        "percent_recorded": 96.9,
+        "distance_meter": null,
+        "altitude_gain_meter": null,
+        "altitude_change_meter": null,
+        "zone_durations": {
+          "zone_zero_milli": 763800,
+          "zone_one_milli": 1085400,
+          "zone_two_milli": 1246200,
+          "zone_three_milli": 562800,
+          "zone_four_milli": 281400,
+          "zone_five_milli": 80400
+        }
+      }
+    },
+    {
+      "id": "9defc9d8-80fd-4279-a457-ad78ccdfb923",
+      "user_id": 100427,
+      "created_at": "2026-07-14T19:40:16.621Z",
+      "updated_at": "2026-07-14T20:45:16.621Z",
+      "start": "2026-07-14T18:23:16.621Z",
+      "end": "2026-07-14T19:35:16.621Z",
+      "timezone_offset": "-04:00",
+      "sport_name": "jumping rope",
+      "score_state": "SCORED",
+      "score": {
+        "strain": 7.55,
+        "average_heart_rate": 113,
+        "max_heart_rate": 180,
+        "kilojoule": 2463.789,
+        "percent_recorded": 99.5,
+        "distance_meter": null,
+        "altitude_gain_meter": null,
+        "altitude_change_meter": null,
+        "zone_durations": {
+          "zone_zero_milli": 820800,
+          "zone_one_milli": 1166400,
+          "zone_two_milli": 1339200,
+          "zone_three_milli": 604800,
+          "zone_four_milli": 302400,
+          "zone_five_milli": 86400
+        }
+      }
+    },
+    {
+      "id": "83a30aed-d1ec-480c-a05a-10eee9348087",
+      "user_id": 100427,
+      "created_at": "2026-07-10T19:08:19.189Z",
+      "updated_at": "2026-07-10T20:13:19.189Z",
+      "start": "2026-07-10T18:05:19.189Z",
+      "end": "2026-07-10T19:03:19.189Z",
+      "timezone_offset": "-04:00",
+      "sport_name": "basketball",
+      "score_state": "SCORED",
+      "score": {
+        "strain": 8.9433,
+        "average_heart_rate": 106,
+        "max_heart_rate": 156,
+        "kilojoule": 1682.125,
+        "percent_recorded": 96.6,
+        "distance_meter": null,
+        "altitude_gain_meter": null,
+        "altitude_change_meter": null,
+        "zone_durations": {
+          "zone_zero_milli": 661200,
+          "zone_one_milli": 939600,
+          "zone_two_milli": 1078800,
+          "zone_three_milli": 487200,
+          "zone_four_milli": 243600,
+          "zone_five_milli": 69600
+        }
+      }
+    },
+    {
+      "id": "edd77639-066a-45dd-a714-966f98ae79fc",
+      "user_id": 100427,
+      "created_at": "2026-07-05T18:13:40.501Z",
+      "updated_at": "2026-07-05T19:18:40.501Z",
+      "start": "2026-07-05T17:28:40.501Z",
+      "end": "2026-07-05T18:08:40.501Z",
+      "timezone_offset": "-04:00",
+      "sport_name": "hiit",
+      "score_state": "SCORED",
+      "score": {
+        "strain": 8.1636,
+        "average_heart_rate": 130,
+        "max_heart_rate": 179,
+        "kilojoule": 2971.831,
+        "percent_recorded": 98.8,
+        "distance_meter": null,
+        "altitude_gain_meter": null,
+        "altitude_change_meter": null,
+        "zone_durations": {
+          "zone_zero_milli": 456000,
+          "zone_one_milli": 648000,
+          "zone_two_milli": 744000,
+          "zone_three_milli": 336000,
+          "zone_four_milli": 168000,
+          "zone_five_milli": 48000
+        }
+      }
+    },
+    {
+      "id": "68da7bfd-c5ba-4b78-a17f-ea254d5a7af6",
+      "user_id": 100427,
+      "created_at": "2026-07-02T18:48:48.907Z",
+      "updated_at": "2026-07-02T19:53:48.907Z",
+      "start": "2026-07-02T17:26:48.907Z",
+      "end": "2026-07-02T18:43:48.907Z",
+      "timezone_offset": "-04:00",
+      "sport_name": "track and field",
+      "score_state": "SCORED",
+      "score": {
+        "strain": 9.7921,
+        "average_heart_rate": 113,
+        "max_heart_rate": 168,
+        "kilojoule": 2920.615,
+        "percent_recorded": 98.4,
+        "distance_meter": null,
+        "altitude_gain_meter": null,
+        "altitude_change_meter": null,
+        "zone_durations": {
+          "zone_zero_milli": 877800,
+          "zone_one_milli": 1247400,
+          "zone_two_milli": 1432200,
+          "zone_three_milli": 646800,
+          "zone_four_milli": 323400,
+          "zone_five_milli": 92400
+        }
+      }
+    },
+    {
+      "id": "85137122-e0cf-4b96-ac56-41532bc029ed",
+      "user_id": 100427,
+      "created_at": "2026-06-28T20:03:59.127Z",
+      "updated_at": "2026-06-28T21:08:59.127Z",
+      "start": "2026-06-28T18:32:59.127Z",
+      "end": "2026-06-28T19:58:59.127Z",
+      "timezone_offset": "-04:00",
+      "sport_name": "activity",
+      "score_state": "SCORED",
+      "score": {
+        "strain": 10.7212,
+        "average_heart_rate": 124,
+        "max_heart_rate": 160,
+        "kilojoule": 2878.399,
+        "percent_recorded": 99.5,
+        "distance_meter": null,
+        "altitude_gain_meter": null,
+        "altitude_change_meter": null,
+        "zone_durations": {
+          "zone_zero_milli": 980400,
+          "zone_one_milli": 1393200,
+          "zone_two_milli": 1599600,
+          "zone_three_milli": 722400,
+          "zone_four_milli": 361200,
+          "zone_five_milli": 103200
+        }
+      }
+    },
+    {
+      "id": "34c064ed-6f44-48db-a564-37dfe151e5b1",
+      "user_id": 100427,
+      "created_at": "2026-06-23T19:17:34.709Z",
+      "updated_at": "2026-06-23T20:22:34.709Z",
+      "start": "2026-06-23T17:56:34.709Z",
+      "end": "2026-06-23T19:12:34.709Z",
+      "timezone_offset": "-04:00",
+      "sport_name": "other",
+      "score_state": "SCORED",
+      "score": {
+        "strain": 12.3285,
+        "average_heart_rate": 111,
+        "max_heart_rate": 174,
+        "kilojoule": 1673.428,
+        "percent_recorded": 99.1,
+        "distance_meter": null,
+        "altitude_gain_meter": null,
+        "altitude_change_meter": null,
+        "zone_durations": {
+          "zone_zero_milli": 866400,
+          "zone_one_milli": 1231200,
+          "zone_two_milli": 1413600,
+          "zone_three_milli": 638400,
+          "zone_four_milli": 319200,
+          "zone_five_milli": 91200
+        }
+      }
+    },
+    {
+      "id": "b9ce3e84-acf2-4a7f-aaf4-330377a37fd5",
+      "user_id": 100427,
+      "created_at": "2026-06-20T18:49:37.809Z",
+      "updated_at": "2026-06-20T19:54:37.809Z",
+      "start": "2026-06-20T17:39:37.809Z",
+      "end": "2026-06-20T18:44:37.809Z",
+      "timezone_offset": "-04:00",
+      "sport_name": "volleyball",
+      "score_state": "SCORED",
+      "score": {
+        "strain": 6.7595,
+        "average_heart_rate": 106,
+        "max_heart_rate": 176,
+        "kilojoule": 2247.392,
+        "percent_recorded": 98.4,
+        "distance_meter": null,
+        "altitude_gain_meter": null,
+        "altitude_change_meter": null,
+        "zone_durations": {
+          "zone_zero_milli": 741000,
+          "zone_one_milli": 1053000,
+          "zone_two_milli": 1209000,
+          "zone_three_milli": 546000,
+          "zone_four_milli": 273000,
+          "zone_five_milli": 78000
+        }
+      }
+    }
+  ],
+  "next_token": null
+}

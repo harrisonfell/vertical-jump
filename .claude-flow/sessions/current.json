@@ -1,0 +1,21 @@
+{
+  "id": "session-1788642538134",
+  "startedAt": "2026-09-05T21:08:58.134Z",
+  "cwd": "C:\\Users\\nonot\\vertical-jump",
+  "context": {
+    "lastMatchedPatterns": [
+      "insight-1788642521106-zwq1",
+      "insight-1788642521106-8w1m",
+      "insight-1788642521106-q24h",
+      "insight-1788642521106-nlgv",
+      "insight-1788583384436-euro"
+    ]
+  },
+  "metrics": {
+    "edits": 0,
+    "commands": 0,
+    "tasks": 0,
+    "errors": 0
+  },
+  "updatedAt": "2026-09-05T21:32:28.416Z"
+}

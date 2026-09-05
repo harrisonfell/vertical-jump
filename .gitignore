@@ -1,0 +1,15 @@
+node_modules/
+.expo/
+dist/
+web-build/
+ios/
+android/
+.env
+.env.*
+*.log
+.DS_Store
+.vitest/
+*.tsbuildinfo
+.next/
+.vercel/
+next-env.d.ts

@@ -1,0 +1,26 @@
+{
+  "name": "vert",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "typecheck": "node scripts/typecheck.mjs",
+    "test": "vitest run --config vitest.config.ts",
+    "tokens": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/gen-tokens.mjs",
+    "web": "node scripts/web.mjs",
+    "export:web": "node scripts/export-web.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "culori": "^4.0.1",
+    "typescript": "~6.0.3",
+    "vitest": "^3.2.4"
+  },
+  "overrides": {
+    "react-native-gesture-handler": "~2.32.0",
+    "react-native-reanimated": "4.5.1"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "session-1788539273493",
+  "startedAt": "2026-09-04T16:27:53.493Z",
+  "cwd": "C:\\Users\\nonot\\vertical-jump",
+  "context": {},
+  "metrics": {
+    "edits": 17,
+    "commands": 0,
+    "tasks": 0,
+    "errors": 0
+  },
+  "endedAt": "2026-09-04T20:34:43.431Z",
+  "duration": 14809938
+}

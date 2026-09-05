@@ -1,0 +1,1 @@
+ALTER TABLE "athlete" ADD COLUMN "best_sets_json" jsonb;

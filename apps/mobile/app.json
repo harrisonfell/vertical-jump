@@ -1,0 +1,59 @@
+{
+  "expo": {
+    "name": "Vert",
+    "slug": "vert",
+    "scheme": "vert",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "com.nonot.vert",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.nonot.vert",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6EDE7",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "static",
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "root": "./app"
+        }
+      ],
+      "expo-font",
+      "expo-sqlite",
+      "expo-secure-store",
+      "expo-notifications",
+      "expo-web-browser",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#F3F6F3",
+          "dark": {
+            "backgroundColor": "#2E2C29"
+          }
+        }
+      ],
+      "expo-sharing"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
