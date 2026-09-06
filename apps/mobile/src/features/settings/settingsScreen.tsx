@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { loadRuleset, validateWeekdays } from '@vert/engine';
 import type { Sport } from '@vert/engine';
-import { readBestSets, readSessionWindow } from '@/lib/engineAthlete';
+import { readBestSets } from '@/lib/engineAthlete';
 import { AppHeader, href } from '@/app';
 import {
   kvStore,
@@ -55,6 +55,7 @@ import { useSettingsFacts } from './useSettingsFacts';
 import {
   climbingAnswersFrom,
   climbingPatchFrom,
+  clockWindowFrom,
   readinessConfigValuesFrom,
   bestSetsDraftFrom,
   bestSetsFrom,
@@ -163,7 +164,9 @@ export function SettingsScreen() {
       wallFingerHard: activeDraft.wallFingerHard,
       wallGapHours: activeDraft.wallGapHours,
     });
-    const window = readSessionWindow(athlete.sessionWindow ?? null);
+    // The gym window as the draft has it, not as the row has it: the picks are
+    // read against what the confirm is about to write.
+    const window = clockWindowFrom(activeDraft.gymStart, activeDraft.gymEnd);
     const verdict = validateWeekdays(
       [...activeDraft.weekdays],
       athlete.daysPerWeek,
@@ -214,6 +217,7 @@ export function SettingsScreen() {
     const patch: Partial<Athlete> = {
       ...answers,
       weekdays: activeDraft.weekdays,
+      sessionWindow: clockWindowFrom(activeDraft.gymStart, activeDraft.gymEnd) as unknown as Json,
       goalHeightMm: activeDraft.goalHeightMm,
       targetDate: activeDraft.targetDate,
       inSeason: activeDraft.inSeason,

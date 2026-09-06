@@ -33,6 +33,8 @@ const BASE_DEFAULTS: Omit<StepTwoValues, 'readinessConfig'> = {
   targetDate: '',
   weekdays: [],
   daysPerWeek: 4,
+  gymStart: '',
+  gymEnd: '',
   bodyweightLb: '',
   squatLb: '',
   hingeLb: '',

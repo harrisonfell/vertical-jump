@@ -29,6 +29,7 @@ const base: ProgramParams = {
   secondaryGoal: null,
   daysPerWeek: 4,
   weekdays: [1, 2, 4, 6],
+  gymWindow: 'not set',
   goalHeightMm: 914.4,
   targetDate: '2026-11-29',
   inSeason: false,

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   feasibilityLine,
+  firstRefusal,
   orderWeekdays,
   reachTouchIn,
   validateStepTwo,
@@ -19,6 +20,8 @@ const VALID: StepTwoDraft = {
   targetDate: '2026-11-29',
   weekdays: [1, 2, 4, 6],
   daysPerWeek: 4,
+  gymStart: '',
+  gymEnd: '',
   bodyweightLb: '181',
   squatLb: '275',
   hingeLb: '',
@@ -187,5 +190,47 @@ describe('the climbing main lifts', () => {
 
   it('asks for neither: both fields are optional', () => {
     expect(check({ boxSquatLb: '', pullUpAddedLb: '' }).ok).toBe(true);
+  });
+});
+
+describe('the gym window', () => {
+  it('reads two blank fields as "not said", which is a complete answer', () => {
+    const result = check({ gymStart: '', gymEnd: '' });
+    expect(result.errors.gymStart).toBeUndefined();
+    expect(result.errors.gymEnd).toBeUndefined();
+    expect(result.ok).toBe(true);
+  });
+
+  it('accepts a morning window', () => {
+    expect(check({ gymStart: '08:00', gymEnd: '10:00' }).ok).toBe(true);
+  });
+
+  it('refuses a window in the same three sentences the wall window uses', () => {
+    expect(check({ gymStart: '08:00' }).errors.gymEnd).toBe('Enter both times, or leave both blank.');
+    expect(check({ gymEnd: '10:00' }).errors.gymStart).toBe('Enter both times, or leave both blank.');
+    expect(check({ gymStart: '8am', gymEnd: '10:00' }).errors.gymStart).toBe(
+      'Use a 24-hour time, for example 18:00.',
+    );
+    expect(check({ gymStart: '10:00', gymEnd: '10:00' }).errors.gymEnd).toBe(
+      'The end time has to be after the start.',
+    );
+  });
+});
+
+describe('firstRefusal', () => {
+  it('names the topmost refused field, in screen order', () => {
+    expect(firstRefusal({})).toBeNull();
+    expect(firstRefusal({ weekdays: 'Pick 4 training days.', goalIn: 'Enter a goal jump height.' })).toBe(
+      'Enter a goal jump height.',
+    );
+    expect(firstRefusal({ pressLb: 'A 1RM reads between 45 and 1,000 lb.', gymEnd: 'Enter both.' })).toBe(
+      'Enter both.',
+    );
+  });
+
+  it('repeats the weekday refusal the owner could not see beside the save button', () => {
+    const result = check({ weekdays: [1, 2] });
+    expect(firstRefusal(result.errors)).toBe(result.errors.weekdays);
+    expect(firstRefusal(result.errors)).toBe('Pick 4 training days.');
   });
 });

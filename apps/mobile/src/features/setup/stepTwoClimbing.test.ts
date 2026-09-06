@@ -26,6 +26,8 @@ const BASE: StepTwoDraft = {
   targetDate: '2026-11-29',
   weekdays: [1, 2, 3, 5],
   daysPerWeek: 4,
+  gymStart: '',
+  gymEnd: '',
   bodyweightLb: '150',
   squatLb: '',
   hingeLb: '',
@@ -70,12 +72,41 @@ describe('the weekday refusal a climber sees in step 2', () => {
   it('refuses picks that cannot carry the upper-power day, in the engine words', () => {
     // Evenings in the gym: the same-day gap fails, so a wall day cannot carry
     // the session, and Mon, Wed, Fri and Sat are all inside 48 h of a wall day.
+    // No pick works, so the sentence says what to change rather than naming
+    // the wall days, which were refused too.
     const result = check({}, WALL, EVENINGS);
     expect(result.errors.weekdays).toBe(
       'Upper power needs a climbing day at least 6 h before the wall, ' +
-        'or a day 48 h from climbing. Pick Sun, Tue or Thu.',
+        'or a day 48 h from climbing. ' +
+        'No day of the week does either with your gym hours: change when you lift, or when you climb.',
     );
     expect(result.ok).toBe(false);
+  });
+
+  it('reads the gym window typed on the form before the one on file', () => {
+    // Nothing on file: the engine assumes an evening gym, which is the bug the
+    // owner hit on the deployed app, so every four-day pick was refused.
+    expect(check({}, WALL, null).errors.weekdays).toContain('No day of the week does either');
+    // Typing mornings on the form is enough; nothing has to be on file.
+    const typed = check({ gymStart: '08:00', gymEnd: '10:00' }, WALL, null);
+    expect(typed.errors.weekdays).toBeUndefined();
+    expect(typed.ok).toBe(true);
+    // And a typed window outranks the one on file, because it is what saves.
+    expect(check({ gymStart: '08:00', gymEnd: '10:00' }, WALL, EVENINGS).ok).toBe(true);
+    expect(check({ gymStart: '17:00', gymEnd: '19:00' }, WALL, MORNINGS).ok).toBe(false);
+  });
+
+  it('refuses a half-typed gym window on its own field, not as a weekday refusal', () => {
+    const result = check({ gymStart: '08:00' }, WALL, MORNINGS);
+    expect(result.errors.gymEnd).toBe('Enter both times, or leave both blank.');
+    expect(result.errors.gymStart).toBeUndefined();
+    expect(result.ok).toBe(false);
+    expect(check({ gymStart: '8am', gymEnd: '10:00' }, WALL, MORNINGS).errors.gymStart).toBe(
+      'Use a 24-hour time, for example 18:00.',
+    );
+    expect(check({ gymStart: '10:00', gymEnd: '08:00' }, WALL, MORNINGS).errors.gymEnd).toBe(
+      'The end time has to be after the start.',
+    );
   });
 
   it('says the athletes own gap, not a number typed into the app', () => {

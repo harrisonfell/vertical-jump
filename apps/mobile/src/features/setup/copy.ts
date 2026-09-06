@@ -6,7 +6,7 @@
  * screen never assembles a sentence out of template literals of its own.
  */
 import { formatShortDate } from '@vert/engine/analytics';
-import { weekdayOf } from '@vert/engine';
+import { formatInteger, weekdayOf } from '@vert/engine';
 import type { LocalDate } from '@/data';
 
 export const SETUP_COPY = {
@@ -94,6 +94,10 @@ export const SETUP_COPY = {
   stepTwoTargetLabel: 'Target date',
   stepTwoTargetHelper: 'At least 2 weeks out.',
   stepTwoWeekdays: 'Which days do you train?',
+  stepTwoGym: 'When do you lift?',
+  stepTwoGymStart: 'Gym session starts',
+  stepTwoGymEnd: 'Gym session ends',
+  stepTwoGymTimeHelper: 'Use a 24-hour time, for example 08:00.',
   stepTwoInventory: 'Equipment',
   stepTwoInventoryEdit: 'Edit equipment',
   stepTwoBodyweight: 'Bodyweight',
@@ -136,6 +140,8 @@ export const SETUP_COPY = {
   stepTwoReadinessThreshold: 'Low threshold',
   stepTwoReadinessThresholdDetail: 'More than this far below the median reads low.',
   stepTwoSubmit: 'Save and continue',
+  stepTwoRefusalDetail: 'Fix it above, then save again.',
+  stepTwoBestSetIncomplete: 'A best recent set above is incomplete.',
 
   /* step 3 */
   stepThreeTitle: 'Whoop',
@@ -186,6 +192,22 @@ export const SETUP_COPY = {
 } as const;
 
 const WEEKDAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
+
+/**
+ * Why step 2 asks a climber when they lift (`house.sc.sport_requirements`):
+ * the hard pulling day may share a wall day only when the gym clears the wall
+ * by the same-day gap, and two blank fields leave the engine on its assumed
+ * window, which is said out loud rather than applied in silence.
+ */
+export function gymWindowDetail(
+  gapHours: number,
+  assumed: { readonly start: string; readonly end: string },
+): string {
+  return (
+    `Hard pulling shares a climbing day only when the gym is ${formatInteger(gapHours)} h clear of the wall.` +
+    ` Blank assumes ${assumed.start} to ${assumed.end}.`
+  );
+}
 
 /** "Mon 8 Sep": the weekday and short date the key copy writes. */
 export function formatDayDate(date: LocalDate): string {

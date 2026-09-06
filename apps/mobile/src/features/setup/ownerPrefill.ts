@@ -30,6 +30,7 @@ import {
 import { weightRoomAccess } from '@/lib/inventory';
 import { bestSetsFrom } from './bestSets';
 import { climbingPatchFrom, type ClimbingAnswers } from './climbing';
+import { clockWindowFrom } from './clockWindow';
 import { workingMaxesFrom } from './enteredMaxes';
 import { readinessConfigDefaults, toReadinessTestConfig } from './readinessConfig';
 import type { StepOneValues } from './stepOne';
@@ -98,6 +99,12 @@ export const OWNER_STEP_TWO: StepTwoValues = {
   ...stepTwoDefaults(),
   weekdays: [1, 2, 3, 5],
   daysPerWeek: 4,
+  // Mornings, ten hours clear of the evening wall, so the week's hard pulling
+  // day can sit on a climbing day (`house.sc.sport_requirements`). Without a
+  // window the engine assumes an evening one, and that assumption refuses
+  // every four-day pick a Sun, Tue, Thu climber can make.
+  gymStart: '08:00',
+  gymEnd: '10:00',
   inventory: OWNER_INVENTORY,
   boxSquatLb: '320',
   bestSets: {
@@ -122,6 +129,7 @@ export function ownerAthletePatch(today: LocalDate, timezone: string, at: string
     level: deriveLevel(OWNER_STEP_ONE.trainingAge),
     daysPerWeek: OWNER_STEP_ONE.daysPerWeek,
     weekdays: [...OWNER_STEP_TWO.weekdays],
+    sessionWindow: clockWindowFrom(OWNER_STEP_TWO.gymStart, OWNER_STEP_TWO.gymEnd) as unknown as Json,
     inventory: OWNER_INVENTORY as unknown as Json,
     weightRoomAccess: weightRoomAccess(OWNER_INVENTORY),
     bodyweightKg: null,

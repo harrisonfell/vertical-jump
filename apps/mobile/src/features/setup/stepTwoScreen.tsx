@@ -70,7 +70,6 @@ export function StepTwoScreen() {
         trainingAge={initial.trainingAge}
         sport={initial.sport}
         wallWork={initial.wallWork}
-        sessionWindow={initial.sessionWindow}
         lowerLimbPain={initial.lowerLimbPain}
         saving={save.isPending}
         {...(save.isError ? { error: save.error.message } : null)}

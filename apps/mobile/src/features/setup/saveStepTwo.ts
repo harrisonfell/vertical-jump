@@ -10,6 +10,7 @@ import {
   useToday,
 } from '@/data';
 import type { Json, LocalDate, SqlExecutor } from '@/data';
+import { clockWindowFrom } from './clockWindow';
 import { weightRoomAccess } from './inventory';
 import { toReadinessTestConfig } from './readinessConfig';
 import { inchesToMm, parseNumber } from './stepTwoValidation';
@@ -49,6 +50,10 @@ async function writeStepTwo(
 
   const patch = {
     weekdays: [...values.weekdays],
+    // When the athlete lifts. The engine places a climber's hard pulling day
+    // against it (`house.sc.sport_requirements`); null means "not said" and
+    // the engine reads its own assumed window.
+    sessionWindow: clockWindowFrom(values.gymStart, values.gymEnd) as unknown as Json,
     goalHeightMm: inchesToMm(goalIn),
     targetDate: values.targetDate.trim(),
     standingReachMm: baseline.standingReachMm,

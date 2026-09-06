@@ -6,7 +6,8 @@
  * they read the same climbing answers the setup block wrote.
  */
 import type { Athlete } from '@/data';
-import { SPORT_OPTIONS, climbingAnswersFrom, type SportValue } from '../setup';
+import { readSessionWindow } from '@/lib/engineAthlete';
+import { SPORT_OPTIONS, climbingAnswersFrom, clockWindowLabel, type SportValue } from '../setup';
 import { wallWindowLabel, type ProgramDraft } from './programDraft';
 import type { ProgramParams } from './regenerate';
 
@@ -24,6 +25,7 @@ export function paramsOf(athlete: Athlete, draft: ProgramDraft, answers: Partial
     secondaryGoal: climbing.secondaryGoal,
     daysPerWeek: answers.daysPerWeek ?? athlete.daysPerWeek,
     weekdays: draft.weekdays,
+    gymWindow: clockWindowLabel(draft.gymStart, draft.gymEnd),
     goalHeightMm: draft.goalHeightMm,
     targetDate: draft.targetDate,
     inSeason: draft.inSeason,
@@ -43,12 +45,14 @@ export function paramsOf(athlete: Athlete, draft: ProgramDraft, answers: Partial
 /** The parameters as they are on file right now. */
 export function savedParams(athlete: Athlete): ProgramParams {
   const climbing = climbingAnswersFrom(athlete);
+  const gym = readSessionWindow(athlete.sessionWindow ?? null);
   return {
     trainingAgeYears: athlete.trainingAgeYears,
     sport: athlete.sport,
     secondaryGoal: climbing.secondaryGoal,
     daysPerWeek: athlete.daysPerWeek,
     weekdays: athlete.weekdays,
+    gymWindow: clockWindowLabel(gym?.start ?? '', gym?.end ?? ''),
     goalHeightMm: athlete.goalHeightMm,
     targetDate: athlete.targetDate,
     inSeason: athlete.inSeason,

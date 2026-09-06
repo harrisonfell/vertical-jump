@@ -7,6 +7,7 @@ import {
   WALL_GAP_MIN,
   WEEKDAY_CHIPS,
   validateClimbing,
+  validateClockWindow,
   climbingDefaults,
 } from '../setup';
 import type { ProgramDraft } from './programDraft';
@@ -64,6 +65,7 @@ export function ProgramSheetBody({
     wallGapHours: draft.wallGapHours,
     valgusControl: draft.valgusControl,
   });
+  const gym = validateClockWindow(draft.gymStart, draft.gymEnd);
 
   return (
     <View style={{ gap: space.lg }}>
@@ -84,6 +86,36 @@ export function ProgramSheetBody({
         </View>
         {weekdayRefusal === null ? null : <Notice text={weekdayRefusal} live />}
       </View>
+
+      {showClimbing ? (
+        <View style={{ gap: space.lg }}>
+          <Field
+            label="Gym session starts"
+            value={draft.gymStart}
+            placeholder="08:00"
+            maxLength={5}
+            testID="settings-gym-start"
+            {...(gym.start === undefined
+              ? { helper: 'Use a 24-hour time, for example 08:00.' }
+              : { error: gym.start })}
+            onChangeText={(text) => onDraft({ ...draft, gymStart: text })}
+          />
+          <Field
+            label="Gym session ends"
+            value={draft.gymEnd}
+            placeholder="10:00"
+            maxLength={5}
+            testID="settings-gym-end"
+            {...(gym.end === undefined
+              ? {
+                  helper:
+                    'Hard pulling shares a climbing day only when the gym clears the wall by the same-day gap. Blank assumes 17:00 to 19:00.',
+                }
+              : { error: gym.end })}
+            onChangeText={(text) => onDraft({ ...draft, gymEnd: text })}
+          />
+        </View>
+      ) : null}
 
       <Field
         label="Goal height"

@@ -1,5 +1,6 @@
 import { kgToLb, roundHalfUp } from '@vert/engine';
 import type { Athlete, LocalDate } from '@/data';
+import { readSessionWindow } from '@/lib/engineAthlete';
 import { climbingAnswersFrom } from '../setup/climbing';
 
 /**
@@ -14,6 +15,12 @@ export const DATE_SHAPE = /^\d{4}-\d{2}-\d{2}$/;
 
 export interface ProgramDraft {
   readonly weekdays: readonly number[];
+  /**
+   * When the athlete lifts, kept as typed. A climber's hard pulling day is
+   * placed against it (`house.sc.sport_requirements`).
+   */
+  readonly gymStart: string;
+  readonly gymEnd: string;
   readonly goalHeightMm: number | null;
   readonly targetDate: LocalDate | null;
   readonly inSeason: boolean;
@@ -36,8 +43,11 @@ export interface ProgramDraft {
 /** A fresh draft from the saved athlete. */
 export function draftFrom(athlete: Athlete): ProgramDraft {
   const climbing = climbingAnswersFrom(athlete);
+  const gym = readSessionWindow(athlete.sessionWindow ?? null);
   return {
     weekdays: athlete.weekdays,
+    gymStart: gym?.start ?? '',
+    gymEnd: gym?.end ?? '',
     goalHeightMm: athlete.goalHeightMm,
     targetDate: athlete.targetDate,
     inSeason: athlete.inSeason,

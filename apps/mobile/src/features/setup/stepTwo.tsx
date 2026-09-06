@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
-import { addDays, formatInteger } from '@vert/engine';
-import type { SessionWindow, WallWork } from '@vert/engine';
+import { ASSUMED_SESSION_WINDOW, addDays, formatInteger } from '@vert/engine';
+import type { WallWork } from '@vert/engine';
+import { defaultWallGapHours } from '@/lib/engineAthlete';
 import {
   AnswerGroup,
   Button,
@@ -14,7 +15,7 @@ import {
   space,
 } from '@/ui';
 import type { LocalDate } from '@/data';
-import { SETUP_COPY } from './copy';
+import { SETUP_COPY, gymWindowDetail } from './copy';
 import { CheckRow, Question, StepFrame } from './parts';
 import { inventorySummary } from './inventory';
 import { InventorySheet } from './inventorySheet';
@@ -35,6 +36,7 @@ import {
   MIN_TARGET_DAYS,
   THREE_DAY_LINE,
   feasibilityLine,
+  firstRefusal,
   orderWeekdays,
   validateStepTwo,
   type MeasureMode,
@@ -66,12 +68,13 @@ export interface SetupStepTwoProps {
   /** From step 1. It decides which lifts have an entered 1RM row. */
   readonly sport: SportValue;
   /**
-   * From step 1, for a climber. With them the weekday refusal is checked
+   * From step 1, for a climber. With it the weekday refusal is checked
    * against the wall-aware placement, so a pick that cannot carry the
-   * upper-power day is refused here in the engine's own words.
+   * upper-power day is refused here in the engine's own words, and the form
+   * asks when the athlete lifts, because that is what the placement reads
+   * the picks against.
    */
   readonly wallWork?: WallWork | null;
-  readonly sessionWindow?: SessionWindow | null;
   /** From step 1. A reported lower-limb site keeps depth jumps off. */
   readonly lowerLimbPain: boolean;
   readonly submitLabel?: string;
@@ -88,7 +91,6 @@ export function SetupStepTwo({
   trainingAge,
   sport,
   wallWork = null,
-  sessionWindow = null,
   lowerLimbPain,
   submitLabel = SETUP_COPY.stepTwoSubmit,
   saving = false,
@@ -110,8 +112,8 @@ export function SetupStepTwo({
   };
 
   const result = useMemo(
-    () => validateStepTwo(values, { today, sport, wallWork, sessionWindow }),
-    [today, values, sport, wallWork, sessionWindow],
+    () => validateStepTwo(values, { today, sport, wallWork }),
+    [today, values, sport, wallWork],
   );
   const errorFor = (field: StepTwoField): string | undefined =>
     submitted || blurred.has(field) ? result.errors[field] : undefined;
@@ -152,6 +154,18 @@ export function SetupStepTwo({
   const earliestTarget = addDays(today, MIN_TARGET_DAYS);
 
   const bestSetsRefused = bestSetsHaveErrors(values.bestSets, today);
+
+  // The save button sits a screen below the field that refused, so once a
+  // save was tried the topmost refusal is repeated beside the button.
+  const refusal = !submitted
+    ? null
+    : (firstRefusal(result.errors) ??
+      (bestSetsRefused ? SETUP_COPY.stepTwoBestSetIncomplete : null));
+
+  // A climber with a wall on file is asked when they lift: the engine places
+  // the week's hard pulling day against the two windows, and without an
+  // answer it assumes one, which for an evening climber refuses every pick.
+  const wall = showsClimbingLifts(sport) ? wallWork : null;
 
   const setBestSet = (field: BestSetField, next: BestSetValues): void => {
     set('bestSets', { ...values.bestSets, [field]: next });
@@ -317,6 +331,41 @@ export function SetupStepTwo({
         ) : null}
       </Question>
 
+      {wall === null ? null : (
+        <Question
+          label={SETUP_COPY.stepTwoGym}
+          detail={gymWindowDetail(
+            wall.sameDayGapHours ?? defaultWallGapHours(),
+            ASSUMED_SESSION_WINDOW,
+          )}
+        >
+          <View style={{ gap: space.lg }}>
+            <Field
+              label={SETUP_COPY.stepTwoGymStart}
+              value={values.gymStart}
+              onChangeText={(text) => set('gymStart', text)}
+              onBlur={() => touch('gymStart')}
+              placeholder="08:00"
+              maxLength={5}
+              testID="step-two-gym-start"
+              {...(errorFor('gymStart') === undefined
+                ? { helper: SETUP_COPY.stepTwoGymTimeHelper }
+                : { error: errorFor('gymStart') })}
+            />
+            <Field
+              label={SETUP_COPY.stepTwoGymEnd}
+              value={values.gymEnd}
+              onChangeText={(text) => set('gymEnd', text)}
+              onBlur={() => touch('gymEnd')}
+              placeholder="10:00"
+              maxLength={5}
+              testID="step-two-gym-end"
+              {...(errorFor('gymEnd') === undefined ? null : { error: errorFor('gymEnd') })}
+            />
+          </View>
+        </Question>
+      )}
+
       <Question label={SETUP_COPY.stepTwoInventory}>
         <Text variant="body" color="ink2" testID="step-two-inventory-summary">
           {inventorySummary(values.inventory)}
@@ -412,6 +461,15 @@ export function SetupStepTwo({
           detail="Your answers are still here."
           {...(onRetry === undefined ? null : { actionLabel: 'Retry', onAction: onRetry })}
           live
+        />
+      )}
+
+      {refusal === null ? null : (
+        <Notice
+          text={refusal}
+          detail={SETUP_COPY.stepTwoRefusalDetail}
+          live
+          testID="step-two-refusal"
         />
       )}
 

@@ -115,10 +115,13 @@ export function canCarryHardFinger(weekday: Weekday, wall: WallPlacement): boole
   return clearOfWall(weekday, wall);
 }
 
-/** Weekdays that could carry the upper-power day, in Monday-first order. */
+/**
+ * Weekdays that could carry the upper-power day, in Monday-first order. Empty
+ * when no day can: every non-climbing day sits inside the finger spacing of a
+ * wall day, and the gym window does not clear the wall on a climbing day.
+ */
 export function upperPowerCandidates(wall: WallPlacement): Weekday[] {
-  const found = WEEK_ORDER.filter((weekday) => canCarryHardFinger(weekday, wall));
-  return found.length > 0 ? found : [...wall.weekdays].sort((a, b) => a - b);
+  return WEEK_ORDER.filter((weekday) => canCarryHardFinger(weekday, wall));
 }
 
 /** "Tue", "Tue or Thu", "Sun, Tue or Thu". */
@@ -134,12 +137,16 @@ function listWeekdays(weekdays: readonly Weekday[]): string {
  * would work (brief section 06, "Weekday pick refused").
  */
 export function upperPowerRefusal(wall: WallPlacement): string {
-  const suggestion = listWeekdays(upperPowerCandidates(wall));
-  const tail = suggestion === '' ? '' : ` Pick ${suggestion}.`;
-  return (
+  const need =
     `Upper power needs a climbing day at least ${wall.sameDayGapHours} h before the wall, ` +
-    `or a day ${wall.spacingHours} h from climbing.${tail}`
-  );
+    `or a day ${wall.spacingHours} h from climbing.`;
+  const candidates = upperPowerCandidates(wall);
+  if (candidates.length === 0) {
+    // Naming the wall days here would send the athlete to picks that fail the
+    // same rule. What moves is the gym window or the wall, so say that.
+    return `${need} No day of the week does either with your gym hours: change when you lift, or when you climb.`;
+  }
+  return `${need} Pick ${listWeekdays(candidates)}.`;
 }
 
 /** The pick indexes not yet spent, in the order the athlete trains them. */

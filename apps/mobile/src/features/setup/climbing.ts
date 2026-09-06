@@ -18,6 +18,7 @@ import {
   readValgusControl,
   readWallWork,
 } from '@/lib/engineAthlete';
+import { CLOCK, validateClockWindow } from './clockWindow';
 import type { GripModeValue, SecondaryGoalValue, WeakerSideValue } from './questions';
 
 /** 0 to 10, the same scale the soreness and pain questions use. */
@@ -31,9 +32,6 @@ export const CEILING_MAX = 10;
  */
 export const WALL_GAP_MIN = 0;
 export const WALL_GAP_MAX = 12;
-
-/** A 24-hour clock time, which is the only shape a wall-work time reads in. */
-const CLOCK = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export interface ClimbingAnswers {
   readonly secondaryGoal: SecondaryGoalValue | null;
@@ -99,19 +97,11 @@ export interface ClimbingResult {
 export function validateClimbing(values: ClimbingAnswers): ClimbingResult {
   const errors: Partial<Record<ClimbingField, string>> = {};
 
-  const start = values.wallStart.trim();
-  const end = values.wallEnd.trim();
-  const shape = 'Use a 24-hour time, for example 18:00.';
-
-  if (start !== '' && !CLOCK.test(start)) errors.wallStart = shape;
-  if (end !== '' && !CLOCK.test(end)) errors.wallEnd = shape;
-  if (errors.wallStart === undefined && errors.wallEnd === undefined) {
-    if (start === '' && end !== '') errors.wallStart = 'Enter both times, or leave both blank.';
-    if (end === '' && start !== '') errors.wallEnd = 'Enter both times, or leave both blank.';
-    if (start !== '' && end !== '' && end <= start) {
-      errors.wallEnd = 'The end time has to be after the start.';
-    }
-  }
+  // The same three refusals the gym window gets in step 2 (`clockWindow.ts`):
+  // two windows on one athlete have to be refused in the same words.
+  const wall = validateClockWindow(values.wallStart, values.wallEnd);
+  if (wall.start !== undefined) errors.wallStart = wall.start;
+  if (wall.end !== undefined) errors.wallEnd = wall.end;
 
   if (
     !Number.isFinite(values.fingerPainCeiling) ||

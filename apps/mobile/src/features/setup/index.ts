@@ -1,6 +1,23 @@
 /** First run, end to end. Routes compose these; nothing else reaches inside. */
 
-export { SETUP_COPY, formatDayDate, lockoutLine, programBuiltLine, reassessmentLine } from './copy';
+export {
+  SETUP_COPY,
+  formatDayDate,
+  gymWindowDetail,
+  lockoutLine,
+  programBuiltLine,
+  reassessmentLine,
+} from './copy';
+export {
+  CLOCK,
+  CLOCK_BOTH_LINE,
+  CLOCK_ORDER_LINE,
+  CLOCK_SHAPE_LINE,
+  clockWindowFrom,
+  clockWindowLabel,
+  validateClockWindow,
+  type ClockWindowErrors,
+} from './clockWindow';
 export {
   ADULT_QUESTION,
   AVAILABILITY_OPTIONS,
@@ -168,6 +185,7 @@ export {
   MIN_TARGET_DAYS,
   THREE_DAY_LINE,
   feasibilityLine,
+  firstRefusal,
   inchesToMm,
   mmToInches,
   orderWeekdays,

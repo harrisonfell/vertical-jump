@@ -29,6 +29,7 @@ export type ProgramParam =
   | 'secondaryGoal'
   | 'daysPerWeek'
   | 'weekdays'
+  | 'gymWindow'
   | 'goalHeight'
   | 'targetDate'
   | 'inSeason'
@@ -61,6 +62,8 @@ export interface ProgramParams {
   readonly secondaryGoal: string | null;
   readonly daysPerWeek: number | null;
   readonly weekdays: readonly number[];
+  /** "08:00 to 10:00", or "not set": when the athlete lifts. */
+  readonly gymWindow: string;
   readonly goalHeightMm: number | null;
   readonly targetDate: LocalDate | null;
   readonly inSeason: boolean;
@@ -172,6 +175,7 @@ export function diffParams(before: ProgramParams, after: ProgramParams): ParamCh
     after.daysPerWeek === null ? 'not set' : `${after.daysPerWeek}`,
   );
   push('weekdays', 'Training days', weekdaysLabel(before.weekdays), weekdaysLabel(after.weekdays));
+  push('gymWindow', 'Gym hours', before.gymWindow, after.gymWindow);
   push('goalHeight', 'Goal height', heightLabel(before.goalHeightMm), heightLabel(after.goalHeightMm));
   push('targetDate', 'Target date', dateLabel(before.targetDate), dateLabel(after.targetDate));
   push('inSeason', 'In-season', before.inSeason ? 'yes' : 'no', after.inSeason ? 'yes' : 'no');

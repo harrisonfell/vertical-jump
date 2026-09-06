@@ -24,6 +24,9 @@ export * from './skeleton/index.js';
 export * from './prescribe/index.js';
 export * from './adherence/index.js';
 export * from './select/index.js';
+// The gym window the wall rules assume when the athlete has not said when they
+// lift. Setup shows it beside the field, so the assumption is never silent.
+export { ASSUMED_SESSION_WINDOW } from './select/rnt.js';
 export * from './readiness/index.js';
 export * from './exercises/index.js';
 export * from './fixtures/index.js';

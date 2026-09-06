@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { formatHeightIn, formatInteger, formatLoadLb, kgToLb, roundHalfUp } from '@vert/engine';
 import type { Athlete } from '@/data';
 import { Button, Notice, Sheet, Text, space } from '@/ui';
-import { climbingAnswersFrom, showsGripBlock } from '../setup';
+import { climbingAnswersFrom, clockWindowLabel, showsGripBlock } from '../setup';
 import { RowDivider, SettingRow, SettingSection } from './row';
 import { DATE_SHAPE, draftFrom, wallWindowLabel, type ProgramDraft } from './programDraft';
 import { ProgramSheetBody } from './programSheet';
@@ -180,6 +180,16 @@ export function ProgramSection({
             numeric
             onPress={() => setEditing(true)}
             testID="settings-wall-window"
+          />
+          <RowDivider />
+          <SettingRow
+            label="Gym hours"
+            value={clockWindowLabel(draft.gymStart, draft.gymEnd)}
+            caption="Hard pulling shares a climbing day only when the gym clears the wall by the same-day gap."
+            chevron
+            numeric
+            onPress={() => setEditing(true)}
+            testID="settings-gym-window"
           />
           <RowDivider />
           <SettingRow

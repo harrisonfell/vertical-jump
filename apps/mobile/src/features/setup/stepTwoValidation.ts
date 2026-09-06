@@ -24,6 +24,7 @@ import {
 } from '@vert/engine/analytics';
 import type { DaysPerWeek, Sport, WallWork, SessionWindow, Weekday } from '@vert/engine';
 import type { LocalDate } from '@/data';
+import { clockWindowFrom, validateClockWindow } from './clockWindow';
 
 /** The OVR Jump's own field: under 6 in or over 60 in is not a reading. */
 export const HEIGHT_MIN_IN = 6;
@@ -44,6 +45,14 @@ export interface StepTwoDraft {
   readonly targetDate: string;
   readonly weekdays: readonly number[];
   readonly daysPerWeek: DaysPerWeek;
+  /**
+   * When you lift, as two 24-hour times, kept as typed. Two blank fields are
+   * an answer: the engine then reads its own assumed evening window, which is
+   * what the field's helper says, and for a climber who climbs evenings that
+   * assumption is what refuses every weekday pick.
+   */
+  readonly gymStart: string;
+  readonly gymEnd: string;
   readonly bodyweightLb: string;
   readonly squatLb: string;
   readonly hingeLb: string;
@@ -62,6 +71,8 @@ export type StepTwoField =
   | 'goalIn'
   | 'targetDate'
   | 'weekdays'
+  | 'gymStart'
+  | 'gymEnd'
   | 'bodyweightLb'
   | 'squatLb'
   | 'hingeLb'
@@ -143,16 +154,35 @@ export interface StepTwoContext {
    */
   readonly sport?: Sport;
   readonly wallWork?: WallWork | null;
+  /**
+   * The gym window on file, read only when the draft's own two fields are
+   * blank. The typed window outranks it: it is what the save writes.
+   */
   readonly sessionWindow?: SessionWindow | null;
+}
+
+/**
+ * The gym window the picks are checked against: the one typed in the draft
+ * when it parses, the one on file when both fields are blank, and nothing
+ * while a half-typed or refused time sits in either field.
+ */
+function gymWindowFor(draft: StepTwoDraft, context: StepTwoContext): SessionWindow | undefined {
+  const typed = clockWindowFrom(draft.gymStart, draft.gymEnd);
+  if (typed !== null) return typed;
+  if (draft.gymStart.trim() === '' && draft.gymEnd.trim() === '') {
+    return context.sessionWindow ?? undefined;
+  }
+  return undefined;
 }
 
 /** The engine's layout context, or undefined when the sport has no wall. */
 function layoutContext(
+  draft: StepTwoDraft,
   context: StepTwoContext,
 ): { sport: Sport; wallWork?: WallWork; sessionWindow?: SessionWindow } | undefined {
   if (context.sport === undefined) return undefined;
   const wall = context.wallWork ?? undefined;
-  const window = context.sessionWindow ?? undefined;
+  const window = gymWindowFor(draft, context);
   return {
     sport: context.sport,
     ...(wall === undefined ? null : { wallWork: wall }),
@@ -206,12 +236,18 @@ export function validateStepTwo(draft: StepTwoDraft, context: StepTwoContext): S
     }
   }
 
+  // The gym window is refused before the picks are read against it, so a
+  // half-typed time never turns into a weekday refusal about the wall.
+  const gym = validateClockWindow(draft.gymStart, draft.gymEnd);
+  if (gym.start !== undefined) errors.gymStart = gym.start;
+  if (gym.end !== undefined) errors.gymEnd = gym.end;
+
   const picks = orderWeekdays(draft.weekdays);
   const weekdayDecision = validateWeekdays(
     picks,
     draft.daysPerWeek,
     RULESET_V1,
-    layoutContext(context),
+    layoutContext(draft, context),
   );
   if (!weekdayDecision.ok) errors.weekdays = weekdayDecision.reason;
 
@@ -236,6 +272,37 @@ export function validateStepTwo(draft: StepTwoDraft, context: StepTwoContext): S
     goalValue,
     ok: Object.keys(errors).length === 0,
   };
+}
+
+/** The fields in the order they sit on the screen, top to bottom. */
+const FIELD_ORDER: readonly StepTwoField[] = [
+  'baselineIn',
+  'reachIn',
+  'touchIn',
+  'goalIn',
+  'targetDate',
+  'weekdays',
+  'gymStart',
+  'gymEnd',
+  'bodyweightLb',
+  'boxSquatLb',
+  'pullUpAddedLb',
+  'squatLb',
+  'hingeLb',
+  'pressLb',
+];
+
+/**
+ * The topmost refusal, for the line beside the save button. The refusals
+ * themselves sit on their fields, and the save button sits a screen below the
+ * weekday chips, so a tap that does nothing has to say why where the tap was.
+ */
+export function firstRefusal(errors: StepTwoResult['errors']): string | null {
+  for (const field of FIELD_ORDER) {
+    const message = errors[field];
+    if (message !== undefined) return message;
+  }
+  return null;
 }
 
 export interface FeasibilityInput {

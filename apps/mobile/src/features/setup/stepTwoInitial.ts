@@ -54,6 +54,7 @@ function storedValues(
   const reachTouch = baseline?.instrument === 'vertec_reach_touch';
   const jumpIn = baseline?.bestHeightMm == null ? null : mmToInches(baseline.bestHeightMm);
   const reachIn = athlete?.standingReachMm == null ? null : mmToInches(athlete.standingReachMm);
+  const gym = readSessionWindow(athlete?.sessionWindow ?? null);
 
   return {
     measure: reachTouch ? 'reach' : 'device',
@@ -65,6 +66,8 @@ function storedValues(
     targetDate: athlete?.targetDate ?? '',
     weekdays: athlete?.weekdays ?? [],
     daysPerWeek: daysOrDefault(athlete?.daysPerWeek ?? null),
+    gymStart: gym?.start ?? '',
+    gymEnd: gym?.end ?? '',
     bodyweightLb:
       athlete?.bodyweightKg == null ? '' : `${Math.round(kgToLb(athlete.bodyweightKg))}`,
     squatLb: maxLb(athlete, MAX_LIFT_IDS.squat),
