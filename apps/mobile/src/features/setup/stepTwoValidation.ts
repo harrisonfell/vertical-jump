@@ -15,6 +15,7 @@ import {
   programStartFor,
   programWeeks,
   validateWeekdays,
+  weekdayLayoutNote,
 } from '@vert/engine';
 import {
   formatInValue,
@@ -85,6 +86,12 @@ export interface StepTwoResult {
   /** The baseline the goal is measured against, in inches, when it parses. */
   readonly currentIn: number | null;
   readonly goalValue: number | null;
+  /**
+   * A legal pick that cannot carry a climber's hard pulling day, said in the
+   * engine's words (`weekdayLayoutNote`). Not a refusal: the pick stands and
+   * the program demotes those pulls to light work.
+   */
+  readonly weekdayNote: string | null;
   readonly ok: boolean;
 }
 
@@ -243,13 +250,12 @@ export function validateStepTwo(draft: StepTwoDraft, context: StepTwoContext): S
   if (gym.end !== undefined) errors.gymEnd = gym.end;
 
   const picks = orderWeekdays(draft.weekdays);
-  const weekdayDecision = validateWeekdays(
-    picks,
-    draft.daysPerWeek,
-    RULESET_V1,
-    layoutContext(draft, context),
-  );
+  const layout = layoutContext(draft, context);
+  const weekdayDecision = validateWeekdays(picks, draft.daysPerWeek, RULESET_V1, layout);
   if (!weekdayDecision.ok) errors.weekdays = weekdayDecision.reason;
+  const weekdayNote = weekdayDecision.ok
+    ? weekdayLayoutNote(picks, draft.daysPerWeek, RULESET_V1, layout)
+    : null;
 
   const bodyweight = parseNumber(draft.bodyweightLb);
   if (bodyweight !== null && (bodyweight < 60 || bodyweight > 500)) {
@@ -270,6 +276,7 @@ export function validateStepTwo(draft: StepTwoDraft, context: StepTwoContext): S
     errors,
     currentIn,
     goalValue,
+    weekdayNote,
     ok: Object.keys(errors).length === 0,
   };
 }

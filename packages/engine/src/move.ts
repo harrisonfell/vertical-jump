@@ -21,7 +21,7 @@ import type { SessionPlan, WeekPlan } from './types/plan.js';
 import type { Ruleset } from './types/ruleset.js';
 import { addDays, dayOffsetInWeek, diffDays, isWithin } from './calendar.js';
 import { dayTypesFor } from './skeleton/index.js';
-import { climbingWeekLayout, upperPowerRefusal, wallPlacementFor } from './skeleton/climbing.js';
+import { climbingWeekLayout, upperPowerNote, wallPlacementFor } from './skeleton/climbing.js';
 
 /** No rule-book rule refused this; the shape of the week did. */
 const STRUCTURAL = 0;
@@ -198,13 +198,14 @@ export interface WeekdayLayoutContext {
  * True when the weekday layout the athlete picked at setup breaks a spacing
  * rule, so Setup can refuse inline before a program is ever built. Setup
  * refusals say the rule number out loud (brief section 06 "Weekday pick
- * refused"), except the climbing one, which is a house rule and says its two
- * gaps in hours instead.
+ * refused").
  *
  * @param context the sport and the wall and gym windows. Given for a speed
- *   climber who has said when they climb, the picks must also be able to carry
- *   the upper-power day, and the spacing rules are checked against the
- *   wall-aware placement rather than against the template order.
+ *   climber who has said when they climb, the spacing rules are checked
+ *   against the wall-aware placement rather than against the template order.
+ *   Picks that cannot carry the upper-power day are not refused: the generator
+ *   falls back to the template order and demotes that day's pulls, and
+ *   `weekdayLayoutNote` says so beside the picks.
  */
 export function validateWeekdayLayout(
   weekdays: number[],
@@ -237,9 +238,9 @@ export function validateWeekdayLayout(
   // the generator will actually build, not against the template order.
   const wall = context === undefined ? undefined : wallPlacementFor(context, ruleset);
   const placed = wall === undefined ? undefined : climbingWeekLayout(base, picks, wall);
-  if (wall !== undefined && placed === undefined && base.includes('upper_strength')) {
-    return refuse(upperPowerRefusal(wall), STRUCTURAL);
-  }
+  // No placement means no pick can carry the upper-power day. That is the
+  // generator's fallback, not a refusal: it takes the template order and the
+  // finger rule demotes that day's pulls (`weekdayLayoutFor`).
   const dayTypes = placed?.dayTypes ?? base;
   for (let a = 0; a < offsets.length; a += 1) {
     const typeA = dayTypes[a];
@@ -265,3 +266,28 @@ export function validateWeekdayLayout(
 
 /** The setup-time name the brief uses. */
 export const validateWeekdays = validateWeekdayLayout;
+
+/**
+ * The plain-words note beside a legal pick that cannot carry the upper-power
+ * day (house `house.sc.sport_requirements`), or null when it can, when the
+ * athlete has no wall, or when the picks are not yet a full week. The pick
+ * is not refused: the generator runs the template order and the 48 h finger
+ * rule turns that day's pulls into light work with a line naming the climbing
+ * day, so setup says the same thing here, before the program is built.
+ */
+export function weekdayLayoutNote(
+  weekdays: number[],
+  daysPerWeek: number,
+  ruleset: Ruleset,
+  context?: WeekdayLayoutContext,
+): string | null {
+  if (context === undefined || !isDaysPerWeek(daysPerWeek)) return null;
+  const picks: Weekday[] = weekdays.filter(isWeekday);
+  if (picks.length !== daysPerWeek) return null;
+  const base = dayTypesFor(daysPerWeek);
+  if (!base.includes('upper_strength')) return null;
+  const wall = wallPlacementFor(context, ruleset);
+  if (wall === undefined) return null;
+  if (climbingWeekLayout(base, picks, wall) !== undefined) return null;
+  return upperPowerNote(wall);
+}

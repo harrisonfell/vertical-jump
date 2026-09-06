@@ -19,10 +19,10 @@
  *   Recovery      the first pick left.
  *   Speed         at five days, the pick left after that (R136).
  *
- * When no pick can carry the upper-power day, this returns undefined: setup
- * refuses with `upperPowerRefusal` and the generator falls back to the plain
- * template order, where the 48 h finger rule demotes the pulls and the session
- * says why.
+ * When no pick can carry the upper-power day, this returns undefined: the
+ * generator falls back to the plain template order, where the 48 h finger
+ * rule demotes the pulls and the session says why, and setup says the same
+ * thing beside the picks with `upperPowerNote` rather than refusing them.
  *
  * Pure and side-effect free; nothing here reads a clock or the ruleset.
  */
@@ -132,21 +132,22 @@ function listWeekdays(weekdays: readonly Weekday[]): string {
 }
 
 /**
- * The plain-words setup refusal when none of the picked weekdays can carry the
- * upper-power day. Second person, no rule number, and it names the days that
- * would work (brief section 06, "Weekday pick refused").
+ * The plain-words setup note when none of the picked weekdays can carry the
+ * upper-power day. Not a refusal: the picks stand, the generator runs the
+ * template order, and the 48 h finger rule turns that day's pulls into light
+ * work with a line naming the climbing day. Second person, no rule number,
+ * and it names the days that would keep hard pulling when there are any.
  */
-export function upperPowerRefusal(wall: WallPlacement): string {
+export function upperPowerNote(wall: WallPlacement): string {
   const need =
-    `Upper power needs a climbing day at least ${wall.sameDayGapHours} h before the wall, ` +
+    `Hard pulling needs a climbing day at least ${wall.sameDayGapHours} h before the wall, ` +
     `or a day ${wall.spacingHours} h from climbing.`;
   const candidates = upperPowerCandidates(wall);
+  const outcome = 'so your pull-ups run as light work and each session says why.';
   if (candidates.length === 0) {
-    // Naming the wall days here would send the athlete to picks that fail the
-    // same rule. What moves is the gym window or the wall, so say that.
-    return `${need} No day of the week does either with your gym hours: change when you lift, or when you climb.`;
+    return `${need} None of your days does either with your gym hours, ${outcome}`;
   }
-  return `${need} Pick ${listWeekdays(candidates)}.`;
+  return `${need} None of these days does; ${listWeekdays(candidates)} would. As picked, ${outcome}`;
 }
 
 /** The pick indexes not yet spent, in the order the athlete trains them. */

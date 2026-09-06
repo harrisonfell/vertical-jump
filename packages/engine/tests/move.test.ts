@@ -11,6 +11,7 @@ import {
   legalMoveTargets,
   validateWeekdayLayout,
   validateWeekdays,
+  weekdayLayoutNote,
 } from '../src/move.js';
 import type { WallWork } from '../src/types.js';
 import { buildOwnerWeek, buildSession, buildWeekPlan } from './skeleton.support.js';
@@ -176,34 +177,53 @@ describe("validateWeekdayLayout for a climber's wall", () => {
     expect(decision).toEqual({ ok: true });
   });
 
-  it('refuses honestly when no day at all can carry the upper-power day', () => {
+  it('accepts a pick no day of which can carry the upper-power day', () => {
     // No gym window on file: the assumed evening window runs into the wall,
-    // and Mon, Wed, Fri and Sat are all inside 48 h of a wall day. Naming the
-    // wall days here would send the athlete to picks that fail the same way.
-    const decision = validateWeekdayLayout([1, 2, 3, 5], 4, RULESET_V1, {
-      sport: 'speed_climbing',
-      wallWork: WALL,
-    });
-    expect(decision.ok).toBe(false);
-    if (decision.ok) return;
-    expect(decision.reason).toBe(
-      'Upper power needs a climbing day at least 6 h before the wall, or a day 48 h from climbing. ' +
-        'No day of the week does either with your gym hours: change when you lift, or when you climb.',
-    );
-    expect(decision.reason).not.toContain('Pick ');
+    // and Mon, Wed, Fri and Sat are all inside 48 h of a wall day. The pick
+    // stands: the generator falls back to the template order and demotes the
+    // pulls (`weekdayLayoutFor`), so setup has nothing to refuse.
+    const context = { sport: 'speed_climbing' as const, wallWork: WALL };
+    expect(validateWeekdayLayout([1, 2, 3, 5], 4, RULESET_V1, context)).toEqual({ ok: true });
+    // The spacing rules still read against the template order in that case.
+    const decision = validateWeekdayLayout([1, 2, 4, 6], 4, RULESET_V1, context);
+    expect(decision).toEqual({ ok: true });
   });
 
-  it('names the days that would work when some can carry it', () => {
-    // Tue and Thu evenings: Sat and Sun sit 48 h clear of both.
-    const decision = validateWeekdayLayout([1, 2, 3, 5], 4, RULESET_V1, {
-      sport: 'speed_climbing',
-      wallWork: { ...WALL, weekdays: [2, 4] },
-    });
-    expect(decision.ok).toBe(false);
-    if (decision.ok) return;
-    expect(decision.reason).toBe(
-      'Upper power needs a climbing day at least 6 h before the wall, or a day 48 h from climbing. ' +
-        'Pick Sat or Sun.',
+  it('says beside the pick that hard pulling becomes light work, and why', () => {
+    const context = { sport: 'speed_climbing' as const, wallWork: WALL };
+    expect(weekdayLayoutNote([1, 2, 3, 5], 4, RULESET_V1, context)).toBe(
+      'Hard pulling needs a climbing day at least 6 h before the wall, or a day 48 h from climbing. ' +
+        'None of your days does either with your gym hours, ' +
+        'so your pull-ups run as light work and each session says why.',
     );
+    // Tue and Thu evenings: Sat and Sun sit 48 h clear of both, so it says so.
+    expect(
+      weekdayLayoutNote([1, 2, 3, 5], 4, RULESET_V1, {
+        ...context,
+        wallWork: { ...WALL, weekdays: [2, 4] },
+      }),
+    ).toBe(
+      'Hard pulling needs a climbing day at least 6 h before the wall, or a day 48 h from climbing. ' +
+        'None of these days does; Sat or Sun would. As picked, ' +
+        'so your pull-ups run as light work and each session says why.',
+    );
+  });
+
+  it('says nothing when a pick carries it, when there is no wall, or before the week is full', () => {
+    const mornings = {
+      sport: 'speed_climbing' as const,
+      wallWork: WALL,
+      sessionWindow: { start: '08:00', end: '10:00' },
+    };
+    expect(weekdayLayoutNote([1, 2, 3, 5], 4, RULESET_V1, mornings)).toBeNull();
+    expect(weekdayLayoutNote([1, 2, 3, 5], 4, RULESET_V1, { sport: 'basketball' })).toBeNull();
+    expect(weekdayLayoutNote([1, 2, 3, 5], 4, RULESET_V1)).toBeNull();
+    expect(
+      weekdayLayoutNote([1, 2], 4, RULESET_V1, { sport: 'speed_climbing', wallWork: WALL }),
+    ).toBeNull();
+    // Two and three days have no separate upper day, so the wall changes nothing.
+    expect(
+      weekdayLayoutNote([1, 3, 5], 3, RULESET_V1, { sport: 'speed_climbing', wallWork: WALL }),
+    ).toBeNull();
   });
 });

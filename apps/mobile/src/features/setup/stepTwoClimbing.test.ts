@@ -3,15 +3,17 @@ import type { SessionWindow, WallWork } from '@vert/engine';
 import { validateStepTwo, type StepTwoDraft } from './stepTwoValidation';
 
 /**
- * Step 2's weekday refusal, for a climber.
+ * Step 2's weekday check, for a climber.
  *
  * A speed climber's picks decide which day carries the upper-power session,
  * because that session is the week's one hard finger day and has to clear the
  * wall (`house.sc.sport_requirements`). Given the sport and the two windows,
- * `validateWeekdays` checks the picks against the placement the generator will
- * actually build, so a set of days that cannot carry it is refused here rather
- * than at build time. The sentence is the engine's, word for word: this asserts
- * that the app shows it and does not reword it.
+ * `validateWeekdays` checks the spacing rules against the placement the
+ * generator will actually build. A set of days that cannot carry the session
+ * is not refused: the generator runs the template order and demotes that
+ * day's pulls, and `weekdayLayoutNote` says so beside the picks. The sentence
+ * is the engine's, word for word: this asserts that the app shows it and does
+ * not reword it.
  */
 
 const TODAY = '2026-09-04';
@@ -62,38 +64,42 @@ function check(
   );
 }
 
-describe('the weekday refusal a climber sees in step 2', () => {
+describe('the weekday note a climber sees in step 2', () => {
   it('accepts the owner picks, which put upper power on a wall morning', () => {
     const result = check({}, WALL, MORNINGS);
     expect(result.errors.weekdays).toBeUndefined();
     expect(result.ok).toBe(true);
   });
 
-  it('refuses picks that cannot carry the upper-power day, in the engine words', () => {
+  it('accepts picks that cannot carry the upper-power day, and says what happens instead', () => {
     // Evenings in the gym: the same-day gap fails, so a wall day cannot carry
     // the session, and Mon, Wed, Fri and Sat are all inside 48 h of a wall day.
-    // No pick works, so the sentence says what to change rather than naming
-    // the wall days, which were refused too.
+    // The pick stands (the generator demotes the pulls and says why); the
+    // note beside the chips is the engine's sentence, word for word.
     const result = check({}, WALL, EVENINGS);
-    expect(result.errors.weekdays).toBe(
-      'Upper power needs a climbing day at least 6 h before the wall, ' +
+    expect(result.errors.weekdays).toBeUndefined();
+    expect(result.ok).toBe(true);
+    expect(result.weekdayNote).toBe(
+      'Hard pulling needs a climbing day at least 6 h before the wall, ' +
         'or a day 48 h from climbing. ' +
-        'No day of the week does either with your gym hours: change when you lift, or when you climb.',
+        'None of your days does either with your gym hours, ' +
+        'so your pull-ups run as light work and each session says why.',
     );
-    expect(result.ok).toBe(false);
+    expect(check({}, WALL, MORNINGS).weekdayNote).toBeNull();
+    expect(check({}, null, EVENINGS).weekdayNote).toBeNull();
   });
 
   it('reads the gym window typed on the form before the one on file', () => {
-    // Nothing on file: the engine assumes an evening gym, which is the bug the
-    // owner hit on the deployed app, so every four-day pick was refused.
-    expect(check({}, WALL, null).errors.weekdays).toContain('No day of the week does either');
+    // Nothing on file: the engine assumes an evening gym, which is what stood
+    // between the owner and step 3 on the deployed app.
+    expect(check({}, WALL, null).weekdayNote).toContain('None of your days does either');
     // Typing mornings on the form is enough; nothing has to be on file.
     const typed = check({ gymStart: '08:00', gymEnd: '10:00' }, WALL, null);
-    expect(typed.errors.weekdays).toBeUndefined();
+    expect(typed.weekdayNote).toBeNull();
     expect(typed.ok).toBe(true);
     // And a typed window outranks the one on file, because it is what saves.
-    expect(check({ gymStart: '08:00', gymEnd: '10:00' }, WALL, EVENINGS).ok).toBe(true);
-    expect(check({ gymStart: '17:00', gymEnd: '19:00' }, WALL, MORNINGS).ok).toBe(false);
+    expect(check({ gymStart: '08:00', gymEnd: '10:00' }, WALL, EVENINGS).weekdayNote).toBeNull();
+    expect(check({ gymStart: '17:00', gymEnd: '19:00' }, WALL, MORNINGS).weekdayNote).not.toBeNull();
   });
 
   it('refuses a half-typed gym window on its own field, not as a weekday refusal', () => {
@@ -111,7 +117,7 @@ describe('the weekday refusal a climber sees in step 2', () => {
 
   it('says the athletes own gap, not a number typed into the app', () => {
     const wall: WallWork = { ...WALL, sameDayGapHours: 9 };
-    expect(check({}, wall, EVENINGS).errors.weekdays).toContain('at least 9 h before the wall');
+    expect(check({}, wall, EVENINGS).weekdayNote).toContain('at least 9 h before the wall');
   });
 
   it('leaves the refusal alone when the wall is light on the hands', () => {

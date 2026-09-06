@@ -324,6 +324,16 @@ export function SetupStepTwo({
             {result.errors.weekdays}
           </Text>
         )}
+        {errorFor('weekdays') !== undefined || result.weekdayNote === null ? null : (
+          <Text
+            variant="caption"
+            color="ink3"
+            accessibilityLiveRegion="polite"
+            testID="step-two-weekday-note"
+          >
+            {result.weekdayNote}
+          </Text>
+        )}
         {values.daysPerWeek === 3 ? (
           <Text variant="caption" color="ink3">
             {THREE_DAY_LINE}

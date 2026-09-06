@@ -44,6 +44,8 @@ export interface ProgramSectionProps {
   readonly onDraft: (draft: ProgramDraft) => void;
   /** Refuses a weekday set in plain words plus its rule number, or null. */
   readonly weekdayRefusal: string | null;
+  /** A legal pick that turns a climber's hard pulling into light work, said. */
+  readonly weekdayNote: string | null;
   readonly plan: RegenerationPlan | null;
   readonly onConfirm: () => void;
   readonly onDiscard: () => void;
@@ -58,6 +60,7 @@ export function ProgramSection({
   draft,
   onDraft,
   weekdayRefusal,
+  weekdayNote,
   plan,
   onConfirm,
   onDiscard,
@@ -242,6 +245,7 @@ export function ProgramSection({
           draft={draft}
           onDraft={onDraft}
           weekdayRefusal={weekdayRefusal}
+          weekdayNote={weekdayNote}
           goalError={goalError}
           dateError={dateError}
           showClimbing={showClimbing}

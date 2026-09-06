@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useMemo, useState, type ReactNode } from 'react';
 import { View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { loadRuleset, validateWeekdays } from '@vert/engine';
+import { loadRuleset, validateWeekdays, weekdayLayoutNote } from '@vert/engine';
 import type { Sport } from '@vert/engine';
 import { readBestSets } from '@/lib/engineAthlete';
 import { AppHeader, href } from '@/app';
@@ -149,10 +149,11 @@ export function SettingsScreen() {
     return buildExportFiles({ ...data, appVersion: APP_VERSION });
   }, [exportQuery.data]);
 
-  const weekdayRefusal = useMemo(() => {
-    if (activeDraft === null || athlete?.daysPerWeek == null) return null;
+  const weekdayVerdict = useMemo(() => {
+    const none = { refusal: null, note: null };
+    if (activeDraft === null || athlete?.daysPerWeek == null) return none;
     if (activeDraft.weekdays.length !== athlete.daysPerWeek) {
-      return `Pick ${athlete.daysPerWeek} training days.`;
+      return { refusal: `Pick ${athlete.daysPerWeek} training days.`, note: null };
     }
     // A climber's picks are checked against the wall-aware placement, which is
     // what the generator will build (`house.sc.sport_requirements`).
@@ -167,18 +168,23 @@ export function SettingsScreen() {
     // The gym window as the draft has it, not as the row has it: the picks are
     // read against what the confirm is about to write.
     const window = clockWindowFrom(activeDraft.gymStart, activeDraft.gymEnd);
-    const verdict = validateWeekdays(
-      [...activeDraft.weekdays],
-      athlete.daysPerWeek,
-      loadRuleset(),
-      {
-        sport: (athlete.sport ?? 'none') as Sport,
-        ...(wall === null ? null : { wallWork: wall }),
-        ...(window === null ? null : { sessionWindow: window }),
-      },
-    );
-    return verdict.ok ? null : verdict.reason;
+    const context = {
+      sport: (athlete.sport ?? 'none') as Sport,
+      ...(wall === null ? null : { wallWork: wall }),
+      ...(window === null ? null : { sessionWindow: window }),
+    };
+    const picks = [...activeDraft.weekdays];
+    const verdict = validateWeekdays(picks, athlete.daysPerWeek, loadRuleset(), context);
+    if (!verdict.ok) return { refusal: verdict.reason, note: null };
+    // A pick that cannot carry the hard pulling day is not refused; the
+    // program demotes those pulls, and the sheet says so beside the days.
+    return {
+      refusal: null,
+      note: weekdayLayoutNote(picks, athlete.daysPerWeek, loadRuleset(), context),
+    };
   }, [activeDraft, athlete]);
+  const weekdayRefusal = weekdayVerdict.refusal;
+  const weekdayNote = weekdayVerdict.note;
 
   const changes = useMemo(() => {
     if (athlete === null || activeDraft === null) return [];
@@ -317,6 +323,7 @@ export function SettingsScreen() {
           setConfirming(false);
         }}
         weekdayRefusal={weekdayRefusal}
+        weekdayNote={weekdayNote}
         plan={plan}
         saving={regenerate.isPending}
         error={regenerate.error === null ? null : regenerate.error.message}

@@ -28,6 +28,8 @@ export interface ProgramSheetBodyProps {
   readonly draft: ProgramDraft;
   readonly onDraft: (draft: ProgramDraft) => void;
   readonly weekdayRefusal: string | null;
+  /** A legal pick that turns a climber's hard pulling into light work, said. */
+  readonly weekdayNote: string | null;
   readonly goalError: string | undefined;
   readonly dateError: string | undefined;
   /** Speed climbing and finger histories only: the wall and RNT questions. */
@@ -38,6 +40,7 @@ export function ProgramSheetBody({
   draft,
   onDraft,
   weekdayRefusal,
+  weekdayNote,
   goalError,
   dateError,
   showClimbing,
@@ -85,6 +88,11 @@ export function ProgramSheetBody({
           ))}
         </View>
         {weekdayRefusal === null ? null : <Notice text={weekdayRefusal} live />}
+        {weekdayRefusal !== null || weekdayNote === null ? null : (
+          <Text variant="caption" color="ink3" testID="settings-weekday-note">
+            {weekdayNote}
+          </Text>
+        )}
       </View>
 
       {showClimbing ? (
