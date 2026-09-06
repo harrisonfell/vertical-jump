@@ -75,6 +75,31 @@ describe('step 2 opening on the resolved row', () => {
     if (!initial.ready) return;
     expect(initial.values.weekdays).toEqual(OWNER_STEP_TWO.weekdays);
     expect(initial.values.boxSquatLb).toBe('320');
+    expect(initial.values.gymStart).toBe('08:00');
+    expect(initial.values.daysPerWeek).toBe(4);
+    expect(initial.sport).toBe('speed_climbing');
+  });
+
+  it('keeps the step 1 answers on file over the saved profile when both exist', async () => {
+    // Settings asked for the profile, then step 1 was saved as three days with
+    // no wall: step 2 has to read those, or it says "Pick 4" and checks the
+    // picks against a wall the athlete just took off.
+    const row: Athlete = {
+      ...(await ownerRow()),
+      daysPerWeek: 3,
+      wallWork: null,
+      sport: 'basketball',
+    };
+    const initial = stepTwoInitial({ ...RESOLVED, athlete: row, ownerRequested: true });
+
+    expect(initial.ready).toBe(true);
+    if (!initial.ready) return;
+    expect(initial.values.daysPerWeek).toBe(3);
+    expect(initial.sport).toBe('basketball');
+    expect(initial.wallWork).toBeNull();
+    // The rest of the profile still fills the form: that is what was asked for.
+    expect(initial.values.weekdays).toEqual(OWNER_STEP_TWO.weekdays);
+    expect(initial.values.boxSquatLb).toBe('320');
   });
 });
 

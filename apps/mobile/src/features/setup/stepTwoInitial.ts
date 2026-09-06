@@ -134,18 +134,30 @@ export function stepTwoInitial(input: StepTwoInitialInput): StepTwoInitial {
   if (input.pains === undefined) return NOT_READY;
 
   const athlete = input.athlete;
-  const owner = input.ownerRequested;
+  const rowSport = athlete?.sport ?? null;
+  const rowDays = athlete?.daysPerWeek ?? null;
+  // Step 1 is saved before step 2 opens. For the answers step 2 only reads
+  // (the days a week, the sport, the wall) the row outranks the saved profile
+  // once it carries them: a step 1 answered as three days must not open a
+  // step 2 that says "Pick 4" and checks the picks against a wall the athlete
+  // just changed.
+  const stepOneOnFile = rowSport !== null && rowDays !== null;
+  const owner = input.ownerRequested && !stepOneOnFile;
   return {
     ready: true,
     // "Use my saved profile" answers everything step 2 asks except the two
     // heights and the date, which the athlete types over the top of it.
-    values: owner
-      ? { ...OWNER_STEP_TWO, readiness: STEP_TWO_DEFAULTS.readiness }
+    values: input.ownerRequested
+      ? {
+          ...OWNER_STEP_TWO,
+          readiness: STEP_TWO_DEFAULTS.readiness,
+          ...(stepOneOnFile ? { daysPerWeek: daysOrDefault(rowDays) } : null),
+        }
       : storedValues(athlete, input.baseline, input.today),
     trainingAge: owner
       ? OWNER_STEP_ONE.trainingAge
       : trainingAgeFromYears(athlete?.trainingAgeYears ?? null),
-    sport: owner ? OWNER_STEP_ONE.sport : sportOf(athlete?.sport ?? null),
+    sport: owner ? OWNER_STEP_ONE.sport : sportOf(rowSport),
     wallWork: owner ? wallWorkFrom(OWNER_STEP_ONE) : readWallWork(athlete?.wallWork ?? null),
     sessionWindow: readSessionWindow(athlete?.sessionWindow ?? null),
     lowerLimbPain: hasLowerLimbPain(input.pains),

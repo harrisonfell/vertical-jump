@@ -89,6 +89,13 @@ export function useSaveStepOne(): UseMutationResult<StepOneSaveResult, Error, St
     mutationFn: async (values) => {
       if (db === null) throw new Error('The database is not open yet.');
       await writeStepOne(db, values, today);
+      // Step 2 seeds its form once, from the cache, the moment it mounts, and
+      // the routing runs before an invalidation's refetch has landed. So the
+      // saved row is read back here and awaited: what step 2 opens on is what
+      // step 1 just wrote (the days a week, the sport, the wall), not the row
+      // from before it. The key is a prefix of the pain rows' key, so both
+      // reads come back together.
+      await client.refetchQueries({ queryKey: queryKeys.athlete() }, { cancelRefetch: true });
       const athlete = await athleteStore.getAthlete(db);
       const pains = await athleteStore.listPainStatus(db);
       return { clearance: painGateFor({ athlete, pains, today }).clearanceScreen };
