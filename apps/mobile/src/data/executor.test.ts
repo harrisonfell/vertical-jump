@@ -161,3 +161,40 @@ describe('migrations', () => {
     await db.closeAsync();
   });
 });
+
+describe('the whole database as bytes', () => {
+  it('serializes to a SQLite file and can be replaced by one', async () => {
+    const source = await openMigratedTestDb();
+    await source.runAsync(
+      `INSERT INTO kv (key, value, updated_at) VALUES ('marker', 'from source', '2026-09-06T00:00:00.000Z')`,
+    );
+    const bytes = await source.serializeAsync();
+    expect(bytes.byteLength).toBeGreaterThan(0);
+    expect(String.fromCharCode(...bytes.subarray(0, 15))).toBe('SQLite format 3');
+    // Exporting must not close the connection or drop its pragmas.
+    const pragma = await source.getFirstAsync<{ foreign_keys: number }>('PRAGMA foreign_keys');
+    expect(pragma?.foreign_keys).toBe(1);
+
+    const target = await openMigratedTestDb();
+    await target.runAsync(
+      `INSERT INTO kv (key, value, updated_at) VALUES ('marker', 'from target', '2026-09-06T00:00:00.000Z')`,
+    );
+    await target.replaceAsync(bytes);
+    const marker = await target.getFirstAsync<{ value: string }>(
+      `SELECT value FROM kv WHERE key = 'marker'`,
+    );
+    expect(marker?.value).toBe('from source');
+    expect(await currentSchemaVersion(target)).toBe(SCHEMA_VERSION);
+    const replacedPragma = await target.getFirstAsync<{ foreign_keys: number }>('PRAGMA foreign_keys');
+    expect(replacedPragma?.foreign_keys).toBe(1);
+
+    // The replaced database is a working one: transactions still serialise.
+    await target.withTransactionAsync(async () => {
+      await target.runAsync(`UPDATE kv SET value = 'edited' WHERE key = 'marker'`);
+    });
+    expect((await target.getFirstAsync<{ value: string }>(`SELECT value FROM kv WHERE key = 'marker'`))?.value).toBe('edited');
+
+    await source.closeAsync();
+    await target.closeAsync();
+  });
+});

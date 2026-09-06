@@ -368,6 +368,87 @@ export interface SyncPullResponse {
   readonly serverTime: IsoTimestamp;
 }
 
+/* -------------------------------------------------------------- snapshot */
+
+/**
+ * The athlete's whole database, kept on the server so every device opens on
+ * the same data. The bytes travel as `application/octet-stream`; everything
+ * about them travels as headers, spelled from this one list on both sides.
+ */
+export const SNAPSHOT_HEADERS = {
+  version: 'x-snapshot-version',
+  schema: 'x-snapshot-schema',
+  /** On a save: the version this device adopted last, or `none`. */
+  base: 'x-snapshot-base',
+  /** On a save: `1` saves over a newer copy on purpose. */
+  force: 'x-snapshot-force',
+  createdAt: 'x-snapshot-created-at',
+  origin: 'x-snapshot-origin',
+  device: 'x-snapshot-device',
+  sha256: 'x-snapshot-sha256',
+} as const;
+
+/** The most a save may carry; the server refuses more with 413. */
+export const SNAPSHOT_MAX_BYTES = 4 * 1024 * 1024;
+
+export interface SnapshotMeta {
+  readonly version: number;
+  readonly byteLength: number;
+  readonly sha256: string;
+  /** The app's own migration number the file was written under. */
+  readonly schemaVersion: number;
+  readonly origin: 'web' | 'device';
+  readonly deviceId: string | null;
+  readonly baseVersion: number | null;
+  readonly createdAt: IsoTimestamp;
+}
+
+function isRecordValue(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+/** A snapshot's facts out of a JSON body, read defensively. */
+export function readSnapshotMeta(value: unknown): SnapshotMeta | null {
+  if (!isRecordValue(value)) return null;
+  const version = value['version'];
+  const schemaVersion = value['schemaVersion'];
+  const createdAt = value['createdAt'];
+  if (typeof version !== 'number' || !Number.isSafeInteger(version) || version <= 0) return null;
+  if (typeof schemaVersion !== 'number' || !Number.isSafeInteger(schemaVersion)) return null;
+  if (typeof createdAt !== 'string' || createdAt === '') return null;
+  const byteLength = value['byteLength'];
+  const baseVersion = value['baseVersion'];
+  const deviceId = value['deviceId'];
+  return {
+    version,
+    byteLength: typeof byteLength === 'number' ? byteLength : 0,
+    sha256: typeof value['sha256'] === 'string' ? value['sha256'] : '',
+    schemaVersion,
+    origin: value['origin'] === 'device' ? 'device' : 'web',
+    deviceId: typeof deviceId === 'string' && deviceId !== '' ? deviceId : null,
+    baseVersion: typeof baseVersion === 'number' && baseVersion > 0 ? baseVersion : null,
+    createdAt,
+  };
+}
+
+/** The same facts off a byte response's headers. */
+export function snapshotMetaFromHeaders(
+  read: (name: string) => string | null,
+  byteLength: number,
+): SnapshotMeta | null {
+  const base = read(SNAPSHOT_HEADERS.base);
+  return readSnapshotMeta({
+    version: Number(read(SNAPSHOT_HEADERS.version)),
+    schemaVersion: Number(read(SNAPSHOT_HEADERS.schema)),
+    createdAt: read(SNAPSHOT_HEADERS.createdAt),
+    origin: read(SNAPSHOT_HEADERS.origin),
+    deviceId: read(SNAPSHOT_HEADERS.device),
+    sha256: read(SNAPSHOT_HEADERS.sha256),
+    baseVersion: base === null || base === 'none' ? null : Number(base),
+    byteLength,
+  });
+}
+
 /* ---------------------------------------------------------------- export */
 
 export type ExportFileName =
@@ -401,6 +482,8 @@ export const API = {
   mirrors: '/api/mirrors',
   syncPush: '/api/sync/push',
   syncPull: '/api/sync/pull',
+  snapshot: '/api/snapshot',
+  snapshotVersions: '/api/snapshot/versions',
   exportData: '/api/export',
 } as const;
 

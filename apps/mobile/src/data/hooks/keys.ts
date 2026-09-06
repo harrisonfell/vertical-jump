@@ -40,6 +40,8 @@ export const queryKeys = {
     date,
   ],
   sync: (): readonly unknown[] => ['sync'],
+  /** The database copy on the server: this device's standing, and the versions kept. */
+  snapshot: (): readonly unknown[] => ['snapshot'],
   autoregulation: (): readonly unknown[] => ['autoregulation'],
   imports: (): readonly unknown[] => ['imports'],
 } as const;

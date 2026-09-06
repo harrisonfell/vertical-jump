@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { WHOOP_START_TOKEN_PARAM, whoopStartQuery } from '../../../../lib/api-contract';
 import { whoopOauthState } from '../../../../db/tables/whoop';
-import { env } from '../../../../lib/env';
+import { env, whoopConfigured, whoopEnv } from '../../../../lib/env';
 import { log } from '../../../../lib/logger';
 import { database } from '../../../../lib/routes/db';
 import { deviceIdOf, guard, isCrossSiteNavigation } from '../../../../lib/routes/guard';
@@ -59,8 +59,12 @@ export async function GET(request: NextRequest): Promise<Response> {
     t: url.searchParams.get(WHOOP_START_TOKEN_PARAM) ?? undefined,
   });
   if (!parsed.success) return badRequest('That start request is not a shape this path takes.');
+  if (!whoopConfigured()) {
+    return fail(503, 'whoop_not_configured', 'Whoop is not set up on this server yet.');
+  }
 
   const config = env();
+  const whoop = whoopEnv();
   const now = new Date();
 
   let principal: Principal;
@@ -102,8 +106,8 @@ export async function GET(request: NextRequest): Promise<Response> {
   }
 
   const target = authorizeUrl({
-    clientId: config.WHOOP_CLIENT_ID,
-    redirectUri: config.WHOOP_REDIRECT_URI,
+    clientId: whoop.WHOOP_CLIENT_ID,
+    redirectUri: whoop.WHOOP_REDIRECT_URI,
     state,
   });
 

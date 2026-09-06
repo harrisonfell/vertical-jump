@@ -28,6 +28,13 @@ export interface DbState {
   /** The athlete's own today, from their timezone and rollover hour. */
   readonly today: string;
   readonly timezone: string;
+  /**
+   * Bumps when the database underneath was swapped for a copy from the
+   * server, so anything that read it once at boot reads it again.
+   */
+  readonly generation: number;
+  /** Re-reads the athlete's clock after such a swap. */
+  readonly reload: () => Promise<void>;
 }
 
 const FALLBACK_TIMEZONE = 'UTC';
@@ -117,6 +124,15 @@ export function DbProvider({ children, executor: provided }: DbProviderProps): R
   const [error, setError] = useState<Error | null>(null);
   const [timezone, setTimezone] = useState<string>(deviceTimezone);
   const [rolloverHour, setRolloverHour] = useState(0);
+  const [generation, setGeneration] = useState(0);
+
+  const reload = useCallback(async (): Promise<void> => {
+    if (executor === null) return;
+    const stored = await getAthlete(executor);
+    setTimezone(stored?.timezone ?? deviceTimezone());
+    setRolloverHour(stored?.rolloverHour ?? 0);
+    setGeneration((current) => current + 1);
+  }, [executor]);
 
   useEffect(() => {
     let cancelled = false;
@@ -155,8 +171,8 @@ export function DbProvider({ children, executor: provided }: DbProviderProps): R
   const value = useMemo<DbState>(() => {
     const status: DbState['status'] =
       error !== null ? 'error' : executor !== null ? 'ready' : 'opening';
-    return { status, executor, error, timezone, today };
-  }, [executor, error, timezone, today]);
+    return { status, executor, error, timezone, today, generation, reload };
+  }, [executor, error, timezone, today, generation, reload]);
 
   return <DbContext.Provider value={value}>{children}</DbContext.Provider>;
 }

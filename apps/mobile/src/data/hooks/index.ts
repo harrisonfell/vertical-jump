@@ -92,6 +92,15 @@ export {
   type WhoopStripDay,
 } from './useWhoopStrip';
 export {
+  SNAPSHOT_DEBOUNCE_MS,
+  setSnapshotRemoteForTests,
+  useSnapshotActions,
+  useSnapshotStatus,
+  useSnapshotSync,
+  useSnapshotVersions,
+  type SnapshotActions,
+} from './useSnapshot';
+export {
   pendingAgeDays,
   useMarkAttempted,
   useMarkSynced,

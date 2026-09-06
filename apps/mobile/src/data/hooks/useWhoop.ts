@@ -312,6 +312,9 @@ export function useSyncNow(): ReturnType<typeof useMutation<SyncRunResult, Error
   const db = useDbOrNull();
   const client = useQueryClient();
   return useMutation<SyncRunResult, Error, void>({
+    // Named, so the snapshot sync knows this write is its sibling's and not a
+    // change of the athlete's worth saving a copy for.
+    mutationKey: [...queryKeys.sync(), 'now'],
     mutationFn: async () => {
       if (db === null) throw new Error('The database is not open yet.');
       return runSync(db, { force: true });

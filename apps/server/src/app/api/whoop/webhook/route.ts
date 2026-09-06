@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { whoopWebhookBody } from '../../../../lib/api-contract';
-import { env } from '../../../../lib/env';
+import { whoopConfigured, whoopEnv } from '../../../../lib/env';
 import { errorMessage, log } from '../../../../lib/logger';
 import { database } from '../../../../lib/routes/db';
 import { fail } from '../../../../lib/routes/respond';
@@ -28,7 +28,10 @@ function noContent(): NextResponse {
 export async function POST(request: NextRequest): Promise<Response> {
   const now = new Date();
   const rawBody = await request.text();
-  const config = env();
+  if (!whoopConfigured()) {
+    return fail(503, 'whoop_not_configured', 'Whoop is not set up on this server yet.');
+  }
+  const config = whoopEnv();
 
   const check = verifyWebhook(rawBody, request.headers, config.WHOOP_CLIENT_SECRET, now);
   if (!check.ok) {

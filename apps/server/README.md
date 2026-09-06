@@ -12,7 +12,11 @@ The phone never holds a Whoop token; it opens `/api/whoop/start` in a system aut
 
 `public/app` is generated and git-ignored. The phone's EAS build sets `EXPO_PUBLIC_SERVER_URL` to the absolute domain instead; unset, as in `npm run web`, still means no server at all.
 
-Migrations: `npm run db:generate -w @vert/server` writes SQL into `drizzle/`; apply it with `npm run db:migrate -w @vert/server`, which runs drizzle's migrator against `DATABASE_URL` and records what it ran, so a second deploy is a no-op. `db:push` is for a scratch database only.
+Migrations: `npm run db:generate -w @vert/server` writes SQL into `drizzle/`; apply it with `npm run db:migrate -w @vert/server`, which runs drizzle's migrator against `DATABASE_URL` and records what it ran, so a second deploy is a no-op. `db:push` is for a scratch database only. The deploy build (`scripts/build.mjs`) runs the migrator itself whenever `DATABASE_URL` is set, so a push to `main` ships the schema with the code.
+
+## The database snapshot
+
+Every device keeps its own SQLite file, and the op feed only carries patches, so the file itself is what keeps the phone and the web on the same data. `PUT /api/snapshot` saves a device's whole database (raw bytes, facts in `x-snapshot-*` headers); `GET /api/snapshot` hands the newest back, `?version=` a specific one, `?meta=1` only the facts. A save names the version the device adopted last in `x-snapshot-base`; when a newer copy landed since, the answer is 409 with that copy, and the app decides (its own copy stands and the passed one stays restorable). The last 20 copies are kept; `GET /api/snapshot/versions` lists them. Either credential works: the signed-in web, or a paired phone.
 
 Tests: `npm test` at the repo root applies `drizzle/*.sql` to pglite in process, so the suite needs no database.
 
@@ -34,9 +38,9 @@ Set each one for Production and Preview. Secret means it is a credential: never 
 | Variable | Secret | What it is |
 | --- | --- | --- |
 | `DATABASE_URL` | yes | Neon pooled connection string. Set by the Neon integration. |
-| `WHOOP_CLIENT_ID` | no | From the Whoop developer dashboard. |
-| `WHOOP_CLIENT_SECRET` | yes | From the same app. |
-| `WHOOP_REDIRECT_URI` | no | `https://<domain>/api/whoop/callback`, character for character the same as the one registered with Whoop. |
+| `WHOOP_CLIENT_ID` | no | From the Whoop developer dashboard. Optional: without the three Whoop values the Whoop paths answer 503 and everything else runs. |
+| `WHOOP_CLIENT_SECRET` | yes | From the same app. Optional, as above. |
+| `WHOOP_REDIRECT_URI` | no | `https://<domain>/api/whoop/callback`, character for character the same as the one registered with Whoop. Optional, as above. |
 | `PUBLIC_BASE_URL` | no | `https://<domain>`. Builds the redirect and the bounce back to `/settings/whoop`. |
 | `APP_PASSPHRASE_HASH` | yes | scrypt hash of the owner's passphrase. |
 | `SESSION_SECRET` | yes | At least 32 bytes of entropy. Signs the session cookie and the OAuth state. |

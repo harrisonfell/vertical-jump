@@ -16,14 +16,33 @@ export interface SqlJsExecutorOptions {
   readonly onWrite?: () => void;
   /** Called by closeAsync, before the database handle is released. */
   readonly onClose?: () => Promise<void>;
+  /**
+   * Opens a fresh sql.js database over these bytes, for `replaceAsync`. The
+   * executor cannot construct one itself: only the caller holds the engine.
+   */
+  readonly reopen?: (bytes: Uint8Array) => Database;
 }
 
 const WRITE_HEAD = /^\s*(insert|update|delete|replace|create|drop|alter|pragma)/i;
 
-export function createSqlJsExecutor(db: Database, options: SqlJsExecutorOptions = {}): SqlExecutor {
+export function createSqlJsExecutor(
+  initial: Database,
+  options: SqlJsExecutorOptions = {},
+): SqlExecutor {
+  let db = initial;
   let queue: Promise<void> = Promise.resolve();
   let depth = 0;
   let dirty = false;
+
+  /** Runs fn once every queued transaction has finished, and holds the next. */
+  const exclusive = <T>(fn: () => Promise<T>): Promise<T> => {
+    const next = queue.then(fn, fn);
+    queue = next.then(
+      () => undefined,
+      () => undefined,
+    );
+    return next;
+  };
 
   const bind = (params?: SqlParams): BindParams => (params ? [...params] : []);
 
@@ -95,12 +114,32 @@ export function createSqlJsExecutor(db: Database, options: SqlJsExecutorOptions 
         notify();
       };
 
-      const next = queue.then(run, run);
-      queue = next.then(
-        () => undefined,
-        () => undefined,
-      );
-      return next;
+      return exclusive(run);
+    },
+
+    serializeAsync(): Promise<Uint8Array> {
+      // sql.js closes and reopens the connection to export it, which drops
+      // the connection-scoped pragma, so it is put back before anyone writes.
+      return exclusive(async () => {
+        const bytes = db.export();
+        db.run('PRAGMA foreign_keys = ON;');
+        return bytes;
+      });
+    },
+
+    replaceAsync(bytes: Uint8Array): Promise<void> {
+      const reopen = options.reopen;
+      if (reopen === undefined) {
+        return Promise.reject(new Error('This executor was opened without a way to reopen.'));
+      }
+      return exclusive(async () => {
+        const next = reopen(bytes);
+        next.run('PRAGMA foreign_keys = ON;');
+        db.close();
+        db = next;
+        dirty = true;
+        notify();
+      });
     },
 
     async closeAsync(): Promise<void> {

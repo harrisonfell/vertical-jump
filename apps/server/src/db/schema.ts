@@ -7,3 +7,4 @@
 export * from './tables/account';
 export * from './tables/whoop';
 export * from './tables/mirror';
+export * from './tables/snapshot';

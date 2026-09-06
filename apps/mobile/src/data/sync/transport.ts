@@ -337,15 +337,19 @@ export async function apiFetch(path: string, options: ApiFetchOptions = {}): Pro
 
   const body = await readBody(response);
   if (response.ok) return body;
+  throw errorFor(response, body);
+}
 
+/** The error a non-2xx answer becomes, from its status and its parsed body. */
+function errorFor(response: Response, body: unknown): ApiRequestError {
   const parsed = errorBodyOf(body);
   const retryAt = retryAtFrom(body, response.headers.get('retry-after'));
 
   if (response.status === 429) {
-    throw new ApiRequestError('rate_limited', 'Rate limited.', 429, retryAt, parsed);
+    return new ApiRequestError('rate_limited', 'Rate limited.', 429, retryAt, parsed);
   }
   if (response.status === 401 || response.status === 403) {
-    throw new ApiRequestError(
+    return new ApiRequestError(
       'needs_reauth',
       parsed?.message ?? 'This device is no longer paired.',
       response.status,
@@ -353,13 +357,86 @@ export async function apiFetch(path: string, options: ApiFetchOptions = {}): Pro
       parsed,
     );
   }
-  throw new ApiRequestError(
+  return new ApiRequestError(
     'api_down',
     parsed?.message ?? `The server answered ${response.status}.`,
     response.status,
     retryAt,
     parsed,
   );
+}
+
+/* ----------------------------------------------------------------- bytes */
+
+export interface BytesFetchOptions {
+  readonly method?: 'GET' | 'PUT';
+  /** Sent as `application/octet-stream`. */
+  readonly body?: Uint8Array;
+  readonly headers?: Readonly<Record<string, string>>;
+  readonly query?: ApiFetchOptions['query'];
+  readonly signal?: AbortSignal;
+}
+
+export interface BytesResponse {
+  readonly status: number;
+  /** A header's value, or null. The response's own headers, unparsed. */
+  readonly header: (name: string) => string | null;
+  /** The body when the server answered with bytes; null for 204 or JSON. */
+  readonly bytes: Uint8Array | null;
+  /** The body when the server answered with JSON; null otherwise. */
+  readonly json: unknown;
+}
+
+/**
+ * One request that carries or fetches raw bytes: the database snapshot.
+ *
+ * Same credential, same base, same error mapping as `apiFetch`, with two
+ * differences a snapshot needs: the body goes out as bytes rather than JSON,
+ * and a 409 comes back as a result rather than a throw, because a save over a
+ * newer copy is an answer the caller decides about, not a failure.
+ */
+export async function apiFetchBytes(
+  path: string,
+  options: BytesFetchOptions = {},
+): Promise<BytesResponse> {
+  const base = serverUrl();
+  if (base === null) throw new ApiRequestError('network', 'No server is configured.');
+
+  const headers: Record<string, string> = {
+    accept: 'application/octet-stream, application/json',
+    ...options.headers,
+  };
+  if (options.body !== undefined) headers['content-type'] = 'application/octet-stream';
+  const credentials = await readCredentials();
+  if (credentials !== null) headers['authorization'] = `Bearer ${credentials.deviceSecret}`;
+
+  let response: Response;
+  try {
+    response = await fetch(`${base}${withQuery(path, options.query)}`, {
+      method: options.method ?? 'GET',
+      headers,
+      credentials: 'include',
+      ...(options.body === undefined ? null : { body: options.body as BodyInit }),
+      ...(options.signal === undefined ? null : { signal: options.signal }),
+    });
+  } catch {
+    throw new ApiRequestError('network', 'Could not reach the server.');
+  }
+
+  const header = (name: string): string | null => response.headers.get(name);
+  if (response.status === 204) return { status: 204, header, bytes: null, json: null };
+
+  const type = response.headers.get('content-type') ?? '';
+  if (response.ok && type.includes('application/octet-stream')) {
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    return { status: response.status, header, bytes, json: null };
+  }
+
+  const body = await readBody(response);
+  if (response.ok || response.status === 409) {
+    return { status: response.status, header, bytes: null, json: body };
+  }
+  throw errorFor(response, body);
 }
 
 /* --------------------------------------------------------- auth sessions */

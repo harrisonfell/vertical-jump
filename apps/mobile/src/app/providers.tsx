@@ -6,7 +6,7 @@ import { useEffect, useMemo, type ReactNode } from 'react';
 import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DbProvider } from '@/data/db';
-import { useServerSync } from '@/data/hooks';
+import { useServerSync, useSnapshotSync } from '@/data/hooks';
 import { useOnlineWatcher } from '@/state/sync';
 import { GestureRoot } from '@/ui/gestureRoot';
 import { useTheme } from '@/ui';
@@ -84,6 +84,7 @@ export function AppChrome({ children }: { readonly children: ReactNode }) {
   const { scheme } = useTheme();
   useOnlineWatcher();
   useServerSync();
+  useSnapshotSync();
   useWebReset();
   useRestTimerPersistence();
 

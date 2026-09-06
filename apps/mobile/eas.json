@@ -14,13 +14,19 @@
       "autoIncrement": true,
       "ios": {
         "simulator": false
+      },
+      "env": {
+        "EXPO_PUBLIC_SERVER_URL": "https://vert-seven-sepia.vercel.app"
       }
     },
     "production": {
       "extends": "base",
       "channel": "production",
       "distribution": "store",
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_SERVER_URL": "https://vert-seven-sepia.vercel.app"
+      }
     }
   },
   "submit": {

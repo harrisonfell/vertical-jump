@@ -53,17 +53,20 @@ export async function openExecutor(options?: OpenExecutorOptions): Promise<SqlEx
 
   let timer: ReturnType<typeof setTimeout> | null = null;
   let flushing: Promise<void> = Promise.resolve();
+  let executor: SqlExecutor | null = null;
 
+  // Through the executor rather than `db.export()` directly: the executor
+  // serialises against its own transactions and may have swapped the handle
+  // for a snapshot pulled from the server, and both are its to know.
   const flush = (): Promise<void> => {
     if (timer !== null) {
       clearTimeout(timer);
       timer = null;
     }
-    const bytes = db.export();
-    flushing = flushing.then(
-      () => writeBytes(key, bytes),
-      () => writeBytes(key, bytes),
-    );
+    const current = executor;
+    if (current === null) return Promise.resolve();
+    const persist = async (): Promise<void> => writeBytes(key, await current.serializeAsync());
+    flushing = flushing.then(persist, persist);
     return flushing;
   };
 
@@ -86,7 +89,8 @@ export async function openExecutor(options?: OpenExecutorOptions): Promise<SqlEx
     window.addEventListener('pagehide', onVisibilityChange);
   }
 
-  return createSqlJsExecutor(db, {
+  executor = createSqlJsExecutor(db, {
+    reopen: (bytes) => new SQL.Database(bytes),
     onWrite: scheduleFlush,
     onClose: async () => {
       if (typeof document !== 'undefined') {
@@ -98,6 +102,7 @@ export async function openExecutor(options?: OpenExecutorOptions): Promise<SqlEx
       await flush();
     },
   });
+  return executor;
 }
 
 /* ------------------------------------------------------------- IndexedDB */

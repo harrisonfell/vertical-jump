@@ -20,7 +20,7 @@ import type { Database } from '../../db/client';
 import type { WhoopStatus } from '../api-contract';
 import { WHOOP_CONNECTION_ID, whoopConnection } from '../../db/tables/whoop';
 import { decryptToken, encryptToken } from '../crypto';
-import { env } from '../env';
+import { env, whoopEnv } from '../env';
 import { errorMessage, log } from '../logger';
 import { WHOOP_PATHS, WHOOP_TOKEN_URL, WhoopApiError, whoopFetchParsed } from './api';
 
@@ -55,7 +55,7 @@ function toTokens(body: z.infer<typeof tokenResponse>, now: Date): WhoopTokens {
 
 /** The authorization code, once, at the callback. */
 export async function exchangeCode(code: string, now: Date = new Date()): Promise<WhoopTokens> {
-  const config = env();
+  const config = whoopEnv();
   const body = await whoopFetchParsed(
     {
       path: WHOOP_TOKEN_URL,
@@ -78,7 +78,7 @@ export async function refreshTokens(
   refreshToken: string,
   now: Date = new Date(),
 ): Promise<WhoopTokens> {
-  const config = env();
+  const config = whoopEnv();
   const body = await whoopFetchParsed(
     {
       path: WHOOP_TOKEN_URL,

@@ -13,7 +13,7 @@ export async function openTestExecutor(): Promise<SqlExecutor> {
   const SQL = await initSqlJs();
   const db = new SQL.Database();
   db.run('PRAGMA foreign_keys = ON;');
-  return createSqlJsExecutor(db);
+  return createSqlJsExecutor(db, { reopen: (bytes) => new SQL.Database(bytes) });
 }
 
 export async function openMigratedTestDb(): Promise<SqlExecutor> {

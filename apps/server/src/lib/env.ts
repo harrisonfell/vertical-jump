@@ -26,11 +26,24 @@ const encryptionKey = z
     message: 'must be exactly 32 bytes, base64 encoded',
   });
 
+/** Optional, and an empty value in the dashboard counts as unset. */
+const optional = () =>
+  z
+    .string()
+    .optional()
+    .transform((value) => (value === undefined || value.trim() === '' ? undefined : value));
+
 const schema = z.object({
   DATABASE_URL: z.string().min(1),
-  WHOOP_CLIENT_ID: z.string().min(1),
-  WHOOP_CLIENT_SECRET: z.string().min(1),
-  WHOOP_REDIRECT_URI: z.string().min(1),
+  /**
+   * The Whoop app, once it exists. Sign-in, pairing and the database sync do
+   * not need it, so the three are optional here and `whoopEnv()` is what the
+   * Whoop paths read: a missing value answers "not set up" on those paths
+   * rather than refusing every path on the server.
+   */
+  WHOOP_CLIENT_ID: optional(),
+  WHOOP_CLIENT_SECRET: optional(),
+  WHOOP_REDIRECT_URI: optional(),
   APP_PASSPHRASE_HASH: z.string().min(1),
   /**
    * At least 32 bytes of entropy. `min(32)` on the string would accept a
@@ -71,6 +84,47 @@ export function env(): Env {
 /** Tests and the fixture path set their own values, then clear the cache. */
 export function resetEnvCache(): void {
   cached = null;
+}
+
+export interface WhoopEnv {
+  readonly WHOOP_CLIENT_ID: string;
+  readonly WHOOP_CLIENT_SECRET: string;
+  readonly WHOOP_REDIRECT_URI: string;
+}
+
+/** Thrown by a Whoop path on a server whose Whoop app is not set up yet. */
+export class WhoopNotConfiguredError extends Error {
+  constructor() {
+    super('Whoop is not set up on this server yet. See .env.example.');
+    this.name = 'WhoopNotConfiguredError';
+  }
+}
+
+/** True once all three Whoop values are set. */
+export function whoopConfigured(): boolean {
+  const config = env();
+  return (
+    config.WHOOP_CLIENT_ID !== undefined &&
+    config.WHOOP_CLIENT_SECRET !== undefined &&
+    config.WHOOP_REDIRECT_URI !== undefined
+  );
+}
+
+/** The three Whoop values, or a `WhoopNotConfiguredError` when any is missing. */
+export function whoopEnv(): WhoopEnv {
+  const config = env();
+  if (
+    config.WHOOP_CLIENT_ID === undefined ||
+    config.WHOOP_CLIENT_SECRET === undefined ||
+    config.WHOOP_REDIRECT_URI === undefined
+  ) {
+    throw new WhoopNotConfiguredError();
+  }
+  return {
+    WHOOP_CLIENT_ID: config.WHOOP_CLIENT_ID,
+    WHOOP_CLIENT_SECRET: config.WHOOP_CLIENT_SECRET,
+    WHOOP_REDIRECT_URI: config.WHOOP_REDIRECT_URI,
+  };
 }
 
 /** True when Whoop calls replay fixtures/whoop/*.json instead of the network. */

@@ -16,4 +16,5 @@ export * from './contract/primitives';
 export * from './contract/access';
 export * from './contract/whoop';
 export * from './contract/sync';
+export * from './contract/snapshot';
 export * from './contract/endpoints';

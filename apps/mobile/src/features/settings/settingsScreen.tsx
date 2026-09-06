@@ -28,6 +28,7 @@ import { useSetupPrefill } from '@/state/setupPrefill';
 import { AthleteSection, ReassessSheet, type AthleteAnswer } from './athleteSection';
 import { AutoregulationSection } from './autoregulationSection';
 import { DataSection } from './dataSection';
+import { SyncSection } from './syncSection';
 import { LiftsSection } from './liftsSection';
 import { LinkSection } from './linkSection';
 import { ProgramSection } from './programSection';
@@ -384,6 +385,7 @@ export function SettingsScreen() {
     ),
     data: (
       <View onLayout={() => { if (!exportOpen) setExportOpen(true); }}>
+        <SyncSection />
         <DataSection
           files={files}
           onSave={(file) => void onSave(file)}

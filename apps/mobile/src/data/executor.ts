@@ -31,6 +31,16 @@ export interface SqlExecutor {
   getFirstAsync<T>(sql: string, params?: SqlParams): Promise<T | null>;
   /** Run fn inside a transaction; any throw rolls the whole thing back. */
   withTransactionAsync(fn: () => Promise<void>): Promise<void>;
+  /**
+   * The whole database as one SQLite file, for the snapshot the server keeps.
+   * Waits for any open transaction; never runs inside one.
+   */
+  serializeAsync(): Promise<Uint8Array>;
+  /**
+   * Replaces the whole database with this SQLite file. Everything cached
+   * above the executor is stale afterwards; the caller invalidates it.
+   */
+  replaceAsync(bytes: Uint8Array): Promise<void>;
   /** Release the handle. Flushes pending persistence on web. */
   closeAsync(): Promise<void>;
 }

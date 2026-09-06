@@ -23,6 +23,8 @@ export const API = {
   mirrors: '/api/mirrors',
   syncPush: '/api/sync/push',
   syncPull: '/api/sync/pull',
+  snapshot: '/api/snapshot',
+  snapshotVersions: '/api/snapshot/versions',
   exportData: '/api/export',
 } as const;
 
@@ -48,5 +50,7 @@ export const AUTH: Readonly<Record<ApiPath, 'public' | 'session' | 'bearer' | 'e
   '/api/mirrors': 'either',
   '/api/sync/push': 'either',
   '/api/sync/pull': 'either',
+  '/api/snapshot': 'either',
+  '/api/snapshot/versions': 'either',
   '/api/export': 'either',
 };
