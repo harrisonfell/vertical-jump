@@ -12,6 +12,7 @@ import {
 import { listSessionExercises, listSessionsByWeek } from '../../data/store/sessions';
 import type { Athlete } from '../../data/types';
 import { buildProgramPlan, type BuildPlan } from './buildProgram';
+import { writeStepCount, type WriteProgress } from './buildProgress';
 import { writeProgramPlan } from './writeProgram';
 
 /**
@@ -176,5 +177,26 @@ describe('writeProgramPlan', () => {
     // The one place a load reaches the screen: the engine's own display string.
     expect(sets[0]?.displayLoad).toMatch(/lb$/);
     expect(sets[0]?.restS).toBeGreaterThan(0);
+  });
+
+  it('reports every write in order, one per step, ending at the total', async () => {
+    const fresh = await openMigratedTestDb();
+    await upsertAthlete(fresh, { ...athlete });
+    const heard: WriteProgress[] = [];
+    await writeProgramPlan(fresh, plan, (progress) => heard.push(progress));
+
+    const total = writeStepCount(plan);
+    expect(total).toBe(1 + 12 + 4);
+    expect(heard).toHaveLength(total);
+    expect(heard.map((progress) => progress.done)).toEqual(
+      heard.map((_progress, index) => index + 1),
+    );
+    expect(heard.every((progress) => progress.total === total)).toBe(true);
+
+    expect(heard[0]?.step).toEqual({ kind: 'program' });
+    expect(heard[1]?.step).toEqual({ kind: 'week', w: 1, of: 12 });
+    expect(heard[12]?.step).toEqual({ kind: 'week', w: 12, of: 12 });
+    expect(heard[13]?.step).toEqual({ kind: 'session', n: 1, of: 4 });
+    expect(heard[total - 1]?.step).toEqual({ kind: 'session', n: 4, of: 4 });
   });
 });

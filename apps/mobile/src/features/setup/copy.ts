@@ -157,6 +157,10 @@ export const SETUP_COPY = {
   /* build */
   buildTitle: 'Build program',
   buildRunning: 'Building your program',
+  buildRuleBook: 'Running the rule book',
+  buildSavingProgram: 'Saving the program',
+  buildWritingWeek: 'Writing week',
+  buildWritingSession: 'Writing week 1, session',
   buildLead: 'This runs the rule book over your answers and writes week 1.',
   buildAction: 'Build program',
   buildRetry: 'Build again',

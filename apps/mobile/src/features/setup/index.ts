@@ -223,6 +223,17 @@ export {
   type BuildPlan,
 } from './buildProgram';
 export { writeProgramPlan } from './writeProgram';
+export {
+  RULE_BOOK_PROGRESS,
+  progressFraction,
+  progressFromWrite,
+  writeStepCount,
+  writeStepLine,
+  type BuildProgress,
+  type WriteProgress,
+  type WriteProgressListener,
+  type WriteStep,
+} from './buildProgress';
 
 export { GateScreen } from './gateScreen';
 export { StepOneScreen } from './stepOneScreen';

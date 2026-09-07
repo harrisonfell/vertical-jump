@@ -13,7 +13,17 @@ import {
   usePainStatus,
   useToday,
 } from '@/data';
-import { Button, ButtonRow, Notice, Screen, Sheet, Skeleton, Text, space } from '@/ui';
+import {
+  Button,
+  ButtonRow,
+  Notice,
+  ProgressBar,
+  Screen,
+  Sheet,
+  Skeleton,
+  Text,
+  space,
+} from '@/ui';
 import { SETUP_COPY, formatDayDate } from './copy';
 import {
   GenerationBlockedError,
@@ -21,6 +31,12 @@ import {
   buildProgramPlan,
   type BuildPlan,
 } from './buildProgram';
+import {
+  RULE_BOOK_PROGRESS,
+  progressFraction,
+  progressFromWrite,
+  type BuildProgress,
+} from './buildProgress';
 import { writeProgramPlan } from './writeProgram';
 import { StepFrame } from './parts';
 import { baselineReading, useBaselineTest } from './useBaseline';
@@ -38,6 +54,15 @@ interface Failure {
   readonly lines: readonly string[];
 }
 
+/**
+ * One turn of the event loop, so the "Running the rule book" line is on
+ * screen before the engine's synchronous run holds the thread. Without it
+ * the bar's first visible state would be the first write.
+ */
+function yieldToPaint(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 export function BuildScreen() {
   const router = useRouter();
   const today = useToday();
@@ -50,12 +75,16 @@ export function BuildScreen() {
 
   const [plan, setPlan] = useState<BuildPlan | null>(null);
   const [failure, setFailure] = useState<Failure | null>(null);
+  const [progress, setProgress] = useState<BuildProgress | null>(null);
 
   const build = useMutation<BuildPlan, Error, void>({
     mutationFn: async () => {
       if (db === null) throw new Error('The database is not open yet.');
       const row = athlete.data;
       if (row == null) throw new Error('Your answers have not saved yet.');
+      setFailure(null);
+      setProgress(RULE_BOOK_PROGRESS);
+      await yieldToPaint();
       const built = buildProgramPlan({
         athlete: row,
         pains: pains.data ?? [],
@@ -63,17 +92,25 @@ export function BuildScreen() {
         today,
         generatedAt: nowIso(),
       });
-      await writeProgramPlan(db, built);
+      await writeProgramPlan(db, built, (step) => setProgress(progressFromWrite(step)));
+      // The tab gate reads the current program from the cache the moment the
+      // tabs mount, and the cached answer is still "no program" from the boot
+      // that sent the athlete here. Invalidating alone is not enough: with no
+      // tab mounted there is nothing to refetch, so "Go to Today" would land
+      // on the gate, read the stale null, and bounce straight back to this
+      // screen. Read the row back and wait for it before the sheet opens.
+      await client.refetchQueries({ queryKey: queryKeys.currentProgram() }, { cancelRefetch: true });
       return built;
     },
     onSuccess: (built) => {
       setFailure(null);
       setPlan(built);
-      void client.invalidateQueries({ queryKey: queryKeys.currentProgram() });
       void client.invalidateQueries({ queryKey: ['week'] });
       void client.invalidateQueries({ queryKey: ['session'] });
     },
     onError: (error) => {
+      // Nothing was written, so the bar has nothing true to show.
+      setProgress(null);
       setFailure({
         blocked: error instanceof GenerationBlockedError,
         lines: buildFailureLines(error),
@@ -135,13 +172,21 @@ export function BuildScreen() {
             </View>
           )}
 
-          <Button
-            label={build.isError ? SETUP_COPY.buildRetry : SETUP_COPY.buildAction}
-            onPress={() => build.mutate()}
-            fullWidth
-            loading={build.isPending}
-            testID="build-run"
-          />
+          {progress === null ? (
+            <Button
+              label={build.isError ? SETUP_COPY.buildRetry : SETUP_COPY.buildAction}
+              onPress={() => build.mutate()}
+              fullWidth
+              testID="build-run"
+            />
+          ) : (
+            <ProgressBar
+              value={progressFraction(progress)}
+              line={progress.line}
+              accessibilityLabel={SETUP_COPY.buildRunning}
+              testID="build-progress"
+            />
+          )}
 
           <ButtonRow align="between">
             <Button

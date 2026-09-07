@@ -152,6 +152,11 @@ export {
   type FooterLineProps,
   type RestBarProps,
 } from './primitives/restBar';
+export {
+  PROGRESS_TRACK_HEIGHT,
+  ProgressBar,
+  type ProgressBarProps,
+} from './primitives/progressBar';
 export { Table, type TableColumn, type TableProps } from './primitives/table';
 export { Disclosure, type DisclosureProps } from './primitives/disclosure';
 export { EmptyState, type EmptyStateProps } from './primitives/emptyState';

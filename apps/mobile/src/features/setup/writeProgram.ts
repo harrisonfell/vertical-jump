@@ -10,6 +10,7 @@ import { nowIso, programStore, sessionStore } from '../../data';
 import type { DayType, Json, SqlExecutor } from '../../data';
 import type { CreateSessionExerciseInput } from '../../data/store/sessions';
 import type { BuildPlan } from './buildProgram';
+import { writeStepCount, type WriteProgressListener, type WriteStep } from './buildProgress';
 
 /** The engine's day types in the words brief section 13 uses. */
 const DAY_TYPES: Readonly<Record<string, DayType>> = {
@@ -66,10 +67,24 @@ function exerciseRowsFor(session: SessionPlan): CreateSessionExerciseInput[] {
 /**
  * Write the program, its first version, its blocks, every week of the
  * skeleton, and week 1's sessions. Returns the program id.
+ *
+ * `onProgress` hears each awaited write land, in order, so the build screen
+ * can draw a determinate bar: `writeStepCount(plan)` steps, the last one at
+ * the total.
  */
-export async function writeProgramPlan(db: SqlExecutor, plan: BuildPlan): Promise<string> {
+export async function writeProgramPlan(
+  db: SqlExecutor,
+  plan: BuildPlan,
+  onProgress?: WriteProgressListener,
+): Promise<string> {
   const { skeleton, week1 } = plan;
   const lastWeek = skeleton.weeks[skeleton.weeks.length - 1];
+  const total = writeStepCount(plan);
+  let done = 0;
+  const landed = (step: WriteStep): void => {
+    done += 1;
+    onProgress?.({ done, total, step });
+  };
 
   const { program, version } = await programStore.createProgram(db, {
     rulesetVersion: plan.rulesetVersion,
@@ -94,9 +109,11 @@ export async function writeProgramPlan(db: SqlExecutor, plan: BuildPlan): Promis
       weekEnd: block.weekTo,
     })),
   });
+  landed({ kind: 'program' });
 
   const generatedAt = nowIso();
   let week1Id: string | null = null;
+  const weekCount = skeleton.weeks.length;
 
   for (const week of skeleton.weeks) {
     const isFirst = week.w === 1;
@@ -117,10 +134,12 @@ export async function writeProgramPlan(db: SqlExecutor, plan: BuildPlan): Promis
       generatedBy: isFirst ? 'setup' : null,
     });
     if (isFirst) week1Id = saved.id;
+    landed({ kind: 'week', w: week.w, of: weekCount });
   }
 
   if (week1Id !== null) {
     let index = 0;
+    const sessionCount = week1.sessions.length;
     for (const session of week1.sessions) {
       await sessionStore.createSession(db, {
         programId: program.id,
@@ -136,6 +155,7 @@ export async function writeProgramPlan(db: SqlExecutor, plan: BuildPlan): Promis
         exercises: exerciseRowsFor(session),
       });
       index += 1;
+      landed({ kind: 'session', n: index, of: sessionCount });
     }
   }
 

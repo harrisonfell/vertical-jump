@@ -5,6 +5,7 @@ import { Button, ButtonRow } from '../primitives/button';
 import { Chip } from '../primitives/chip';
 import { Disclosure } from '../primitives/disclosure';
 import { EmptyState } from '../primitives/emptyState';
+import { ProgressBar } from '../primitives/progressBar';
 import { Table, type TableColumn } from '../primitives/table';
 import { Sheet, useSheet } from '../sheet';
 import { Skeleton } from '../skeleton';
@@ -84,6 +85,29 @@ export function KitSurfaces() {
             <Skeleton skeletonFor="chartPanel" />
             <Skeleton skeletonFor="line" count={2} />
           </View>
+        </KitCase>
+      </KitSection>
+
+      <KitSection
+        title="Progress bar"
+        note="Determinate only: a caption over a 4px track, filling from the left. Skeleton covers waits with no step count."
+      >
+        <KitCase label="the build screen mid-write">
+          <ProgressBar
+            value={7 / 17}
+            line="Writing week 6 of 12"
+            accessibilityLabel="Building your program"
+          />
+        </KitCase>
+        <KitCase label="empty track, total not yet known">
+          <ProgressBar value={0} line="Running the rule book" accessibilityLabel="Building your program" />
+        </KitCase>
+        <KitCase label="full">
+          <ProgressBar
+            value={1}
+            line="Writing week 1, session 4 of 4"
+            accessibilityLabel="Building your program"
+          />
         </KitCase>
       </KitSection>
 
