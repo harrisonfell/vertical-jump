@@ -20,7 +20,7 @@ import {
   weekdayOf,
   analytics,
 } from '@vert/engine';
-import type { LocalDate } from '@/data';
+import type { LocalDate, SessionWithStatus, Week } from '@/data';
 
 /** A program parameter the athlete can edit in Settings. */
 export type ProgramParam =
@@ -232,14 +232,54 @@ export function needsRegeneration(changes: readonly ParamChange[]): boolean {
 export interface WeekProgress {
   readonly w: number;
   readonly windowStart: LocalDate;
+  readonly windowEnd: LocalDate;
   /** Sets logged anywhere in the week. */
   readonly loggedSets: number;
+  /** Sessions in the week that have been started or marked complete. */
+  readonly startedSessions: number;
 }
 
 /**
- * The next week that has not begun. A week counts as begun once its window has
- * opened or anything in it is logged, so a regeneration never rewrites a week
- * the athlete is standing in.
+ * The week rows and the sessions in them, reduced to what the rule below reads.
+ *
+ * The sessions, not the week's own counters: `week.completed_count` cannot tell
+ * a session the athlete has opened from one they have finished, and both mean
+ * the week is theirs. Shared by the Settings confirm sheet and the revision
+ * trigger so the two can never disagree about which week is next.
+ */
+export function weekProgressFrom(
+  weeks: readonly Week[],
+  sessions: readonly SessionWithStatus[],
+): WeekProgress[] {
+  const logged = new Map<string, number>();
+  const started = new Map<string, number>();
+  for (const session of sessions) {
+    logged.set(session.weekId, (logged.get(session.weekId) ?? 0) + session.loggedSetCount);
+    if (session.startedAt !== null || session.markedCompleteAt !== null) {
+      started.set(session.weekId, (started.get(session.weekId) ?? 0) + 1);
+    }
+  }
+  return weeks.map((week) => ({
+    w: week.w,
+    windowStart: week.windowStart,
+    windowEnd: week.windowEnd,
+    loggedSets: logged.get(week.id) ?? 0,
+    startedSessions: started.get(week.id) ?? 0,
+  }));
+}
+
+/**
+ * The first week a rebuild may rewrite.
+ *
+ * Only work protects a week. An open window does not: on the Monday of week 1,
+ * before a single set is logged, changing the training age from "1-3 years" to
+ * "4+ years" has to reach this week, because leaving it as the week the old
+ * answer wrote is exactly the plan the athlete has just told the app is wrong.
+ * A logged set or a session the athlete has opened or finished does protect it,
+ * and that guarantee is unchanged: those weeks are evidence, never a guess.
+ *
+ * A week whose window has fully closed is skipped too. Rebuilding days that
+ * have already gone by writes a plan nobody can train.
  */
 export function nextUnstartedWeek(
   weeks: readonly WeekProgress[],
@@ -247,8 +287,8 @@ export function nextUnstartedWeek(
 ): number | null {
   const ordered = [...weeks].sort((a, b) => a.w - b.w);
   for (const week of ordered) {
-    if (week.loggedSets > 0) continue;
-    if (week.windowStart <= today) continue;
+    if (week.loggedSets > 0 || week.startedSessions > 0) continue;
+    if (week.windowEnd < today) continue;
     return week.w;
   }
   return null;
@@ -298,13 +338,20 @@ export function regenerationPlan(
     };
   }
 
+  // Nothing is behind week 1 to keep, and "Weeks 1 to 0 keep their logs" is
+  // not a sentence. The athlete gets the plainer, truer one instead.
+  const kept =
+    fromWeek === 1
+      ? 'Nothing is logged yet, so the whole program is rebuilt.'
+      : `Weeks 1 to ${fromWeek - 1} keep their logs and are not rebuilt.`;
+
   return {
     changes,
     fromWeek,
     title: `Regenerate from Week ${fromWeek}?`,
     lines: [
       ...lines,
-      `Weeks 1 to ${fromWeek - 1} keep their logs and are not rebuilt.`,
+      kept,
       'Ladder rungs and working maxes carry forward, re-clamped to your level.',
       'The old version stays readable in the Plan version history.',
     ],

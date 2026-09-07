@@ -74,17 +74,41 @@ describe('program parameter changes', () => {
 
   it('regenerates from the first week that has not begun', () => {
     const weeks = [
-      { w: 6, windowStart: '2026-10-12', loggedSets: 40 },
-      { w: 7, windowStart: '2026-10-19', loggedSets: 12 },
-      { w: 8, windowStart: '2026-10-26', loggedSets: 0 },
-      { w: 9, windowStart: '2026-11-02', loggedSets: 0 },
+      { w: 6, windowStart: '2026-10-12', windowEnd: '2026-10-18', loggedSets: 40, startedSessions: 4 },
+      { w: 7, windowStart: '2026-10-19', windowEnd: '2026-10-25', loggedSets: 12, startedSessions: 1 },
+      { w: 8, windowStart: '2026-10-26', windowEnd: '2026-11-01', loggedSets: 0, startedSessions: 0 },
+      { w: 9, windowStart: '2026-11-02', windowEnd: '2026-11-08', loggedSets: 0, startedSessions: 0 },
     ];
     expect(nextUnstartedWeek(weeks, '2026-10-22')).toBe(8);
   });
 
-  it('never picks a week whose window has already opened', () => {
-    const weeks = [{ w: 7, windowStart: '2026-10-19', loggedSets: 0 }];
-    expect(nextUnstartedWeek(weeks, '2026-10-22')).toBeNull();
+  it('rebuilds the week the athlete is in when nothing in it is done', () => {
+    // The Monday of week 7, before a single set. The answer they just changed
+    // has to reach this week, not the one after it.
+    const weeks = [
+      { w: 7, windowStart: '2026-10-19', windowEnd: '2026-10-25', loggedSets: 0, startedSessions: 0 },
+    ];
+    expect(nextUnstartedWeek(weeks, '2026-10-19')).toBe(7);
+    expect(nextUnstartedWeek(weeks, '2026-10-22')).toBe(7);
+  });
+
+  it('never picks a week with a logged set or an opened session in it', () => {
+    const logged = [
+      { w: 7, windowStart: '2026-10-19', windowEnd: '2026-10-25', loggedSets: 1, startedSessions: 0 },
+    ];
+    expect(nextUnstartedWeek(logged, '2026-10-22')).toBeNull();
+    const opened = [
+      { w: 7, windowStart: '2026-10-19', windowEnd: '2026-10-25', loggedSets: 0, startedSessions: 1 },
+    ];
+    expect(nextUnstartedWeek(opened, '2026-10-22')).toBeNull();
+  });
+
+  it('never picks a week whose window has already closed', () => {
+    const weeks = [
+      { w: 7, windowStart: '2026-10-19', windowEnd: '2026-10-25', loggedSets: 0, startedSessions: 0 },
+      { w: 8, windowStart: '2026-10-26', windowEnd: '2026-11-01', loggedSets: 0, startedSessions: 0 },
+    ];
+    expect(nextUnstartedWeek(weeks, '2026-10-26')).toBe(8);
   });
 
   it('writes the confirm sheet with the week number in it', () => {
@@ -94,6 +118,13 @@ describe('program parameter changes', () => {
     expect(plan.confirmLabel).toBe('Regenerate from Week 8');
     expect(plan.lines[0]).toBe('Days a week: 4 to 3');
     expect(plan.lines).toContain('Weeks 1 to 7 keep their logs and are not rebuilt.');
+  });
+
+  it('does not claim to keep a week 0 when the whole program is rebuilt', () => {
+    const plan = regenerationPlan(diffParams(base, { ...base, daysPerWeek: 3 }), 1);
+    expect(plan.title).toBe('Regenerate from Week 1?');
+    expect(plan.lines).toContain('Nothing is logged yet, so the whole program is rebuilt.');
+    expect(plan.lines.some((line) => line.includes('to 0'))).toBe(false);
   });
 
   it('says so plainly when there is nothing left to rebuild', () => {

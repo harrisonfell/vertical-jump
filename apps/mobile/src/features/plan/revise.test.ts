@@ -27,11 +27,16 @@ import {
 const owner = buildOwnerFixture();
 
 /** Twelve weeks opening on Mondays from 7 Sep 2026, with the sets logged in each. */
-function weeks(logged: Readonly<Record<number, number>> = {}): ReviseWeekFacts[] {
+function weeks(
+  logged: Readonly<Record<number, number>> = {},
+  started: Readonly<Record<number, number>> = {},
+): ReviseWeekFacts[] {
   return Array.from({ length: 12 }, (_unused, index) => ({
     w: index + 1,
     windowStart: addWeeks('2026-09-07', index),
+    windowEnd: addWeeks('2026-09-13', index),
     loggedSets: logged[index + 1] ?? 0,
+    startedSessions: started[index + 1] ?? 0,
   }));
 }
 
@@ -144,9 +149,42 @@ describe('revisionTarget', () => {
       today: inWeekOne,
       latestReason: 'first build',
     });
-    expect(target.fromWeek).toBe(2);
+    // The current week is rebuildable, because nothing in it has been done,
+    // but there is nothing to fold in yet either.
+    expect(target.fromWeek).toBe(1);
     expect(target.observedThrough).toBe(0);
     expect(target.shouldRevise).toBe(false);
+  });
+
+  it('starts at the week the athlete is standing in when nothing in it is done', () => {
+    const target = revisionTarget({
+      weeks: weeks(),
+      today: inWeekOne,
+      latestReason: 'first build',
+    });
+    expect(target.fromWeek).toBe(1);
+    expect(target.foldedThrough).toBe(0);
+  });
+
+  it('will not touch a week whose session the athlete has opened', () => {
+    const target = revisionTarget({
+      weeks: weeks({}, { 1: 1 }),
+      today: inWeekOne,
+      latestReason: 'first build',
+    });
+    // Nothing is logged in it, but it has been opened, so it is the athlete's.
+    expect(target.fromWeek).toBe(2);
+  });
+
+  it('skips a week whose window has already closed', () => {
+    const target = revisionTarget({
+      weeks: weeks(),
+      today: '2026-09-16',
+      latestReason: 'first build',
+    });
+    // Week 1 ran 7 to 13 Sep. Rebuilding days that have gone by writes a plan
+    // nobody can train.
+    expect(target.fromWeek).toBe(2);
   });
 });
 
@@ -174,6 +212,16 @@ describe('revisePlanCopy', () => {
     );
     expect(copy.disabled).toBe(true);
     expect(copy.caption).toBe('Nothing to revise yet');
+  });
+
+  it('does not offer to keep a week 0 when the whole program is rebuilt', () => {
+    const copy = revisePlanCopy(
+      revisionTarget({ weeks: weeks(), today: '2026-09-09', latestReason: 'first build' }),
+    );
+    expect(copy.title).toBe('Revise from week 1?');
+    expect(copy.lines).toContain('Weeks 1 to 12 are rebuilt.');
+    expect(copy.lines).toContain('Nothing is logged yet, so the whole program is rebuilt.');
+    expect(copy.lines.some((line) => line.includes('to 0'))).toBe(false);
   });
 
   it('says so plainly when the program has run out of weeks', () => {
@@ -297,11 +345,12 @@ describe('toObservedWeeks', () => {
 function ladder(logged: readonly number[]): ReviseWeekFacts[] {
   return Array.from({ length: 12 }, (_, index) => {
     const w = index + 1;
-    const day = 7 + index * 7;
     return {
       w,
-      windowStart: `2026-09-${String(day).padStart(2, '0')}` as ReviseWeekFacts['windowStart'],
+      windowStart: addWeeks('2026-09-07', index),
+      windowEnd: addWeeks('2026-09-13', index),
       loggedSets: logged.includes(w) ? 12 : 0,
+      startedSessions: 0,
     };
   });
 }
@@ -359,7 +408,9 @@ describe('what a revision records, and what it compares against', () => {
       today: '2026-09-30',
       latestReason: 'first build',
     });
-    expect(target.foldedThrough).toBe(4);
+    // Week 4's window is the one open on 30 Sep, so weeks 1 to 3 are behind it.
+    expect(target.fromWeek).toBe(4);
+    expect(target.foldedThrough).toBe(3);
     expect(target.observedThrough).toBe(0);
     expect(target.shouldRevise).toBe(false);
   });

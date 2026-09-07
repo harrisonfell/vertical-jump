@@ -142,7 +142,9 @@ describe('backfillProgram', () => {
       weeks: weeks.map((week) => ({
         w: week.w,
         windowStart: week.windowStart,
+        windowEnd: week.windowEnd,
         loggedSets: week.w === 1 ? logged : 0,
+        startedSessions: week.w === 1 ? sessions.length : 0,
       })),
       today: TODAY,
       latestReason: versions[versions.length - 1]?.reason,

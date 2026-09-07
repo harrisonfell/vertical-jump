@@ -14,6 +14,7 @@ import {
   useExportData,
   usePainStatus,
   useReportPain,
+  useSessionsBetween,
   useSetAutoregulation,
   useSetWorkingMax,
   useToday,
@@ -48,6 +49,7 @@ import {
   diffParams,
   needsRegeneration,
   nextUnstartedWeek,
+  weekProgressFrom,
   regenerationPlan,
   PAIN_APPLIED_LINE,
 } from './regenerate';
@@ -82,6 +84,13 @@ export function SettingsScreen() {
   const painQuery = usePainStatus();
   const programQuery = useCurrentProgram();
   const weeksQuery = useWeeks(programQuery.data?.id);
+  // The sessions, not just the week counters: whether a week may be rebuilt
+  // turns on real work in it, and `week.completed_count` alone cannot tell a
+  // session the athlete opened from one they finished.
+  const sessionsQuery = useSessionsBetween(
+    programQuery.data?.startDate,
+    programQuery.data?.endDate,
+  );
   const whoopQuery = useWhoopConnection();
 
   const updateAthlete = useUpdateAthlete();
@@ -195,14 +204,10 @@ export function SettingsScreen() {
   const fromWeek = useMemo(
     () =>
       nextUnstartedWeek(
-        (weeksQuery.data ?? []).map((week) => ({
-          w: week.w,
-          windowStart: week.windowStart,
-          loggedSets: week.completedCount,
-        })),
+        weekProgressFrom(weeksQuery.data ?? [], sessionsQuery.data ?? []),
         today,
       ),
-    [weeksQuery.data, today],
+    [weeksQuery.data, sessionsQuery.data, today],
   );
 
   const plan = confirming ? regenerationPlan(changes, fromWeek, program !== null) : null;

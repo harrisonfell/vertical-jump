@@ -227,7 +227,9 @@ describe('reviseProgram when a week write fails', () => {
       weeks: weeks.map((week) => ({
         w: week.w,
         windowStart: week.windowStart,
+        windowEnd: week.windowEnd,
         loggedSets: week.w === 1 ? 1 : 0,
+        startedSessions: week.w === 1 ? 1 : 0,
       })),
       today: TODAY,
       latestReason: versions[versions.length - 1]?.reason,
@@ -264,11 +266,15 @@ describe('reviseProgram after a settings regeneration', () => {
     const weeks = await listWeeks(regenDb, regenProgram.id);
     await trainWeek(regenDb, weeks[0]?.id ?? '', TODAY);
 
-    // Exactly what Settings does when the athlete drops to three days: a new
-    // skeleton, stored on a new version row, with `program.snapshot` untouched.
+    // A settings regeneration whose own rebuild never finished: the new
+    // skeleton is on a new version row, `program.snapshot` is untouched, and
+    // no `rebuiltWeeks` says any week was written. That row is what the
+    // automatic revision has to pick the skeleton up from. It is planned from
+    // the program's start day, as Settings plans it, so the week grid lands on
+    // the rows that already exist instead of shifting a week.
     const patched = await upsertAthlete(regenDb, { daysPerWeek: 3, weekdays: [1, 3, 5] });
     threeDayAthlete = toEngineAthlete({ athlete: patched, pains: [], baseline: BASELINE });
-    const skeleton = planSkeleton(threeDayAthlete, TODAY, loadRuleset());
+    const skeleton = planSkeleton(threeDayAthlete, regenProgram.startDate, loadRuleset());
     await createProgramVersion(
       regenDb,
       regenProgram.id,
@@ -321,7 +327,11 @@ describe('reviseProgram when a folded week was skipped entirely', () => {
   let skipDb: SqlExecutor;
   let skipProgram: Program;
   let skipAthlete: EngineAthlete;
-  /** The last day of week 2, so week 3 is the first week not yet begun. */
+  /**
+   * The first day of week 3, so week 2's window has fully closed and week 3 is
+   * the first week a rebuild may write. A week is the athlete's until its last
+   * day is behind them, so the day before this one would still rebuild week 2.
+   */
   let day: string;
   let blocksBefore: unknown[];
 
@@ -331,7 +341,7 @@ describe('reviseProgram when a folded week was skipped entirely', () => {
     skipProgram = built.program;
     skipAthlete = built.engineAthlete;
     const weeks = await listWeeks(skipDb, skipProgram.id);
-    day = weeks[1]?.windowEnd ?? TODAY;
+    day = weeks[2]?.windowStart ?? TODAY;
     await trainWeek(skipDb, weeks[0]?.id ?? '', day);
     // Week 2 is left alone: its window passes with nothing logged in it, which
     // is what R94 calls a repeat.
@@ -388,7 +398,8 @@ describe('reviseProgram when a set is logged out of order', () => {
   let outDb: SqlExecutor;
   let outProgram: Program;
   let outAthlete: EngineAthlete;
-  let endOfWeekTwo: string;
+  /** The first day of week 3: week 2 is behind the athlete, week 3 is open. */
+  let startOfWeekThree: string;
   let endOfWeekThree: string;
 
   beforeAll(async () => {
@@ -397,18 +408,18 @@ describe('reviseProgram when a set is logged out of order', () => {
     outProgram = built.program;
     outAthlete = built.engineAthlete;
     const weeks = await listWeeks(outDb, outProgram.id);
-    endOfWeekTwo = weeks[1]?.windowEnd ?? TODAY;
+    startOfWeekThree = weeks[2]?.windowStart ?? TODAY;
     endOfWeekThree = weeks[2]?.windowEnd ?? TODAY;
-    await trainWeek(outDb, weeks[0]?.id ?? '', endOfWeekTwo);
+    await trainWeek(outDb, weeks[0]?.id ?? '', startOfWeekThree);
     // One set entered late against week 4, which the fold will not reach.
-    await logOneSet(outDb, weeks[3]?.id ?? '', endOfWeekTwo);
+    await logOneSet(outDb, weeks[3]?.id ?? '', startOfWeekThree);
   });
 
   it('records the week the fold reached, not the week the stray set is in', async () => {
     const result = await reviseProgram(outDb, {
       athlete: outAthlete,
       program: outProgram,
-      today: endOfWeekTwo,
+      today: startOfWeekThree,
     });
     expect(result.fromWeek).toBe(3);
     expect(result.observedThrough).toBe(4);

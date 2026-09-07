@@ -40,6 +40,7 @@ export {
   formatCalendarDate,
   needsRegeneration,
   nextUnstartedWeek,
+  weekProgressFrom,
   regenerationPlan,
   shortCalendarDate,
   trainingAgeLabel,
@@ -73,5 +74,13 @@ export {
   deleteConfirmMatches,
 } from './deleteAll';
 export { NO_MAX_LINE, workingMaxRows, type LiftRow, type LiftSource } from './lifts';
-export { useRegenerate, RegenerationFailedError, type RegenerateInput } from './useRegenerate';
+export {
+  RegenerationFailedError,
+  regenerateProgram,
+  useRegenerate,
+  type RegenerateInput,
+  type RegenerateProgramInput,
+  type RegenerateResult,
+  type WeekLayout,
+} from './useRegenerate';
 export { useSettingsFacts, liftName, type SettingsFacts } from './useSettingsFacts';

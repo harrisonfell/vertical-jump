@@ -61,6 +61,30 @@ export function projectedFromReason(reason: string | null | undefined): number {
 }
 
 /**
+ * The week a **finished** settings regeneration rebuilt from, read back out of
+ * the newest version row's layout.
+ *
+ * A regeneration that rebuilt weeks `N..W` has already folded weeks 1 to `N-1`
+ * in, exactly as a revision from week `N` would have, so the trigger must read
+ * it as such or the very next Today mount would revise again over weeks written
+ * moments earlier: the same content under new ids, and a version row per mount.
+ *
+ * `rebuiltWeeks` is what separates a finished regeneration from one whose
+ * rebuild threw, and from the rows an older build wrote before a regeneration
+ * rebuilt anything at all. Both of those read as 0 here, which leaves the
+ * trigger armed so the automatic revision repairs them.
+ */
+export function projectedFromLayout(layout: Json): number {
+  if (typeof layout !== 'object' || layout === null || Array.isArray(layout)) return 0;
+  const record = layout as Record<string, unknown>;
+  const rebuilt = record['rebuiltWeeks'];
+  if (!Array.isArray(rebuilt) || rebuilt.length === 0) return 0;
+  const fromWeek = record['fromWeek'];
+  if (typeof fromWeek !== 'number' || !Number.isFinite(fromWeek) || fromWeek < 1) return 0;
+  return fromWeek - 1;
+}
+
+/**
  * The skeleton a settings regeneration stored on its version row, if that is
  * what this layout is.
  *
@@ -102,6 +126,13 @@ export interface RevisionTargetInput {
   readonly today: LocalDate;
   /** The newest `program_version.reason`. */
   readonly latestReason: string | null | undefined;
+  /**
+   * The newest `program_version.week_layout`. A revision records the week it
+   * projected from in its reason; a settings regeneration records it in this
+   * layout, because its reason has to stay the sentence the version history
+   * shows. Optional, so a caller that only has the reason still reads right.
+   */
+  readonly latestLayout?: Json;
 }
 
 export interface RevisionTarget {
@@ -142,7 +173,13 @@ export function revisionTarget(input: RevisionTargetInput): RevisionTarget {
   const fromWeek = nextUnstartedWeek(input.weeks, input.today);
   const observedThrough = observedThroughWeek(input.weeks);
   const foldedThrough = fromWeek === null ? 0 : fromWeek - 1;
-  const projectedFrom = projectedFromReason(input.latestReason);
+  // Either kind of rebuild counts. A revision names its fold in the reason, a
+  // finished regeneration in the layout, and whichever reached further is what
+  // the current projections were written from.
+  const projectedFrom = Math.max(
+    projectedFromReason(input.latestReason),
+    projectedFromLayout(input.latestLayout ?? null),
+  );
   const lastWeek = input.weeks.reduce((highest, week) => Math.max(highest, week.w), 0);
   return {
     fromWeek,
@@ -194,7 +231,11 @@ export function revisePlanCopy(target: RevisionTarget): RevisePlanCopy {
     lines: [
       `${range} are rebuilt.`,
       source,
-      `Weeks 1 to ${fromWeek - 1} keep their sessions and their logs.`,
+      // There is no week 0 to keep, so the line that names what is kept has to
+      // change rather than read "Weeks 1 to 0".
+      fromWeek === 1
+        ? 'Nothing is logged yet, so the whole program is rebuilt.'
+        : `Weeks 1 to ${fromWeek - 1} keep their sessions and their logs.`,
       'A session with anything logged in it is never touched.',
       'The old version stays readable in the Plan version history.',
     ],

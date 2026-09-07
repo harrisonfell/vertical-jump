@@ -51,6 +51,7 @@ export {
   REVISE_CAPTION,
   REVISE_LABEL,
   observedThroughWeek,
+  projectedFromLayout,
   projectedFromReason,
   regeneratedSkeleton,
   revisePlanCopy,
@@ -75,11 +76,18 @@ export {
 } from './backfill';
 export {
   RevisionFailedError,
-  reviseProgram,
+  rebuildFromWeek,
+  refusalSentence,
   writeReplacedWeek,
+  weekLayoutFor,
+  type RebuildInput,
+  type RebuildResult,
+  type WeekFacts,
+} from './rebuild';
+export {
+  reviseProgram,
   useRevise,
   useRevisionTarget,
-  weekLayoutFor,
   type ReviseInput,
   type RevisionResult,
 } from './useRevise';

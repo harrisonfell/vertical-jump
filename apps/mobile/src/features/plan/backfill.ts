@@ -15,7 +15,7 @@ import type { LocalDate, Program, SqlExecutor } from '@/data';
 import { toEngineAthlete } from '@/lib/engineAthlete';
 import { baselineReading, useBaselineTest } from '../setup/useBaseline';
 import { readSkeleton } from './engine';
-import { readObserved, readWeekFacts, writeReplacedWeek, type WeekFacts } from './useRevise';
+import { readObserved, readWeekFacts, writeReplacedWeek, type WeekFacts } from './rebuild';
 
 /**
  * The one-time backfill for a program built before the app projected past
