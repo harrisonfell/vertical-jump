@@ -1,24 +1,17 @@
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import type { SessionContacts } from '@vert/engine';
-import { ExerciseHeader, Glyph, Hairline, Notice, Text, space, useTheme } from '@/ui';
+import { Notice, Text, space } from '@/ui';
 import type { SessionExercise, SessionWithStatus, SetLog } from '@/data/types';
-// The store-to-engine seam lives with Plan; imported by module so the
-// session bundle does not pull the Plan screen in with it.
-import { readPrescriptions } from '@/features/plan';
-import { groupExercises } from './blockNames';
+import { SessionBlocks } from './exerciseRows';
 import {
-  compareSets,
   doneSummaryLine,
   feelLine,
   fingerPainLine,
-  rowNoteLine,
   sessionMinutes,
   tonnageLb,
-  usesAddedLoadDisplay,
-  type SetRowModel,
 } from './detail';
-import { rowNotesFor, type RowNotes } from './planNotes';
+import type { RowNotes } from './planNotes';
 
 /**
  * A session that has already happened: what was prescribed, what was done,
@@ -30,8 +23,6 @@ import { rowNotesFor, type RowNotes } from './planNotes';
  * finger answer and the per-row weaker-side and grip notes are read back off
  * the stored snapshot and the stored answers rather than recomputed.
  */
-
-const EMPTY_NOTES: ReadonlyMap<string, RowNotes> = new Map();
 
 export interface PastViewProps {
   readonly session: SessionWithStatus;
@@ -53,97 +44,6 @@ export interface PastViewProps {
   readonly children?: ReactNode;
 }
 
-function LoggedRow({ row }: { readonly row: SetRowModel }) {
-  const { colors } = useTheme();
-  const suffix: string[] = [];
-  if (row.rpe !== null) suffix.push(`RPE ${row.rpe}`);
-  if (row.landing !== null) suffix.push(`landing ${row.landing}`);
-  const detail = [row.detail, suffix.length === 0 ? null : suffix.join(' · ')]
-    .filter((part): part is string => part !== null)
-    .join(' · ');
-
-  return (
-    <View>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: space.md,
-          minHeight: 44,
-          paddingVertical: space.sm,
-          opacity: row.logged ? 1 : 0.7,
-        }}
-      >
-        <Text variant="caption" color="ink3" numeric style={{ width: 24 }}>
-          {row.index}
-        </Text>
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text variant="body" color={row.logged ? 'ink' : 'ink2'} numeric>
-            {row.prescription}
-          </Text>
-          {detail === '' ? null : (
-            <Text variant="caption" color="ink3" numeric>
-              {detail}
-            </Text>
-          )}
-        </View>
-        <View style={{ width: 20, alignItems: 'center' }}>
-          {row.logged ? <Glyph name="check" size={16} color={colors.green} /> : null}
-        </View>
-      </View>
-      <Hairline />
-    </View>
-  );
-}
-
-function ExerciseRows({
-  exercise,
-  logs,
-  notes,
-}: {
-  readonly exercise: SessionExercise;
-  readonly logs: readonly SetLog[];
-  readonly notes: RowNotes;
-}) {
-  const prescriptions = readPrescriptions(exercise.perSet);
-  const rows = compareSets(
-    prescriptions,
-    logs.filter((log) => log.sessionExerciseId === exercise.id),
-    {
-      bothSides: exercise.bothSides,
-      rpeMode: exercise.loadMode === 'rpe' || exercise.loadMode === 'week1',
-      addedLoad: usesAddedLoadDisplay(prescriptions),
-    },
-  );
-
-  const sub = [exercise.loadType.replace(/_/g, ' '), exercise.headerNote]
-    .filter((part): part is string => part !== null && part !== '')
-    .join(' · ');
-
-  // The weaker-side and grip lines were true of the day, not of the exercise,
-  // so they sit with the rotation note rather than in the load line.
-  const note = rowNoteLine(exercise.rotationNote, notes.sideNote, notes.fingerNote);
-
-  return (
-    <View>
-      <ExerciseHeader
-        name={exercise.exerciseName}
-        sub={sub === '' ? undefined : sub}
-        {...(note === null ? null : { note })}
-        bothSides={exercise.bothSides}
-      />
-      {rows.map((row) => (
-        <LoggedRow key={row.key} row={row} />
-      ))}
-      {exercise.lastTimeNote === null ? null : (
-        <Text variant="caption" color="ink3" style={{ paddingTop: space.xs }} numeric>
-          {exercise.lastTimeNote}
-        </Text>
-      )}
-    </View>
-  );
-}
-
 export function PastView({
   session,
   exercises,
@@ -155,9 +55,7 @@ export function PastView({
   rowNotes,
   children,
 }: PastViewProps) {
-  const groups = groupExercises(exercises);
   const finger = fingerPainLine(fingerPain);
-  const notes: ReadonlyMap<string, RowNotes> = rowNotes ?? EMPTY_NOTES;
   const prescribedSets = session.prescribedSetCount;
   const summary = doneSummaryLine({
     loggedSets: session.loggedSetCount,
@@ -208,28 +106,11 @@ export function PastView({
 
       {children}
 
-      {groups.map((group) => (
-        <View key={group.key} style={{ gap: space.xs }}>
-          <Text variant="label" color="ink2">
-            {group.name}
-          </Text>
-          <Hairline strong />
-          {group.grouped ? (
-            <Text variant="caption" color="ink2" style={{ paddingVertical: space.sm }}>
-              {group.exercises.map((exercise) => exercise.exerciseName).join(' · ')}
-            </Text>
-          ) : (
-            group.exercises.map((exercise) => (
-              <ExerciseRows
-                key={exercise.id}
-                exercise={exercise}
-                logs={logs}
-                notes={rowNotesFor(notes, exercise.block, exercise.exerciseId)}
-              />
-            ))
-          )}
-        </View>
-      ))}
+      <SessionBlocks
+        exercises={exercises}
+        logs={logs}
+        {...(rowNotes === undefined ? null : { rowNotes })}
+      />
     </View>
   );
 }

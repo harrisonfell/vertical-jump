@@ -152,6 +152,12 @@ export function PlanScreen() {
         testID="plan-strip"
       />
 
+      {model.projectionLine === null ? null : (
+        <Text variant="caption" color="ink3" testID="plan-projection-line">
+          {model.projectionLine}
+        </Text>
+      )}
+
       {model.thisWeekLines.length === 0 ? null : (
         <View style={{ gap: space.xs }}>
           <Text variant="label" color="ink2">

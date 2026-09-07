@@ -84,6 +84,10 @@ export * from './materialize/block6.js';
 export * from './materialize/invariants.js';
 export * from './materialize/outcome.js';
 export * from './materialize/lines.js';
+// The multi-week half. Both import `materializeWeek` from here, so they are
+// re-exported after it rather than beside the single-week modules.
+export * from './materialize/chain.js';
+export * from './materialize/project.js';
 
 /** Thrown when Block 1's self-screen refuses to generate at all (R2). */
 export class GenerationBlockedError extends Error {

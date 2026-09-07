@@ -27,6 +27,7 @@ import { Button, EmptyState, Screen, Skeleton, Text, space, useSheet } from '@/u
 import {
   dayTypeLabel,
   formatDayDate,
+  isProjectedWeek,
   readPrescriptions,
   readSessionPlan,
   readSkeleton,
@@ -34,11 +35,11 @@ import {
 } from '@/features/plan';
 import { useFingerPainOn } from './answers';
 import { hasHardFingerWork, rowNotes } from './planNotes';
-import { blockName } from './blockNames';
 import {
   finishedAfterBuildLine,
   matchWindow,
   notFinishedLine,
+  nextWeekIsFinal,
   sessionView,
 } from './detail';
 import { FutureView } from './futureView';
@@ -154,9 +155,7 @@ export function SessionScreen({ sessionId }: SessionScreenProps) {
   const weekNumber =
     week?.w ??
     (skeleton === null ? 0 : (weekIndexOf(skeleton.programStart, skeleton.W, row.scheduledDate) ?? 0));
-  const nextWeekBuilt =
-    states.has('built') ||
-    (weeks.data ?? []).some((entry) => entry.w === weekNumber + 1 && entry.generatedAt !== null);
+  const nextWeekBuilt = states.has('built') || nextWeekIsFinal(weeks.data ?? [], weekNumber);
 
   // The stored day type is the rule book's template; the word the athlete
   // reads is the one the generator gave the day (`house.sc.upper_power_day`).
@@ -228,8 +227,8 @@ export function SessionScreen({ sessionId }: SessionScreenProps) {
   }
 
   if (view === 'future') {
-    const main = (exercises.data ?? []).find((entry) => entry.block === 'main_lift') ?? null;
-    const built = week !== null && week.generatedAt !== null;
+    const rows = exercises.data ?? [];
+    const main = rows.find((entry) => entry.block === 'main_lift') ?? null;
     const todayIsRest = (todaySessions.data ?? []).length === 0;
     const sameWeek =
       week !== null && week.windowStart <= today && today <= week.windowEnd;
@@ -249,9 +248,10 @@ export function SessionScreen({ sessionId }: SessionScreenProps) {
               : readPrescriptions(main.perSet).filter((set) => !set.isRamp).length
           }
           weekNumber={weekNumber}
-          built={built}
           hardFinger={hasHardFingerWork(sessionPlan)}
-          blocks={(sessionPlan?.blocks ?? []).map((entry) => blockName(entry.name))}
+          exercises={rows}
+          rowNotes={notes}
+          projected={isProjectedWeek(week?.generatedBy ?? null)}
           move={
             decision === null
               ? null

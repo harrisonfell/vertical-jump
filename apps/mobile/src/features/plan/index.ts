@@ -36,7 +36,53 @@ export {
   type VersionNoteInput,
 } from './header';
 export { countAdherence, ladderLine, liveAdherence } from './ladder';
-export { buildPlanModel, segmentWeeks, type PlanModel, type PlanModelInput } from './model';
+export {
+  PROJECTED_BY,
+  buildPlanModel,
+  isProjectedWeek,
+  projectionLine,
+  segmentWeeks,
+  type PlanModel,
+  type PlanModelInput,
+} from './model';
+export {
+  FIRST_BUILD_REASON,
+  NOTHING_TO_REVISE,
+  REVISE_CAPTION,
+  REVISE_LABEL,
+  observedThroughWeek,
+  projectedFromReason,
+  regeneratedSkeleton,
+  revisePlanCopy,
+  revisionReason,
+  revisionTarget,
+  toObservedWeeks,
+  weekHasWork,
+  type ObservedWeekSource,
+  type RevisePlanCopy,
+  type RevisionTarget,
+  type RevisionTargetInput,
+  type ReviseWeekFacts,
+} from './revise';
+export {
+  backfillOnce,
+  backfillProgram,
+  backfillRange,
+  useProjectionBackfill,
+  type BackfillInput,
+  type BackfillRange,
+  type BackfillWeekFacts,
+} from './backfill';
+export {
+  RevisionFailedError,
+  reviseProgram,
+  writeReplacedWeek,
+  useRevise,
+  useRevisionTarget,
+  weekLayoutFor,
+  type ReviseInput,
+  type RevisionResult,
+} from './useRevise';
 export {
   appliedRuleGroup,
   ruleGroups,
@@ -61,6 +107,7 @@ export {
 } from './climbLines';
 export { PLAN_STATES, readPlanStates, type PlanState } from './states';
 export {
+  PROJECTED_LABEL,
   buildStrip,
   dayTypeShort,
   stripColumns,

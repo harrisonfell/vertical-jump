@@ -28,7 +28,7 @@ import { SETUP_COPY, formatDayDate } from './copy';
 import {
   GenerationBlockedError,
   buildFailureLines,
-  buildProgramPlan,
+  buildProgramWeeks,
   type BuildPlan,
 } from './buildProgram';
 import {
@@ -44,9 +44,13 @@ import { feasibilityLine } from './stepTwoValidation';
 import { mmToInches } from './stepTwoValidation';
 
 /**
- * Build: run the rule book over the answers, write week 1, and show the
- * validation report only if a rule refused. Nothing is written until the
- * engine returns, so a refusal leaves the database exactly as it was.
+ * Build: run the rule book over the answers a week at a time, write every
+ * session of every week, and show the validation report only if a rule
+ * refused. Nothing is written until the whole projection returns, so a refusal
+ * leaves the database exactly as it was.
+ *
+ * Materializing and writing share one running `done`, so the bar crosses from
+ * the first phase to the second without restarting.
  */
 
 interface Failure {
@@ -55,9 +59,11 @@ interface Failure {
 }
 
 /**
- * One turn of the event loop, so the "Running the rule book" line is on
- * screen before the engine's synchronous run holds the thread. Without it
- * the bar's first visible state would be the first write.
+ * One turn of the event loop, so the line on screen is the week the engine has
+ * just finished rather than the one it is holding the thread for. Awaited
+ * before the first week and again after each one; twelve weeks is a fifth of a
+ * second to over half a second on a phone, long enough that one frozen label
+ * would be a worse lie than a moving bar.
  */
 function yieldToPaint(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
@@ -85,14 +91,29 @@ export function BuildScreen() {
       setFailure(null);
       setProgress(RULE_BOOK_PROGRESS);
       await yieldToPaint();
-      const built = buildProgramPlan({
-        athlete: row,
-        pains: pains.data ?? [],
-        baseline: baselineReading(baseline.data),
-        today,
-        generatedAt: nowIso(),
-      });
-      await writeProgramPlan(db, built, (step) => setProgress(progressFromWrite(step)));
+      const built = await buildProgramWeeks(
+        {
+          athlete: row,
+          pains: pains.data ?? [],
+          baseline: baselineReading(baseline.data),
+          today,
+          generatedAt: nowIso(),
+        },
+        (w, of, total) => {
+          setProgress(
+            progressFromWrite({ done: w, total, step: { kind: 'materialize', w, of } }),
+          );
+        },
+        yieldToPaint,
+      );
+      // The writes pick the count up where the materialize phase left it, so
+      // one bar covers both halves.
+      await writeProgramPlan(
+        db,
+        built,
+        (step) => setProgress(progressFromWrite(step)),
+        built.weeks.length,
+      );
       // The tab gate reads the current program from the cache the moment the
       // tabs mount, and the cached answer is still "no program" from the boot
       // that sent the athlete here. Invalidating alone is not enough: with no

@@ -2,6 +2,7 @@
 export * as athleteStore from './athlete';
 export * as programStore from './program';
 export * as sessionStore from './sessions';
+export * as revisionStore from './revision';
 export * as setLogStore from './setLogs';
 export * as jumpTestStore from './jumpTests';
 export * as readinessStore from './readiness';

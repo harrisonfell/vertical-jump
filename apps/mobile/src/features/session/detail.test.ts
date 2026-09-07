@@ -9,7 +9,6 @@ import {
   feelLine,
   fingerPainLine,
   finishedAfterBuildLine,
-  futureTargetsLine,
   matchWindow,
   notFinishedLine,
   rowNoteLine,
@@ -106,6 +105,21 @@ describe('compareSets', () => {
     const rows = compareSets([prescription({ setNumber: 1 })], []);
     expect(rows[0]?.detail).toBe('not logged');
     expect(rows[0]?.logged).toBe(false);
+  });
+
+  it('calls nothing missing on a day that has not happened yet', () => {
+    const rows = compareSets([prescription({ setNumber: 1 })], [], { future: true });
+    expect(rows[0]?.detail).toBeNull();
+    expect(rows[0]?.logged).toBe(false);
+    expect(rows[0]?.prescription).toBe('5 × 205 lb');
+  });
+
+  it('still says ramp and each side on a future day', () => {
+    const rows = compareSets([prescription({ setNumber: 1, isRamp: true })], [], {
+      future: true,
+      bothSides: true,
+    });
+    expect(rows[0]?.detail).toBe('ramp · each side');
   });
 
   it('numbers a ramp set R1 and says ramp', () => {
@@ -218,32 +232,6 @@ describe('the not-finished sentences', () => {
     expect(finishedAfterBuildLine(8)).toBe(
       'Finished after week 8 was built · counts in the ledger, week 8 unchanged',
     );
-  });
-});
-
-describe('futureTargetsLine', () => {
-  it('writes the week-level targets brief section 05 quotes', () => {
-    expect(
-      futureTargetsLine({
-        dayType: 'Lower Strength',
-        mainLiftName: 'back squat',
-        workingSets: 3,
-        weekNumber: 8,
-        built: false,
-      }),
-    ).toBe('Lower Strength · main lift: back squat · 3 working sets · loads set when week 8 is built');
-  });
-
-  it('withholds the loads even when the week is built', () => {
-    const line = futureTargetsLine({
-      dayType: 'Lower Strength',
-      mainLiftName: 'back squat',
-      workingSets: 3,
-      weekNumber: 7,
-      built: true,
-    });
-    expect(line).toContain('loads shown on the day');
-    expect(line).not.toMatch(/\d+ lb/);
   });
 });
 
@@ -398,33 +386,6 @@ describe('added-load rows', () => {
       log({ setNumber: 1, loadKg: 106.6 }),
     ]);
     expect(rows[0]?.detail).toBe('was 5 × 235');
-  });
-});
-
-describe('futureTargetsLine on a hard finger day', () => {
-  it('names hard finger work, because the 48 h gap is measured from it', () => {
-    expect(
-      futureTargetsLine({
-        dayType: 'Upper power',
-        mainLiftName: 'Weighted pull-up',
-        workingSets: 3,
-        weekNumber: 8,
-        built: true,
-        hardFinger: true,
-      }),
-    ).toBe('Upper power · main lift: Weighted pull-up · 3 working sets · hard finger work · loads shown on the day');
-  });
-
-  it('says nothing about fingers on a day that carries none', () => {
-    expect(
-      futureTargetsLine({
-        dayType: 'Lower Strength',
-        mainLiftName: 'Box squat',
-        workingSets: 3,
-        weekNumber: 8,
-        built: false,
-      }),
-    ).not.toContain('finger');
   });
 });
 

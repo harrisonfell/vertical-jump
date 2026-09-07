@@ -12,15 +12,16 @@ import {
 import { listSessionExercises, listSessionsByWeek } from '../../data/store/sessions';
 import type { Athlete } from '../../data/types';
 import { buildProgramPlan, type BuildPlan } from './buildProgram';
-import { writeStepCount, type WriteProgress } from './buildProgress';
+import { buildStepCount, writeStepCount, type WriteProgress } from './buildProgress';
 import { writeProgramPlan } from './writeProgram';
 
 /**
  * The write half, against the same sql.js engine the web build runs on.
  *
- * Week 1 is written whole (sessions, exercise rows, per-set prescriptions);
- * weeks 2 to W are written from the skeleton with no snapshot, because their
- * loads are set when they are built. This test says both halves land.
+ * Every week is written whole: the week row with the engine's `WeekPlan` as
+ * its snapshot, then every session with its exercise rows and per-set
+ * prescriptions. Week 1 is materialized from the answers, weeks 2 to W are
+ * projected from it, and `generated_by` is the only thing that separates them.
  */
 
 const TODAY = '2026-09-04';
@@ -115,22 +116,63 @@ describe('writeProgramPlan', () => {
     expect(blocks.map((block) => block.type)).toEqual(['strength', 'power']);
   });
 
-  it('writes every week of the skeleton, and a snapshot only on week 1', async () => {
+  it('writes every week with a snapshot, week 1 from setup and the rest projected', async () => {
     const weeks = await listWeeks(db, programId);
     expect(weeks).toHaveLength(12);
     expect(weeks.map((week) => week.w)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
 
-    const first = weeks[0];
-    expect(first?.generatedAt).not.toBeNull();
-    expect(first?.snapshot).not.toBeNull();
-    expect(first?.kind).toBe('load');
-
-    for (const week of weeks.slice(1)) {
-      expect(week.generatedAt).toBeNull();
-      expect(week.snapshot).toBeNull();
+    for (const week of weeks) {
+      expect(week.snapshot).not.toBeNull();
+      expect(week.generatedAt).not.toBeNull();
+      expect(week.prescribedCount).toBeGreaterThan(0);
     }
+
+    expect(weeks[0]?.generatedBy).toBe('setup');
+    expect(weeks[0]?.kind).toBe('load');
+    expect(weeks[6]?.generatedBy).toBe('projection');
+    expect(weeks.map((week) => week.generatedBy)).toEqual([
+      'setup',
+      ...Array.from({ length: 11 }, () => 'projection'),
+    ]);
+
     expect(weeks.some((week) => week.kind === 'deload')).toBe(true);
     expect(weeks[11]?.kind).toBe('peak');
+  });
+
+  it('writes every session of every week, not just week 1', async () => {
+    const weeks = await listWeeks(db, programId);
+    const counts: number[] = [];
+    for (const week of weeks) {
+      counts.push((await listSessionsByWeek(db, week.id, TODAY)).length);
+    }
+    expect(counts).toHaveLength(12);
+    expect(counts[0]).toBe(4);
+    expect(counts[6]).toBe(4);
+    // The taper week prescribes fewer, and the write follows the plan, not a
+    // constant four a week.
+    expect(counts[11]).toBe(3);
+    expect(counts.every((count) => count > 0)).toBe(true);
+
+    const total = counts.reduce((sum, count) => sum + count, 0);
+    expect(total).toBe(plan.weeks.reduce((sum, week) => sum + week.sessions.length, 0));
+    expect(counts).toEqual(plan.weeks.map((week) => week.sessions.length));
+  });
+
+  it('gives a projected week its own sessions, with exercise rows behind them', async () => {
+    const weeks = await listWeeks(db, programId);
+    const seventh = weeks[6];
+    expect(seventh?.generatedBy).toBe('projection');
+
+    const sessions = await listSessionsByWeek(db, seventh?.id ?? '', TODAY);
+    expect(sessions.map((session) => session.scheduledDate)).toEqual(
+      plan.weeks[6]?.sessions.map((session) => session.date),
+    );
+    for (const session of sessions) {
+      expect(session.status).toBe('planned');
+      expect(session.prescribedSetCount).toBeGreaterThan(0);
+      const rows = await listSessionExercises(db, session.id);
+      expect(rows.length).toBeGreaterThan(0);
+    }
   });
 
   it('writes week 1 sessions with their day types in the words the app uses', async () => {
@@ -185,18 +227,35 @@ describe('writeProgramPlan', () => {
     const heard: WriteProgress[] = [];
     await writeProgramPlan(fresh, plan, (progress) => heard.push(progress));
 
+    const sessions = plan.weeks.reduce((sum, week) => sum + week.sessions.length, 0);
     const total = writeStepCount(plan);
-    expect(total).toBe(1 + 12 + 4);
+    expect(total).toBe(1 + 12 + sessions);
     expect(heard).toHaveLength(total);
     expect(heard.map((progress) => progress.done)).toEqual(
       heard.map((_progress, index) => index + 1),
     );
     expect(heard.every((progress) => progress.total === total)).toBe(true);
+    expect(heard[total - 1]?.done).toBe(total);
 
     expect(heard[0]?.step).toEqual({ kind: 'program' });
     expect(heard[1]?.step).toEqual({ kind: 'week', w: 1, of: 12 });
-    expect(heard[12]?.step).toEqual({ kind: 'week', w: 12, of: 12 });
-    expect(heard[13]?.step).toEqual({ kind: 'session', n: 1, of: 4 });
-    expect(heard[total - 1]?.step).toEqual({ kind: 'session', n: 4, of: 4 });
+    expect(heard[2]?.step).toEqual({ kind: 'session', w: 1, n: 1, of: 4 });
+    expect(heard[5]?.step).toEqual({ kind: 'session', w: 1, n: 4, of: 4 });
+    expect(heard[6]?.step).toEqual({ kind: 'week', w: 2, of: 12 });
+    expect(heard[total - 1]?.step).toEqual({ kind: 'session', w: 12, n: 3, of: 3 });
+  });
+
+  it('picks the count up from the materialize phase when the screen asks it to', async () => {
+    const fresh = await openMigratedTestDb();
+    await upsertAthlete(fresh, { ...athlete });
+    const heard: WriteProgress[] = [];
+    const offset = plan.weeks.length;
+    await writeProgramPlan(fresh, plan, (progress) => heard.push(progress), offset);
+
+    const total = writeStepCount(plan) + offset;
+    expect(total).toBe(buildStepCount(plan.skeleton));
+    expect(heard[0]?.done).toBe(offset + 1);
+    expect(heard[heard.length - 1]?.done).toBe(total);
+    expect(heard.every((progress) => progress.total === total)).toBe(true);
   });
 });

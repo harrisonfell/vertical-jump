@@ -159,9 +159,11 @@ export const SETUP_COPY = {
   buildRunning: 'Building your program',
   buildRuleBook: 'Running the rule book',
   buildSavingProgram: 'Saving the program',
+  buildBuildingWeek: 'Building week',
   buildWritingWeek: 'Writing week',
-  buildWritingSession: 'Writing week 1, session',
-  buildLead: 'This runs the rule book over your answers and writes week 1.',
+  buildSessionWord: 'session',
+  buildLead:
+    'This runs the rule book over your answers and writes every session of every week.',
   buildAction: 'Build program',
   buildRetry: 'Build again',
   buildValidationTitle: 'A rule refused this program',

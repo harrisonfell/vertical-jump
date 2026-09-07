@@ -7,6 +7,7 @@ import type {
   SqlParams,
   SqlRunResult,
 } from './executor';
+import { reentrantTransaction } from './reentrant';
 
 /**
  * The native executor: expo-sqlite in the app's Documents directory, which is
@@ -16,6 +17,12 @@ import type {
  *
  * WAL keeps a long session's writes off the read path; foreign keys are opt-in
  * per connection in SQLite, so they are turned on at every open.
+ *
+ * Transactions are re-entrant. expo-sqlite's `withTransactionAsync` issues a
+ * bare BEGIN, which SQLite refuses inside another transaction, so a caller that
+ * wraps several store writes would break every store write that opens its own
+ * transaction. `reentrantTransaction` gives the outermost caller the real
+ * transaction and every caller inside it a savepoint.
  */
 
 export function openExecutor(options?: OpenExecutorOptions): Promise<SqlExecutor> {
@@ -46,6 +53,11 @@ function databaseFile(databaseName: string): File {
 
 function wrap(initial: SQLite.SQLiteDatabase, databaseName: string): SqlExecutor {
   let db = initial;
+  const transaction = reentrantTransaction({
+    outer: (fn) => db.withTransactionAsync(fn),
+    exec: (sql) => db.execAsync(sql),
+  });
+
   return {
     execAsync(sql: string): Promise<void> {
       return db.execAsync(sql);
@@ -66,7 +78,7 @@ function wrap(initial: SQLite.SQLiteDatabase, databaseName: string): SqlExecutor
     },
 
     withTransactionAsync(fn: () => Promise<void>): Promise<void> {
-      return db.withTransactionAsync(fn);
+      return transaction(fn);
     },
 
     async serializeAsync(): Promise<Uint8Array> {

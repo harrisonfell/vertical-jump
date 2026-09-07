@@ -193,6 +193,11 @@ function WeekHeader({ row }: { readonly row: StripRow }) {
           </Text>
         </View>
       )}
+      {row.projectedLabel === null ? null : (
+        <Text variant="caption" color="ink3">
+          {row.projectedLabel}
+        </Text>
+      )}
     </View>
   );
 }

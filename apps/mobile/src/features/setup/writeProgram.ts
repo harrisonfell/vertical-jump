@@ -1,13 +1,17 @@
 /**
- * Writing a built program: the program, its first version, its blocks, every
- * week of the skeleton, and week 1's sessions.
+ * Writing a built program: the program, its first version, its blocks, and
+ * every week with every one of its sessions.
  *
- * Weeks 2 to W are written from the skeleton with no snapshot: the Plan's
- * forward view is real, and the loads for week N are set when week N is built.
+ * Week 1 is materialized from the athlete's answers; weeks 2 to W are
+ * projected from it under the assumption that each week goes as written. Both
+ * arrive here as ordinary `WeekPlan`s and are written the same way, so Today
+ * and the Plan can open any session of any week. The only difference the
+ * database keeps is `generated_by`: 'setup' for week 1, 'projection' for the
+ * rest, 'revision' when a later re-materialization replaces them.
  */
-import type { SessionPlan } from '@vert/engine';
-import { nowIso, programStore, sessionStore } from '../../data';
-import type { DayType, Json, SqlExecutor } from '../../data';
+import type { SessionPlan, WeekPlan } from '@vert/engine';
+import { programStore, sessionStore } from '../../data';
+import type { DayType, Json, SqlExecutor, Timestamp } from '../../data';
 import type { CreateSessionExerciseInput } from '../../data/store/sessions';
 import type { BuildPlan } from './buildProgram';
 import { writeStepCount, type WriteProgressListener, type WriteStep } from './buildProgress';
@@ -64,23 +68,95 @@ function exerciseRowsFor(session: SessionPlan): CreateSessionExerciseInput[] {
   return rows;
 }
 
+/** One week's write: the week row itself, then every session it prescribes. */
+export interface WriteWeekInput {
+  readonly programId: string;
+  readonly programVersionId: string | null;
+  /** The engine's week, stored verbatim as the week's snapshot. */
+  readonly plan: WeekPlan;
+  /** 'setup' for week 1 at build, 'projection' for the rest, 'revision' after. */
+  readonly generatedBy: string;
+  /** The real instant the row was written, not the engine's frozen one. */
+  readonly generatedAt: Timestamp;
+  /** The "of" in "week 7 of 12". Defaults to the week's own number. */
+  readonly weekCount?: number;
+}
+
 /**
- * Write the program, its first version, its blocks, every week of the
- * skeleton, and week 1's sessions. Returns the program id.
+ * Write one week and its sessions. The week row is an upsert on
+ * `(program_id, w)`, so a revision replacing a projected week reuses its id.
+ *
+ * The caller owns any transaction and, on a revision, owns deleting the old
+ * sessions first: this function only ever inserts them. Returns the week id.
+ */
+export async function writeWeekPlan(
+  db: SqlExecutor,
+  input: WriteWeekInput,
+  landed?: (step: WriteStep) => void,
+): Promise<string> {
+  const { plan } = input;
+  const of = input.weekCount ?? plan.w;
+  const saved = await programStore.upsertWeek(db, {
+    programId: input.programId,
+    programVersionId: input.programVersionId,
+    w: plan.w,
+    windowStart: plan.windowStart,
+    windowEnd: plan.windowEnd,
+    kind: plan.kind,
+    k: plan.snapshot.k,
+    prescribedCount: plan.sessions.length,
+    repeatOfWeek: plan.repeatOfWeek ?? null,
+    extensiveTarget: plan.snapshot.targets.extensiveBottom,
+    highContactAllowance: plan.snapshot.targets.highIntensityAllowance,
+    ladderRungs: plan.snapshot.targets.ladderRungs as unknown as Json,
+    snapshot: plan as unknown as Json,
+    generatedAt: input.generatedAt,
+    generatedBy: input.generatedBy,
+  });
+  landed?.({ kind: 'week', w: plan.w, of });
+
+  let index = 0;
+  const sessionCount = plan.sessions.length;
+  for (const session of plan.sessions) {
+    await sessionStore.createSession(db, {
+      programId: input.programId,
+      weekId: saved.id,
+      scheduledDate: session.date,
+      orderIndex: index,
+      dayType: DAY_TYPES[session.dayType] ?? 'Lower Strength',
+      testStatus: session.testStatus ?? null,
+      isMaximalCns: session.isMaximalCns,
+      blocksPresent: session.blocks.map((block) => block.name) as unknown as Json,
+      trimmedExercises: session.trimmed as unknown as Json,
+      snapshot: session as unknown as Json,
+      exercises: exerciseRowsFor(session),
+    });
+    index += 1;
+    landed?.({ kind: 'session', w: plan.w, n: index, of: sessionCount });
+  }
+
+  return saved.id;
+}
+
+/**
+ * Write the program, its first version, its blocks, and every week of the
+ * program with every session it prescribes. Returns the program id.
  *
  * `onProgress` hears each awaited write land, in order, so the build screen
- * can draw a determinate bar: `writeStepCount(plan)` steps, the last one at
- * the total.
+ * can draw a determinate bar. `done` starts at `offset`, which is the count of
+ * steps the caller has already spent materializing, and `total` is the whole
+ * build; the last write lands exactly on it.
  */
 export async function writeProgramPlan(
   db: SqlExecutor,
   plan: BuildPlan,
   onProgress?: WriteProgressListener,
+  offset = 0,
+  total = writeStepCount(plan) + offset,
 ): Promise<string> {
-  const { skeleton, week1 } = plan;
+  const { skeleton, weeks } = plan;
   const lastWeek = skeleton.weeks[skeleton.weeks.length - 1];
-  const total = writeStepCount(plan);
-  let done = 0;
+  let done = offset;
   const landed = (step: WriteStep): void => {
     done += 1;
     onProgress?.({ done, total, step });
@@ -111,52 +187,24 @@ export async function writeProgramPlan(
   });
   landed({ kind: 'program' });
 
-  const generatedAt = nowIso();
-  let week1Id: string | null = null;
-  const weekCount = skeleton.weeks.length;
+  // The instant the build ran, not the engine's frozen per-week value: the row
+  // is honest about when it was written (design question 7).
+  const generatedAt = plan.generatedAt;
+  const weekCount = weeks.length;
 
-  for (const week of skeleton.weeks) {
-    const isFirst = week.w === 1;
-    const saved = await programStore.upsertWeek(db, {
-      programId: program.id,
-      programVersionId: version.id,
-      w: week.w,
-      windowStart: week.windowStart,
-      windowEnd: week.windowEnd,
-      kind: week.kind,
-      k: week.k,
-      prescribedCount: isFirst ? week1.sessions.length : week.sessions.length,
-      extensiveTarget: week.targets.extensiveBottom,
-      highContactAllowance: week.targets.highIntensityAllowance,
-      ladderRungs: week.targets.ladderRungs as unknown as Json,
-      snapshot: isFirst ? (week1 as unknown as Json) : null,
-      generatedAt: isFirst ? generatedAt : null,
-      generatedBy: isFirst ? 'setup' : null,
-    });
-    if (isFirst) week1Id = saved.id;
-    landed({ kind: 'week', w: week.w, of: weekCount });
-  }
-
-  if (week1Id !== null) {
-    let index = 0;
-    const sessionCount = week1.sessions.length;
-    for (const session of week1.sessions) {
-      await sessionStore.createSession(db, {
+  for (const week of weeks) {
+    await writeWeekPlan(
+      db,
+      {
         programId: program.id,
-        weekId: week1Id,
-        scheduledDate: session.date,
-        orderIndex: index,
-        dayType: DAY_TYPES[session.dayType] ?? 'Lower Strength',
-        testStatus: session.testStatus ?? null,
-        isMaximalCns: session.isMaximalCns,
-        blocksPresent: session.blocks.map((block) => block.name) as unknown as Json,
-        trimmedExercises: session.trimmed as unknown as Json,
-        snapshot: session as unknown as Json,
-        exercises: exerciseRowsFor(session),
-      });
-      index += 1;
-      landed({ kind: 'session', n: index, of: sessionCount });
-    }
+        programVersionId: version.id,
+        plan: week,
+        generatedBy: week.w === 1 ? 'setup' : 'projection',
+        generatedAt,
+        weekCount,
+      },
+      landed,
+    );
   }
 
   return program.id;

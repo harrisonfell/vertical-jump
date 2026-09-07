@@ -181,3 +181,4 @@ export { TodayCards } from './todayCards';
 export { useRunnerActions } from './runnerActions';
 export { RunnerExercise } from './exerciseSection';
 export { forcedState, type TodayForcedState } from './states';
+export { useAutoRevise } from './useAutoRevise';

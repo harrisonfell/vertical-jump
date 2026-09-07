@@ -50,6 +50,8 @@ export interface PlanModel {
   readonly strip: Strip;
   /** "Week 7 · 2 of 4 done (50%) · finish 1 more for 75%". */
   readonly ladder: string | null;
+  /** "Weeks 4 to 12 are projected from this plan." Null when none is. */
+  readonly projectionLine: string | null;
   /** The current week's outcome line, its post-generation lines, its days. */
   readonly thisWeekLines: string[];
   readonly earlier: { readonly w: number; readonly line: string }[];
@@ -79,10 +81,29 @@ export function segmentWeeks(input: PlanModelInput): SegmentWeek[] {
     .map((week) => ({ w: week.w, kind: week.kind, blockType: blockTypeFor(input.blocks, week.w) }));
 }
 
+/**
+ * A week the engine built from the plan as written rather than from what
+ * happened in it.
+ *
+ * Both values mean that. `projection` is a week written at build; `revision`
+ * is the same week written again after a real week was logged, which makes it
+ * a better guess but still a guess: its own sets have not been done yet. The
+ * athlete can tell either from a week that has actually run, because a
+ * projection is a best case and saying so is the honest thing to do.
+ */
+export const PROJECTED_BY: readonly string[] = ['projection', 'revision'];
+
+/** True for a week the engine wrote ahead of the athlete reaching it. */
+export function isProjectedWeek(generatedBy: string | null): boolean {
+  return generatedBy !== null && PROJECTED_BY.includes(generatedBy);
+}
+
 function stripWeeks(input: PlanModelInput): StripWeekInput[] {
   const repeats = new Map<number, number>();
+  const projected = new Set<number>();
   for (const week of input.weeks) {
     if (week.repeatOfWeek !== null) repeats.set(week.w, week.repeatOfWeek);
+    if (isProjectedWeek(week.generatedBy)) projected.add(week.w);
   }
 
   const source =
@@ -104,8 +125,25 @@ function stripWeeks(input: PlanModelInput): StripWeekInput[] {
 
   return source.map((week) => {
     const stored = repeats.get(week.w);
-    return stored === undefined ? week : { ...week, repeatOfWeek: stored };
+    const withRepeat = stored === undefined ? week : { ...week, repeatOfWeek: stored };
+    return projected.has(week.w) ? { ...withRepeat, projected: true } : withRepeat;
   });
+}
+
+/**
+ * "Weeks 4 to 12 are projected from this plan. They are rewritten as you log."
+ *
+ * Said once, under the strip, rather than repeated on every projected row.
+ * Null when nothing is projected.
+ */
+export function projectionLine(weeks: readonly StripWeekInput[]): string | null {
+  const projected = weeks.filter((week) => week.projected === true).map((week) => week.w);
+  const first = projected[0];
+  const last = projected[projected.length - 1];
+  if (first === undefined || last === undefined) return null;
+  return first === last
+    ? `Week ${first} is projected from this plan. It is rewritten as you log.`
+    : `Weeks ${first} to ${last} are projected from this plan. They are rewritten as you log.`;
 }
 
 /**
@@ -257,8 +295,9 @@ export function buildPlanModel(input: PlanModelInput): PlanModel {
   const currentWeek =
     totalWeeks === 0 ? null : weekIndexOf(start, totalWeeks, input.today);
 
+  const weekInputs = stripWeeks(input);
   const rawStrip = buildStrip({
-    weeks: stripWeeks(input),
+    weeks: weekInputs,
     sessions: input.states.has('not-finished')
       ? applyNotFinished(stripSessions(input), input.today)
       : stripSessions(input),
@@ -308,6 +347,7 @@ export function buildPlanModel(input: PlanModelInput): PlanModel {
     totalWeeks,
     segments: blockSegments(weeks),
     strip,
+    projectionLine: projectionLine(weekInputs),
     ladder: adherence === null || currentWeek === null ? null : ladderLine(currentWeek, adherence),
     thisWeekLines,
     earlier,

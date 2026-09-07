@@ -4,6 +4,7 @@ import { formatHeightIn, formatInteger, formatLoadLb, kgToLb, roundHalfUp } from
 import type { Athlete } from '@/data';
 import { Button, Notice, Sheet, Text, space } from '@/ui';
 import { climbingAnswersFrom, clockWindowLabel, showsGripBlock } from '../setup';
+import { revisePlanCopy, REVISE_LABEL, useRevise, useRevisionTarget } from '../plan';
 import { RowDivider, SettingRow, SettingSection } from './row';
 import { DATE_SHAPE, draftFrom, wallWindowLabel, type ProgramDraft } from './programDraft';
 import { ProgramSheetBody } from './programSheet';
@@ -225,6 +226,9 @@ export function ProgramSection({
         </View>
       ) : null}
 
+      <RowDivider />
+      <RevisePlanRow />
+
       <Sheet
         visible={editing}
         onClose={() => setEditing(false)}
@@ -260,6 +264,72 @@ export function ProgramSection({
         onDiscard={onDiscard}
       />
     </SettingSection>
+  );
+}
+
+
+/**
+ * "Revise plan": rebuild every unstarted week from what has actually been
+ * logged.
+ *
+ * The plan is built whole at setup, which means every week after the first is a
+ * projection of a week that went exactly as written. Once real outcomes exist
+ * the weeks after them can be better than that guess, and Today already does
+ * this on its own. This row is the manual path, for an athlete who wants it
+ * now, and it is the one place a refusal gets said out loud: the sheet keeps
+ * the engine's own sentence and nothing is written.
+ *
+ * It lives in Settings rather than in the Plan tab because the Plan has no
+ * settings sheet and this section already owns every action that rebuilds a
+ * program.
+ */
+export function RevisePlanRow() {
+  const target = useRevisionTarget();
+  const revise = useRevise();
+  const [asking, setAsking] = useState(false);
+
+  if (target === null) return null;
+  const copy = revisePlanCopy(target);
+  const failure = revise.error;
+
+  return (
+    <View>
+      <SettingRow
+        label={REVISE_LABEL}
+        caption={copy.caption}
+        chevron={!copy.disabled}
+        disabled={copy.disabled}
+        onPress={() => setAsking(true)}
+        testID="settings-revise"
+      />
+      <Sheet
+        visible={asking}
+        onClose={() => setAsking(false)}
+        title={copy.title}
+        closeLabel="Keep the current plan"
+        actions={
+          <Button
+            label={copy.confirmLabel}
+            variant="primary"
+            fullWidth
+            loading={revise.isPending}
+            onPress={() => {
+              revise.mutate(undefined, { onSuccess: () => setAsking(false) });
+            }}
+            testID="settings-revise-confirm"
+          />
+        }
+      >
+        <View style={{ gap: space.sm }}>
+          {copy.lines.map((line) => (
+            <Text key={line} variant="body" color="ink2">
+              {line}
+            </Text>
+          ))}
+          {failure === null ? null : <Notice text={failure.message} live />}
+        </View>
+      </Sheet>
+    </View>
   );
 }
 

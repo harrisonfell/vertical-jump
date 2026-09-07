@@ -8,6 +8,10 @@ import {
 } from '@vert/engine/units';
 import { formatCount, joinParts } from '@vert/engine/analytics';
 import type { Landing, LocalDate, SessionStatus, SetLog, Timestamp } from '@/data/types';
+// One predicate for "the engine wrote this week ahead of time", imported by
+// module rather than through the Plan barrel so this file stays free of the
+// Plan screen.
+import { isProjectedWeek } from '@/features/plan/model';
 
 /**
  * One session in the past or the future, as facts.
@@ -61,6 +65,11 @@ export interface CompareOptions {
    * (house rule `house.sc.upper_power_day`).
    */
   readonly addedLoad?: boolean;
+  /**
+   * The session has not happened yet. A set with no log is a set still to
+   * come, not one that was skipped, so it carries no note.
+   */
+  readonly future?: boolean;
 }
 
 /** The word the engine's added-load formatter puts in place of a number. */
@@ -105,7 +114,7 @@ export function compareSets(
     if (set.original !== undefined) parts.push(`was ${set.original.displayLoad}`);
 
     if (log === null) {
-      parts.push('not logged');
+      if (options.future !== true) parts.push('not logged');
     } else {
       if (set.reps !== undefined && log.repsDone !== null && log.repsDone !== set.reps) {
         parts.push(`did ${log.repsDone}`);
@@ -211,14 +220,34 @@ export function finishedAfterBuildLine(nextWeek: number): string {
   return `Finished after week ${nextWeek} was built · counts in the ledger, week ${nextWeek} unchanged`;
 }
 
+/** The one fact `nextWeekIsFinal` needs from a stored week row. */
+export interface WeekSource {
+  readonly w: number;
+  readonly generatedBy: string | null;
+}
+
+/**
+ * True when the week after this one is settled: it exists, and it was written
+ * from what actually happened rather than projected from the plan.
+ *
+ * This is what `finishedAfterBuildLine` claims, and the claim has to be earned.
+ * Every week now carries a `generatedAt` from build day, so "a row exists" no
+ * longer means "the week is fixed": a projected week is rewritten by the next
+ * revision, which reads the sessions this one is asking the athlete to finish.
+ * Telling them their work no longer matters, and taking the Finish button away
+ * to prove it, would be false. Only a week generated from real outcomes closes
+ * the door.
+ */
+export function nextWeekIsFinal(weeks: readonly WeekSource[], weekNumber: number): boolean {
+  const next = weeks.find((entry) => entry.w === weekNumber + 1);
+  if (next === undefined || next.generatedBy === null) return false;
+  return !isProjectedWeek(next.generatedBy);
+}
+
 export interface FutureTargetsInput {
   readonly dayType: string;
   readonly mainLiftName: string | null;
   readonly workingSets: number | null;
-  /** The week this session sits in. */
-  readonly weekNumber: number;
-  /** False while the week has not been generated: no loads exist yet. */
-  readonly built: boolean;
   /**
    * True when this day carries weighted pull-ups, hangboard hangs or explosive
    * pulls. It is worth knowing three days out, because it is the day the 48 h
@@ -228,10 +257,12 @@ export interface FutureTargetsInput {
 }
 
 /**
- * "Lower Strength · main lift: back squat · 3 working sets · loads set when
- * week 8 is built". Per-set loads are withheld even for a built future day:
- * soreness or a pain change re-materializes the session on the morning, and a
- * number read three days early would be a number that moved.
+ * "Lower Strength · main lift: back squat · 3 working sets", the one-line read
+ * above a future day's own sets.
+ *
+ * It says nothing about loads any more. Every session of every week is written
+ * at build, so the sets are on the screen below this line; withholding them
+ * only ever hid work the athlete had already been prescribed.
  */
 export function futureTargetsLine(input: FutureTargetsInput): string {
   return joinParts([
@@ -239,8 +270,23 @@ export function futureTargetsLine(input: FutureTargetsInput): string {
     input.mainLiftName === null ? null : `main lift: ${input.mainLiftName}`,
     input.workingSets === null ? null : `${input.workingSets} working sets`,
     input.hardFinger === true ? 'hard finger work' : null,
-    input.built ? 'loads shown on the day' : `loads set when week ${input.weekNumber} is built`,
   ]);
+}
+
+/**
+ * The one caption above a projected day (`generatedBy` 'projection' or
+ * 'revision'): the sets below are real, and they are a best guess that the
+ * next revision rewrites. A week the engine built for real says nothing extra,
+ * because there is nothing extra to say.
+ */
+export const PROJECTED_CAPTION = 'Projected from your plan. It is rewritten as you log.';
+
+/**
+ * A future day belonging to a program built before whole-plan materialization:
+ * its week has no sessions, so there is nothing to show yet.
+ */
+export function notBuiltLine(weekNumber: number): string {
+  return `Week ${weekNumber} has not been built yet. It appears here when it is.`;
 }
 
 /**

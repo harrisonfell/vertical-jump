@@ -228,14 +228,23 @@ export async function createProgram(
   return { program, version };
 }
 
-/** A new version of the same program, for a regeneration from the next unstarted week. */
+/**
+ * A new version of the same program, for a regeneration from the next
+ * unstarted week.
+ *
+ * `id` may be reserved by the caller. A revision writes its weeks pointing at
+ * the version before the version row exists, so that a run that dies partway
+ * leaves no version row at all: the row is the record that the revision
+ * finished, and a revision that says it finished when it did not would leave
+ * the plan half rebuilt with nothing to trigger a retry.
+ */
 export async function createProgramVersion(
   db: SqlExecutor,
   programId: string,
   weekLayout: Json,
   reason: string,
+  id: string = newId('pver'),
 ): Promise<ProgramVersion> {
-  const id = newId('pver');
   const at = nowIso();
   await db.withTransactionAsync(async () => {
     const row = await db.getFirstAsync<{ next: number | null }>(
@@ -325,6 +334,24 @@ export interface UpsertWeekInput {
   readonly generatedBy?: string | null;
 }
 
+/**
+ * An optional field, or what the row already holds when it was not passed.
+ *
+ * Every column below the first five is optional, and callers pass only the
+ * ones they own: finishing a week's last workout upserts the next week to
+ * store its ladder rungs and knows nothing about how that week was generated.
+ * Writing `?? null` for the rest wiped `generated_by`, `generated_at`,
+ * `program_version_id` and the week's targets, which turned a projected week
+ * into a blank one the moment the week before it was finished.
+ *
+ * An omitted field keeps its value; an explicit `null` still clears it, which
+ * is what a revision needs when a week stops being a repeat of another.
+ */
+function kept<T>(passed: T | undefined, stored: T | null | undefined): T | null {
+  if (passed !== undefined) return passed;
+  return stored ?? null;
+}
+
 export async function upsertWeek(db: SqlExecutor, input: UpsertWeekInput): Promise<Week> {
   const existing = await getWeek(db, input.programId, input.w);
   const id = existing?.id ?? newId('week');
@@ -353,22 +380,22 @@ export async function upsertWeek(db: SqlExecutor, input: UpsertWeekInput): Promi
     [
       id,
       input.programId,
-      input.programVersionId ?? null,
-      input.blockId ?? null,
+      kept(input.programVersionId, existing?.programVersionId),
+      kept(input.blockId, existing?.blockId),
       input.w,
       input.windowStart,
       input.windowEnd,
       input.kind,
-      input.k ?? null,
-      input.prescribedCount ?? 0,
-      input.repeatOfWeek ?? null,
-      toJson(input.jointHighStressCounts),
-      input.highContactAllowance ?? null,
-      input.extensiveTarget ?? null,
-      toJson(input.ladderRungs),
-      toJson(input.snapshot),
-      input.generatedAt ?? null,
-      input.generatedBy ?? null,
+      kept(input.k, existing?.k),
+      input.prescribedCount ?? existing?.prescribedCount ?? 0,
+      kept(input.repeatOfWeek, existing?.repeatOfWeek),
+      toJson(kept(input.jointHighStressCounts, existing?.jointHighStressCounts)),
+      kept(input.highContactAllowance, existing?.highContactAllowance),
+      kept(input.extensiveTarget, existing?.extensiveTarget),
+      toJson(kept(input.ladderRungs, existing?.ladderRungs)),
+      toJson(kept(input.snapshot, existing?.snapshot)),
+      kept(input.generatedAt, existing?.generatedAt),
+      kept(input.generatedBy, existing?.generatedBy),
     ],
   );
   const saved = await getWeek(db, input.programId, input.w);

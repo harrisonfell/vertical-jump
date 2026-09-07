@@ -217,14 +217,16 @@ export { baselineReading, useBaselineTest } from './useBaseline';
 export {
   buildFailureLines,
   buildProgramPlan,
+  buildProgramWeeks,
   emptyHistory,
   seedFor,
   type BuildInput,
   type BuildPlan,
 } from './buildProgram';
-export { writeProgramPlan } from './writeProgram';
+export { writeProgramPlan, writeWeekPlan, type WriteWeekInput } from './writeProgram';
 export {
   RULE_BOOK_PROGRESS,
+  buildStepCount,
   progressFraction,
   progressFromWrite,
   writeStepCount,

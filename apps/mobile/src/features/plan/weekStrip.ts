@@ -57,6 +57,10 @@ export interface StripRow {
   readonly kind: WeekKind;
   /** "Repeat of week 6" when R94 repeated it. */
   readonly repeatLabel: string | null;
+  /** True for a week built from the plan as written, not from real outcomes. */
+  readonly projected: boolean;
+  /** "Projected", the one honest word for such a week. Null otherwise. */
+  readonly projectedLabel: string | null;
   readonly isCurrent: boolean;
   readonly cells: StripCell[];
 }
@@ -66,6 +70,12 @@ export interface StripWeekInput {
   readonly windowStart: LocalDate;
   readonly kind: WeekKind;
   readonly repeatOfWeek?: number;
+  /**
+   * True when the week was materialized from the plan as written rather than
+   * from what the athlete actually did. Every week after the current one is
+   * projected until a real week is logged and the plan is revised.
+   */
+  readonly projected?: boolean;
 }
 
 export interface StripSessionInput {
@@ -120,6 +130,9 @@ const STATE_GLYPH: Readonly<Record<CellState, GlyphName | null>> = {
   not_finished: 'state-notfinished',
   missed: 'state-missed',
 };
+
+/** The one word a projected week carries. Plain, and never colour alone. */
+export const PROJECTED_LABEL = 'Projected';
 
 /** The short word a cell shows for its day type. */
 export function dayTypeShort(dayType: DayType, upperPower = false): string {
@@ -199,6 +212,8 @@ export function buildStrip(input: StripInput): Strip {
     weekLabel: `Week ${week.w}`,
     kind: week.kind,
     repeatLabel: week.repeatOfWeek === undefined ? null : `Repeat of week ${week.repeatOfWeek}`,
+    projected: week.projected === true,
+    projectedLabel: week.projected === true ? PROJECTED_LABEL : null,
     isCurrent: week.w === input.currentWeek,
     cells: Array.from({ length: 7 }, (_unused, offset) => {
       const date = addDays(week.windowStart, offset);

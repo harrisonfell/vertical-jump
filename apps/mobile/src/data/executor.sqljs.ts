@@ -1,5 +1,6 @@
 import type { BindParams, Database } from 'sql.js';
 import type { SqlExecutor, SqlParams, SqlRunResult } from './executor';
+import { reentrantTransaction } from './reentrant';
 
 /**
  * A SqlExecutor over an open sql.js database.
@@ -9,6 +10,13 @@ import type { SqlExecutor, SqlParams, SqlRunResult } from './executor';
  * against each other with a promise queue; single statements run straight
  * through, which is safe because every repository write goes through a
  * transaction.
+ *
+ * A transaction opened inside another gets a savepoint, through the same
+ * `reentrantTransaction` the native executor uses. This file used to flatten
+ * nesting instead, running the inner body with no boundary of its own, which
+ * cost nothing here but hid a real defect: on expo-sqlite the same nesting
+ * issues a second BEGIN and fails. Sharing the logic keeps web, node and the
+ * device on one set of semantics.
  */
 
 export interface SqlJsExecutorOptions {
@@ -63,6 +71,31 @@ export function createSqlJsExecutor(
     return typeof value === 'number' ? value : 0;
   };
 
+  // The outermost transaction takes its turn in the queue and holds `depth` for
+  // as long as it runs, so nothing persists a half-written transaction; every
+  // transaction inside it stands on a savepoint.
+  const transaction = reentrantTransaction({
+    outer: (fn) =>
+      exclusive(async () => {
+        depth = 1;
+        db.run('BEGIN');
+        try {
+          await fn();
+        } catch (error) {
+          db.run('ROLLBACK');
+          depth = 0;
+          throw error;
+        }
+        db.run('COMMIT');
+        depth = 0;
+        notify();
+      }),
+    exec: (sql) => {
+      db.run(sql);
+      return Promise.resolve();
+    },
+  });
+
   const executor: SqlExecutor = {
     execAsync(sql: string): Promise<void> {
       db.exec(sql);
@@ -97,24 +130,7 @@ export function createSqlJsExecutor(
     },
 
     withTransactionAsync(fn: () => Promise<void>): Promise<void> {
-      if (depth > 0) return fn();
-
-      const run = async (): Promise<void> => {
-        depth = 1;
-        db.run('BEGIN');
-        try {
-          await fn();
-        } catch (error) {
-          db.run('ROLLBACK');
-          depth = 0;
-          throw error;
-        }
-        db.run('COMMIT');
-        depth = 0;
-        notify();
-      };
-
-      return exclusive(run);
+      return transaction(fn);
     },
 
     serializeAsync(): Promise<Uint8Array> {

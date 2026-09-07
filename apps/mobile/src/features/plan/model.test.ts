@@ -97,7 +97,11 @@ const program: Program = {
   updatedAt: '2026-09-07T00:00:00.000Z',
 };
 
-function model(today = FIXTURE_TODAY, states: ReadonlySet<PlanState> = new Set()) {
+function model(
+  today = FIXTURE_TODAY,
+  states: ReadonlySet<PlanState> = new Set(),
+  weeks: Week[] = storeWeeks(),
+) {
   return buildPlanModel({
     athlete: {
       id: 'a1',
@@ -127,7 +131,7 @@ function model(today = FIXTURE_TODAY, states: ReadonlySet<PlanState> = new Set()
     program,
     skeleton: owner.skeleton,
     blocks: [],
-    weeks: storeWeeks(),
+    weeks,
     sessions: storeSessions(today),
     today,
     states,
@@ -328,5 +332,54 @@ describe('buildPlanModel on the climbing fixture', () => {
 
   it('still says each sentence once', () => {
     expect(new Set(built.thisWeekLines).size).toBe(built.thisWeekLines.length);
+  });
+});
+
+/**
+ * A projected week is one the engine built from the plan as written rather
+ * than from anything the athlete did. The strip says so in one word and the
+ * screen says so once underneath, because a projection is a best case and the
+ * athlete has to be able to tell it from a week built on their real outcomes.
+ */
+describe('projected weeks', () => {
+  const projected = storeWeeks().map((week) =>
+    week.w >= 5 ? { ...week, generatedBy: 'projection' } : week,
+  );
+
+  it('marks every projected week on the strip and no other', () => {
+    const built = model(FIXTURE_TODAY, new Set(), projected);
+    const labelled = built.strip.rows.filter((row) => row.projectedLabel !== null);
+    expect(labelled.map((row) => row.w)).toEqual([5, 6, 7]);
+    expect(labelled.every((row) => row.projectedLabel === 'Projected')).toBe(true);
+    expect(labelled.every((row) => row.projected)).toBe(true);
+    expect(built.strip.rows.filter((row) => row.w < 5).every((row) => !row.projected)).toBe(true);
+  });
+
+  it('says once, under the strip, which weeks are projected and why they move', () => {
+    expect(model(FIXTURE_TODAY, new Set(), projected).projectionLine).toBe(
+      'Weeks 5 to 7 are projected from this plan. They are rewritten as you log.',
+    );
+  });
+
+  it('says nothing when every week came from real outcomes', () => {
+    expect(model().projectionLine).toBeNull();
+    expect(model().strip.rows.every((row) => row.projectedLabel === null)).toBe(true);
+  });
+
+  it('still marks a week a revision rewrote, because its sets have not been done', () => {
+    const revised = storeWeeks().map((week) =>
+      week.w >= 5 ? { ...week, generatedBy: 'revision' } : week,
+    );
+    const built = model(FIXTURE_TODAY, new Set(), revised);
+    expect(built.strip.rows.filter((row) => row.projected).map((row) => row.w)).toEqual([5, 6, 7]);
+  });
+
+  it('names a single projected week in the singular', () => {
+    const one = storeWeeks().map((week) =>
+      week.w === 7 ? { ...week, generatedBy: 'projection' } : week,
+    );
+    expect(model(FIXTURE_TODAY, new Set(), one).projectionLine).toBe(
+      'Week 7 is projected from this plan. It is rewritten as you log.',
+    );
   });
 });

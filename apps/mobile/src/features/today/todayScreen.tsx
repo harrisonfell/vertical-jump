@@ -8,6 +8,7 @@ import { DoneSummary } from './doneSummary';
 import { RestDay } from './restDay';
 import { SessionRunner } from './sessionRunner';
 import { TodaySkeleton } from './todaySkeleton';
+import { useAutoRevise } from './useAutoRevise';
 import { useTodayData } from './useTodayData';
 
 /**
@@ -21,6 +22,9 @@ import { useTodayData } from './useTodayData';
 
 export function TodayScreen() {
   const data = useTodayData();
+  // Once a week has real outcomes, the weeks after it are rebuilt from them.
+  // A no-op when there is nothing new to fold in, which is most mounts.
+  useAutoRevise();
   const router = useRouter();
   const client = useQueryClient();
   const [editing, setEditing] = useState(false);

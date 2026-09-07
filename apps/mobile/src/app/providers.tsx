@@ -7,6 +7,7 @@ import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DbProvider } from '@/data/db';
 import { useServerSync, useSnapshotSync } from '@/data/hooks';
+import { useProjectionBackfill } from '@/features/plan/backfill';
 import { useOnlineWatcher } from '@/state/sync';
 import { GestureRoot } from '@/ui/gestureRoot';
 import { useTheme } from '@/ui';
@@ -79,6 +80,12 @@ export function useAppFonts(): boolean {
 /**
  * Safe areas, the status bar tuned to the scheme, and the two guards every
  * screen sits behind: the error boundary and the boot skeleton.
+ *
+ * `useProjectionBackfill` is the one piece of repair work that runs here. A
+ * program built before the app projected past week 1 holds weeks 2..W as bare
+ * rows no screen can open, and nothing else in the app would ever fill them.
+ * It writes nothing when there is nothing to fill, which is every start after
+ * the first.
  */
 export function AppChrome({ children }: { readonly children: ReactNode }) {
   const { scheme } = useTheme();
@@ -87,6 +94,7 @@ export function AppChrome({ children }: { readonly children: ReactNode }) {
   useSnapshotSync();
   useWebReset();
   useRestTimerPersistence();
+  useProjectionBackfill();
 
   return (
     <SafeAreaProvider>

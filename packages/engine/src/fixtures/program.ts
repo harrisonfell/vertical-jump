@@ -9,7 +9,12 @@
  * choice goes through `mulberry32(seed)`.
  */
 import { indexById, loadExercises } from '../exercises/index.js';
-import { advancedSkeletonFor, materializeWeek } from '../materialize.js';
+import {
+  emptyMaterializeHistory,
+  runWeekChain,
+  type ChainOptions,
+  type ChainState,
+} from '../materialize.js';
 import { mulberry32 } from '../prng.js';
 import { usesAddedLoad } from '../prescribe/pullUp.js';
 import { loadRuleset } from '../ruleset/index.js';
@@ -19,18 +24,11 @@ import { buildWhoopMirror, type WhoopMirror } from './whoop.js';
 import type { Athlete } from '../types/athlete.js';
 import type { JumpRep, JumpTest } from '../types/analytics.js';
 import type { LocalDate } from '../types/calendar.js';
-import type { Instrument, LadderId } from '../types/core.js';
+import type { Instrument } from '../types/core.js';
 import type { Exercise } from '../types/exercise.js';
 import type { SessionRecord, SetLog } from '../types/logs.js';
 import type { ReadinessTodayInput } from '../types/readiness.js';
-import type {
-  MaterializeContext,
-  MaterializeHistory,
-  PlanSkeleton,
-  PreviousWeekContext,
-  SessionPlan,
-  WeekPlan,
-} from '../types/plan.js';
+import type { PlanSkeleton, SessionPlan, WeekPlan } from '../types/plan.js';
 
 /* -------------------------------------------------- the fixture calendar */
 
@@ -232,59 +230,6 @@ function logWeek(
   return { logs, records };
 }
 
-/** Rolling state week w reads: rotation, ladders, joint load and adherence. */
-function advanceHistory(
-  history: MaterializeHistory,
-  week: WeekPlan,
-  adherence: number,
-  ladderIds: readonly LadderId[],
-): MaterializeHistory {
-  const rotationHistory: Record<string, number[]> = {};
-  for (const [id, weeks] of Object.entries(history.rotationHistory)) rotationHistory[id] = [...weeks];
-  const joints = { knee: 0, spine: 0, shoulder: 0 };
-  for (const session of week.sessions) {
-    for (const block of session.blocks) {
-      if (block.name === 'warm_up') continue;
-      for (const row of block.exercises) {
-        const seen = rotationHistory[row.exerciseId] ?? [];
-        if (!seen.includes(week.w)) seen.push(week.w);
-        rotationHistory[row.exerciseId] = seen;
-      }
-    }
-  }
-
-  const ladderState: MaterializeHistory['ladderState'] = {};
-  for (const id of ladderIds) {
-    const previous = history.ladderState[id];
-    const rung = previous?.rung ?? 0;
-    const spent = previous?.advancesThisBlock ?? 0;
-    const advance = week.kind === 'load' && spent < 2 ? 1 : 0;
-    ladderState[id] = { rung: rung + advance, advancesThisBlock: spent + advance };
-  }
-
-  const percentWeekIndexByLift: Record<string, number> = {
-    ...(history.percentWeekIndexByLift ?? {}),
-  };
-  for (const session of week.sessions) {
-    for (const block of session.blocks) {
-      for (const row of block.exercises) {
-        if (!row.sets.some((set) => set.loadPercent !== undefined)) continue;
-        percentWeekIndexByLift[row.exerciseId] = (percentWeekIndexByLift[row.exerciseId] ?? -1) + 1;
-      }
-    }
-  }
-
-  return {
-    ...history,
-    firstProgram: true,
-    rotationHistory,
-    ladderState,
-    percentWeekIndexByLift,
-    jointHighStressLastWeek: joints,
-    consecutiveAdherence: [...history.consecutiveAdherence, adherence],
-  };
-}
-
 function testReps(heightIn: number, prng: ReturnType<typeof mulberry32>, id: string): JumpRep[] {
   const best = inToMm(heightIn);
   const reps: JumpRep[] = [];
@@ -337,11 +282,15 @@ export function buildTests(
 /**
  * Run one fixture program: materialize weeks 1 to `currentWeek` in order, each
  * reading the one before it, and log the ones that are behind us.
+ *
+ * The week-after-week loop itself lives in `materialize/chain.ts`, so the
+ * projection and the fixtures fold exactly the same state. What stays here is
+ * what makes this a fixture: the Whoop mirror, the readiness gate, the typed
+ * loads, and the canonical tests.
  */
 export function runProgram(spec: ProgramSpec): ProgramRun {
   const ruleset = loadRuleset();
   const { exercises, ladders } = loadExercises();
-  const ladderIds = ladders.map((ladder) => ladder.id);
   const { athlete } = spec;
   const byId = indexById(exercises);
   const squatMaxKg = athlete.workingMaxes[0]?.valueKg ?? lbToKg(275);
@@ -357,64 +306,41 @@ export function runProgram(spec: ProgramSpec): ProgramRun {
     new Set<LocalDate>(sessionDates),
     mulberry32(spec.seed).fork('whoop'),
   );
+
+  const options: ChainOptions = {
+    athlete,
+    ruleset,
+    exercises,
+    ladders,
+    seed: spec.seed,
+    todayFor: (w, week) =>
+      w === spec.currentWeek ? spec.today : (week?.windowStart ?? spec.programStart),
+    logWeek: (week, w) => logWeek(week, w, byId, squatMaxKg, spec),
+    historyFor: (w, history) => {
+      const readiness = spec.readinessToday?.(w, sessionDates, whoop);
+      return readiness === undefined ? history : { ...history, readinessToday: readiness };
+    },
+  };
+  if (spec.priorLogs !== undefined) options.priorLogs = spec.priorLogs;
+
   // The skeleton is carried forward: each week's outcome raises the next
   // week's start offsets, extensive floor and ladder rungs (R95, R96).
-  let skeleton = base;
-
-  const weeks: WeekPlan[] = [];
-  const setLogs: SetLog[] = [];
-  const sessions: SessionRecord[] = [];
-  let history: MaterializeHistory = {
-    firstProgram: true,
-    rotationHistory: {},
-    ladderState: {},
-    percentWeekIndexByLift: {},
-    jointHighStressLastWeek: { knee: 0, spine: 0, shoulder: 0 },
-    consecutiveAdherence: [],
-    testPlateau: false,
-    liftPlateau: {},
-    liftRaisedSinceBlockStart: {},
+  const start: ChainState = {
+    skeleton: base,
+    history: emptyMaterializeHistory(),
+    workingMaxes: athlete.workingMaxes,
+    weeks: [],
+    setLogs: [],
+    sessions: [],
   };
-  let previous: PreviousWeekContext | undefined;
-
-  for (let w = 1; w <= spec.currentWeek; w += 1) {
-    const skeletonWeek = skeleton.weeks.find((entry) => entry.w === w);
-    const context: MaterializeContext = {
-      athlete,
-      ruleset,
-      exercises,
-      ladders,
-      skeleton,
-      w,
-      workingMaxes: weeks[w - 2]?.snapshot.workingMaxes ?? athlete.workingMaxes,
-      history,
-      today:
-        w === spec.currentWeek ? spec.today : (skeletonWeek?.windowStart ?? spec.programStart),
-      seed: spec.seed,
-      recentLogs: [...(spec.priorLogs ?? []), ...setLogs],
-    };
-    const readiness = spec.readinessToday?.(w, sessionDates, whoop);
-    if (readiness !== undefined) context.history = { ...history, readinessToday: readiness };
-    if (previous !== undefined) context.prevWeek = previous;
-    const week = materializeWeek(context);
-    skeleton = advancedSkeletonFor(context);
-    weeks.push(week);
-
-    const { logs, records } = logWeek(week, w, byId, squatMaxKg, spec);
-    setLogs.push(...logs);
-    sessions.push(...records);
-    const done = records.filter((record) => record.status === 'done').length;
-    const adherence = week.sessions.length === 0 ? 0 : done / week.sessions.length;
-    previous = { plan: week, logs, sessions: records };
-    history = advanceHistory(history, week, adherence, ladderIds);
-  }
+  const end = runWeekChain(start, 1, spec.currentWeek, options);
 
   return {
     skeleton: base,
-    weeks,
-    setLogs,
-    sessions,
-    tests: buildTests(weeks, spec, athlete.bodyweightKg ?? lbToKg(181)),
+    weeks: end.weeks,
+    setLogs: end.setLogs,
+    sessions: end.sessions,
+    tests: buildTests(end.weeks, spec, athlete.bodyweightKg ?? lbToKg(181)),
     whoop,
   };
 }

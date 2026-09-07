@@ -4,6 +4,12 @@ export { SessionScreen, type SessionScreenProps } from './sessionScreen';
 export { PastView, type PastViewProps } from './pastView';
 export { FutureView, type FutureViewProps } from './futureView';
 export { RetroView, type RetroViewProps } from './retroView';
+export {
+  ExerciseRows,
+  SessionBlocks,
+  type ExerciseRowsProps,
+  type SessionBlocksProps,
+} from './exerciseRows';
 export { WhoopMatch, type WhoopMatchProps } from './whoopMatch';
 export { blockName, groupExercises, isGrouped, type ExerciseGroup } from './blockNames';
 export { useFingerPainOn } from './answers';
@@ -15,6 +21,7 @@ export {
 } from './planNotes';
 export {
   AWAITING_WORKOUT,
+  PROJECTED_CAPTION,
   compareSets,
   doneSummaryLine,
   feelLine,
@@ -22,6 +29,8 @@ export {
   finishedAfterBuildLine,
   futureTargetsLine,
   matchWindow,
+  nextWeekIsFinal,
+  notBuiltLine,
   notFinishedLine,
   rowNoteLine,
   sessionMinutes,
@@ -35,6 +44,7 @@ export {
   type MatchWindow,
   type SessionView,
   type SetRowModel,
+  type WeekSource,
   type WorkoutEvidence,
 } from './detail';
 export { SESSION_STATES, readSessionStates, type SessionState } from './states';
