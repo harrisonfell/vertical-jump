@@ -158,6 +158,11 @@ export function AsymmetrySection({ model }: AsymmetrySectionProps) {
             {model.trendLine}
           </Text>
         )}
+        {model.effortLine === null ? null : (
+          <Text variant="caption" color="ink2" numeric style={{ maxWidth: 560 }}>
+            {model.effortLine}
+          </Text>
+        )}
         <Text variant="caption" color="ink2" style={{ maxWidth: 560 }}>
           {model.orderLine}
         </Text>

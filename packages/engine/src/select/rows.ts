@@ -32,7 +32,10 @@ export function houseRowNotes(
   placement: ClimbingPlacement,
 ): void {
   const { athlete } = context;
-  const side = athlete.weakerSide;
+  // What the legs did outranks what the athlete guessed: a per-side RPE gap on
+  // logged unilateral work names the harder-working leg, and only when it names
+  // none does the setup answer decide.
+  const side = context.weakerSideLogged ?? athlete.weakerSide;
   if (exercise.unilateral && (side === 'left' || side === 'right')) {
     entry.sideNote = `Weaker side first: ${side}`;
   }

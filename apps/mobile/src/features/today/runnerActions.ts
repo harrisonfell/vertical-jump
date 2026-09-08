@@ -125,6 +125,7 @@ export function useRunnerActions({
           durationS: set.durationS ?? null,
           distanceM: set.distanceM ?? null,
           rpe: extra.rpe ?? set.targetRpe ?? null,
+          ...(extra.side === undefined ? null : { side: extra.side }),
           loadSource: exercise.loadMode,
           plannedDate: session.scheduledDate,
         },
@@ -136,8 +137,19 @@ export function useRunnerActions({
   );
 
   const onLog = useCallback(
-    (exercise: TodayExercise, set: SetPrescription, result: Partial<EditSetValue>) => {
+    (
+      exercise: TodayExercise,
+      set: SetPrescription,
+      result: Partial<EditSetValue>,
+      /**
+       * A second write for the same set: the other leg of a unilateral row.
+       * The rest bar, the landing prompt and the scroll all belong to the set,
+       * so they run once no matter how many legs it took.
+       */
+      alsoWrite?: Partial<EditSetValue>,
+    ) => {
       writeSet(exercise, set, result);
+      if (alsoWrite !== undefined) writeSet(exercise, set, alsoWrite);
 
       const last = exercise.sets[exercise.sets.length - 1];
       if (exercise.landingPromptOnLastSet && last?.setNumber === set.setNumber) {
@@ -168,11 +180,23 @@ export function useRunnerActions({
 
   const onLogRow = useCallback(
     (exercise: TodayExercise, set: SetPrescription, result: SetRowLogResult) => {
-      onLog(exercise, set, {
+      const work = {
         repsDone: set.reps ?? null,
         loadKg: result.loadLb === null ? null : lbToKg(result.loadLb),
-        rpe: result.rpe,
-      });
+      };
+      // A unilateral row answered per leg is two rows under one set number, so
+      // the gap between the legs survives into the ledger. One answer, or none,
+      // is the single row it has always been.
+      if (result.rpeLeft !== null || result.rpeRight !== null) {
+        onLog(
+          exercise,
+          set,
+          { ...work, rpe: result.rpeLeft, side: 'left' },
+          { ...work, rpe: result.rpeRight, side: 'right' },
+        );
+        return;
+      }
+      onLog(exercise, set, { ...work, rpe: result.rpe });
     },
     [onLog],
   );

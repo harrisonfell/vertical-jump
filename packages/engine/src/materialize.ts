@@ -58,6 +58,7 @@ import {
   readinessSuffixFor,
   scoreReadinessToday,
 } from './materialize/climbing.js';
+import { harderSideFrom } from './analytics/sideEffort.js';
 import { applyReadinessAdjustment } from './readiness/index.js';
 import {
   advancedSkeletonFor,
@@ -158,6 +159,15 @@ export function materializeWeek(context: MaterializeContext): WeekPlan {
   // generator spends and a built session cannot un-take a raise.
   const readiness = scoreReadinessToday(context);
   const readinessStep = readinessStepLb(athlete);
+  // House `house.sc.weaker_side_first`, read off the logs rather than the setup
+  // answer: every set the athlete logged per side, reduced to the leg that
+  // reports the higher effort at matched loads. Null until one set carries both
+  // legs at the same work, which is every program before the first one is
+  // logged that way.
+  const weakerSideLogged = harderSideFrom([
+    ...(context.recentLogs ?? []),
+    ...(context.prevWeek?.logs ?? []),
+  ]);
 
   week.sessions.forEach((skeletonSession, index) => {
     const soreness = sorenessForSession(context, skeletonSession);
@@ -182,6 +192,7 @@ export function materializeWeek(context: MaterializeContext): WeekPlan {
       sorenessReduction: reduced,
       fingerPainToday: fingerPain,
       holdExtensiveRaise: isToday && readiness?.adjustment.holdVolume === true,
+      weakerSideLogged,
     };
     const selected = selectSession(selectContext);
     const block6: Block6Context = {

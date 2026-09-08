@@ -14,6 +14,7 @@ import { workingMaxSourceLine } from '../prescribe/workingMax.js';
 import { MAXIMAL_CNS_TOP_SET_PCT, countContacts } from '../budgets.js';
 import { indexById } from '../exercises/index.js';
 import { UNLOADED_LOAD_TYPES } from '../select/volume.js';
+import { sideEffortTail } from '../analytics/sideEffort.js';
 import { formatLastTime, kgToLb, type LastTimeSet } from '../units.js';
 import type { Athlete, WorkingMax } from '../types/athlete.js';
 import type {
@@ -219,22 +220,48 @@ function loadModeFor(
 }
 
 /**
+ * One entry per set number, so a unilateral row logged on both sides reads as
+ * the three sets it was rather than six.
+ *
+ * The left leg's log is preferred where both exist, and only because one of
+ * them has to be: the load and the reps on this line are the row's own, the
+ * same on both legs, and what actually differed between the sides is the
+ * effort, which rides in the tail instead.
+ */
+function oneEntryPerSet(logs: readonly SetLog[]): SetLog[] {
+  const bySet = new Map<number, SetLog>();
+  for (const log of logs) {
+    const held = bySet.get(log.setNumber);
+    if (held === undefined || (held.side === 'right' && log.side === 'left')) {
+      bySet.set(log.setNumber, log);
+    }
+  }
+  return [...bySet.values()].sort((a, b) => a.setNumber - b.setNumber);
+}
+
+/**
  * What the athlete did last time, in the brief's own notation (section 13):
  * "last 5 / 5" for a bodyweight row, "last 5 × 205 / 4 × 220 / 3 × 235" when
  * the sets carried load, and "last 8 × 6 sets" once more than four identical
  * sets ran. The unit is not repeated: the header line beside it already says
  * whether the numbers are pounds.
+ *
+ * A unilateral row logged per side carries what the two legs reported in a
+ * tail: "last 8 × 30 / 8 × 35 / 8 × 40 · left RPE 8, right RPE 6". That is the
+ * whole point of logging the sides separately, and it is the one number on
+ * this line the loads cannot say.
  */
 export function lastTimeLine(logs: readonly SetLog[], exerciseId: ExerciseId): string | undefined {
-  const mine = logs
-    .filter((log) => log.exerciseId === exerciseId && log.repsDone !== undefined)
-    .sort((a, b) => a.setNumber - b.setNumber);
+  const mine = logs.filter((log) => log.exerciseId === exerciseId && log.repsDone !== undefined);
   if (mine.length === 0) return undefined;
-  const sets: LastTimeSet[] = mine.map((log) => {
+  const sets: LastTimeSet[] = oneEntryPerSet(mine).map((log) => {
     const reps = log.repsDone ?? 0;
     return log.loadKg === undefined ? { reps } : { reps, loadLb: kgToLb(log.loadKg) };
   });
-  return formatLastTime(sets);
+  const line = formatLastTime(sets);
+  if (line === undefined) return undefined;
+  const tail = sideEffortTail(mine);
+  return tail === undefined ? line : `${line} \u00b7 ${tail}`;
 }
 
 /**

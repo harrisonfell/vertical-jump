@@ -22,6 +22,12 @@ export interface EditSetValue {
   readonly repsDone: number | null;
   readonly loadKg: number | null;
   readonly rpe: number | null;
+  /**
+   * Which leg this value belongs to, on a unilateral row answered per side.
+   * Absent is the row logged once for both sides, which is what this sheet
+   * always sends: it corrects a set, and a set is the row, not one leg of it.
+   */
+  readonly side?: 'left' | 'right';
 }
 
 export interface EditSetSheetProps {

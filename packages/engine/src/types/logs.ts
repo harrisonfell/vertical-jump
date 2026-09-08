@@ -3,7 +3,7 @@
  * Adherence is sessions marked complete over sessions scheduled in the
  * calendar week, Recovery days included (brief 09 "Calendar and generation").
  */
-import type { ExerciseId, DayType, LandingQuality, LiftId, LoadMode } from './core.js';
+import type { ExerciseId, DayType, LandingQuality, LiftId, LoadMode, Side } from './core.js';
 import type { IsoInstant, LocalDate } from './calendar.js';
 
 /** One logged set. Every tap writes one of these in a transaction. */
@@ -20,6 +20,16 @@ export interface SetLog {
   landing?: LandingQuality;
   /** Logged per set in RPE mode (R74, R158). */
   rpe?: number;
+  /**
+   * Which leg or arm the set ran on. Absent on a bilateral set, and absent on
+   * a unilateral set the athlete logged as one row for both sides, which is
+   * still what a tap without a per-side answer writes.
+   *
+   * A unilateral row that gets a per-side answer writes one log per side under
+   * the same `setNumber`, so the row is still three sets rather than six, and
+   * the two legs carry their own load and their own effort.
+   */
+  side?: Side;
   /** OVR Velocity: best rep's mean velocity, m/s. */
   meanVelocityBest?: number;
   /** OVR Velocity: last rep's mean velocity, m/s. */

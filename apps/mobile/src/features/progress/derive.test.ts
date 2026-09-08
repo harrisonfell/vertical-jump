@@ -155,6 +155,7 @@ describe('lifts', () => {
       repsDone: 5,
       loadKg: lbToKg(205),
       rpe: 8,
+      side: null,
       meanVelocityBest: null,
       velocityLossPct: null,
       ...overrides,

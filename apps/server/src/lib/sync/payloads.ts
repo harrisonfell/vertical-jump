@@ -188,6 +188,8 @@ export const setLogPatch = z.object({
   boxHeightMm: int(),
   landing: text(),
   rpe: decimal(),
+  /** 'left' or 'right' on a unilateral set; absent or null means both at once. */
+  side: text(),
   meanVelocityBest: decimal(),
   meanVelocityLast: decimal(),
   velocityLossPct: decimal(),

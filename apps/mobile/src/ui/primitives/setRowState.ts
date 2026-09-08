@@ -12,6 +12,9 @@ export type SetRowKind = 'loadable' | 'bodyweight' | 'timed' | 'distance' | 'rpe
 
 export type LandingQuality = 'good' | 'ok' | 'poor';
 
+/** Which leg or arm a unilateral row's effort belongs to. */
+export type SetSide = 'left' | 'right';
+
 /** The five landing seconds, from the brief's interaction section. */
 export const LANDING_SECONDS = 5;
 
@@ -23,6 +26,13 @@ export interface SetRowConfig {
   readonly promptsLanding?: boolean;
   /** Prefill for an RPE row: last set of this lift, then last session. */
   readonly initialLoadLb?: number | null;
+  /**
+   * A unilateral row, performed twice. Its RPE is asked once per side, because
+   * the same load can be an easy 6 on one leg and an 8 on the other, and the
+   * gap is the whole reason to ask. Everything else about the row is unchanged:
+   * it is still one set, logged once, undone once.
+   */
+  readonly perSide?: boolean;
 }
 
 export type SetRowPhase = 'idle' | 'expanded' | 'running' | 'landing';
@@ -34,6 +44,10 @@ export interface SetRowState {
   readonly loadLb: number | null;
   /** RPE mode only: 6 to 10, optional and never defaulted. */
   readonly rpe: number | null;
+  /** A per-side row's left-leg effort, optional exactly as `rpe` is. */
+  readonly rpeLeft: number | null;
+  /** A per-side row's right-leg effort. */
+  readonly rpeRight: number | null;
   /** Timed rows: seconds left while running, seconds held once logged. */
   readonly secondsRemaining: number | null;
   readonly secondsHeld: number | null;
@@ -48,7 +62,8 @@ export type SetRowEvent =
   /** One second passed, for a countdown or the landing prompt. */
   | { readonly type: 'tick' }
   | { readonly type: 'setLoad'; readonly loadLb: number }
-  | { readonly type: 'setRpe'; readonly rpe: number }
+  /** No side is the row's one effort; a side is one leg of a per-side row. */
+  | { readonly type: 'setRpe'; readonly rpe: number; readonly side?: SetSide }
   /** The Log control inside an expanded RPE row. */
   | { readonly type: 'log' }
   | { readonly type: 'landing'; readonly quality: LandingQuality }
@@ -67,6 +82,8 @@ export function initialSetRowState(config: SetRowConfig, done = false): SetRowSt
     phase: 'idle',
     loadLb: config.initialLoadLb ?? null,
     rpe: null,
+    rpeLeft: null,
+    rpeRight: null,
     secondsRemaining: null,
     secondsHeld: null,
     landing: null,
@@ -153,8 +170,11 @@ export function setRowReducer(
     case 'setLoad':
       return { ...state, loadLb: event.loadLb };
 
-    case 'setRpe':
+    case 'setRpe': {
+      if (event.side === 'left') return { ...state, rpeLeft: event.rpe };
+      if (event.side === 'right') return { ...state, rpeRight: event.rpe };
       return { ...state, rpe: event.rpe };
+    }
 
     case 'log': {
       if (state.done || !canLog(state, config)) return state;
@@ -181,6 +201,9 @@ export function setRowReducer(
 export interface SetRowLogResult {
   readonly loadLb: number | null;
   readonly rpe: number | null;
+  /** Per-side rows only: the left leg's effort, null when it went unanswered. */
+  readonly rpeLeft: number | null;
+  readonly rpeRight: number | null;
   readonly secondsHeld: number | null;
   readonly landing: LandingQuality | null;
 }
@@ -189,6 +212,8 @@ export function logResult(state: SetRowState): SetRowLogResult {
   return {
     loadLb: state.loadLb,
     rpe: state.rpe,
+    rpeLeft: state.rpeLeft,
+    rpeRight: state.rpeRight,
     secondsHeld: state.secondsHeld,
     landing: state.landing,
   };

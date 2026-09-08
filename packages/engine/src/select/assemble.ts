@@ -27,7 +27,7 @@ import { MAXIMAL_CNS_HIGH_INTENSITY_CONTACTS, planVolume } from './volume.js';
 import type { PlacedRow } from './trim.js';
 import type { Prng } from '../prng.js';
 import type { Athlete } from '../types/athlete.js';
-import type { DayType, ExerciseId, SessionIntent, StressedJoint } from '../types/core.js';
+import type { DayType, ExerciseId, SessionIntent, Side, StressedJoint } from '../types/core.js';
 import type { Exercise, ProgressionLadder } from '../types/exercise.js';
 import type {
   SessionPlan,
@@ -95,6 +95,14 @@ export interface SelectContext {
    * cannot un-take a raise it was built with.
    */
   holdExtensiveRaise?: boolean;
+  /**
+   * House `house.sc.weaker_side_first`: the side the athlete's own per-side
+   * logs report as working harder, from `harderSideFrom`. It outranks the setup
+   * answer on the row note, because logged sets are what the two legs did and
+   * the answer was typed before either had been loaded. Absent or null leaves
+   * the answer in charge.
+   */
+  weakerSideLogged?: Side | null;
 }
 
 const COD_SPORTS = new Set(['basketball', 'soccer']);

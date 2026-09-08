@@ -21,9 +21,10 @@ import {
   type SetRowKind,
   type SetRowLogResult,
   type SetRowState,
+  type SetSide,
 } from './setRowState';
 
-export type { LandingQuality, SetRowKind, SetRowLogResult };
+export type { LandingQuality, SetRowKind, SetRowLogResult, SetSide };
 
 /** The row grid, from the brief: index, prescription, edit, check. */
 export const SET_ROW_GRID = { index: 24, control: 44, gap: space.sm, minHeight: 56 } as const;
@@ -64,6 +65,11 @@ export interface SetRowProps {
   /** RPE mode: the target effort, marked but never preselected. */
   readonly targetRpe?: number;
   /**
+   * A unilateral row: the effort is asked once per leg. The row is still one
+   * set and one tap; only the question doubles.
+   */
+  readonly perSide?: boolean;
+  /**
    * How the typed load reads in the RPE panel's field. It must return the bare
    * number, with the unit carried by `loadUnit`: the field is controlled on
    * this string, and "205 lb" is not something the numeric parser will take
@@ -96,6 +102,7 @@ export function SetRow({
   loadLb = null,
   loadStep = 5,
   targetRpe,
+  perSide = false,
   formatLoad = bareLoad,
   loadUnit = 'lb',
   onLog,
@@ -113,8 +120,9 @@ export function SetRow({
       ...(durationS === undefined ? null : { durationS }),
       promptsLanding,
       initialLoadLb: loadLb,
+      perSide,
     }),
-    [durationS, kind, loadLb, promptsLanding],
+    [durationS, kind, loadLb, perSide, promptsLanding],
   );
 
   const [state, dispatch] = useReducer(
@@ -255,13 +263,18 @@ export function SetRow({
         <RpePanel
           load={state.loadLb}
           rpe={state.rpe}
+          rpeLeft={state.rpeLeft}
+          rpeRight={state.rpeRight}
+          perSide={perSide}
           step={loadStep}
           format={formatLoad}
           unit={loadUnit}
           {...(targetRpe === undefined ? null : { targetRpe })}
           canLog={loggable}
           onLoad={(value) => dispatch({ type: 'setLoad', loadLb: value })}
-          onRpe={(value) => dispatch({ type: 'setRpe', rpe: value })}
+          onRpe={(value, side) =>
+            dispatch({ type: 'setRpe', rpe: value, ...(side === undefined ? null : { side }) })
+          }
           onSubmit={() => dispatch({ type: 'log' })}
         />
       ) : null}
@@ -336,20 +349,47 @@ function EditTarget({ onPress, disabled, label }: EditTargetProps) {
 interface RpePanelProps {
   readonly load: number | null;
   readonly rpe: number | null;
+  readonly rpeLeft: number | null;
+  readonly rpeRight: number | null;
+  /** A unilateral row: two effort rows, one per leg, instead of one. */
+  readonly perSide: boolean;
   readonly step: number;
   readonly format: (lb: number) => string;
   readonly unit: string;
   readonly targetRpe?: number;
   readonly canLog: boolean;
   readonly onLoad: (value: number) => void;
-  readonly onRpe: (value: number) => void;
+  readonly onRpe: (value: number, side?: SetSide) => void;
   readonly onSubmit: () => void;
+}
+
+/** One effort row: its own label, its own chips, its own group for a reader. */
+function EffortRow({
+  label,
+  value,
+  onChange,
+}: {
+  readonly label: string;
+  readonly value: number | null;
+  readonly onChange: (value: number) => void;
+}) {
+  return (
+    <View style={{ gap: space.xs }}>
+      <Text variant="label" color="ink2">
+        {label}
+      </Text>
+      <ChipRow options={RPE_OPTIONS} value={value} groupLabel={label} onChange={onChange} />
+    </View>
+  );
 }
 
 /** Week 1 and any lift without a working max: log the weight you used. */
 function RpePanel({
   load,
   rpe,
+  rpeLeft,
+  rpeRight,
+  perSide,
   step,
   format,
   unit,
@@ -359,8 +399,8 @@ function RpePanel({
   onRpe,
   onSubmit,
 }: RpePanelProps) {
-  const effortLabel =
-    targetRpe === undefined ? 'Effort (RPE)' : `Effort (RPE) · target ${targetRpe}`;
+  const target = targetRpe === undefined ? '' : ` · target ${targetRpe}`;
+  const effortLabel = `Effort (RPE)${target}`;
   return (
     <View style={{ paddingBottom: space.md, gap: space.md }}>
       <Stepper
@@ -375,12 +415,26 @@ function RpePanel({
         {...(loggable ? { onSubmit } : null)}
       />
 
-      <View style={{ gap: space.xs }}>
-        <Text variant="label" color="ink2">
-          {effortLabel}
-        </Text>
-        <ChipRow options={RPE_OPTIONS} value={rpe} groupLabel={effortLabel} onChange={onRpe} />
-      </View>
+      {perSide ? (
+        <>
+          {/* Two answers, because the same weight is not the same work on both
+              legs and the gap between them is what names the weaker side.
+              Either may be left blank: an unanswered leg logs no effort rather
+              than borrowing the other's. */}
+          <EffortRow
+            label={`Left leg (RPE)${target}`}
+            value={rpeLeft}
+            onChange={(value) => onRpe(value, 'left')}
+          />
+          <EffortRow
+            label={`Right leg (RPE)${target}`}
+            value={rpeRight}
+            onChange={(value) => onRpe(value, 'right')}
+          />
+        </>
+      ) : (
+        <EffortRow label={effortLabel} value={rpe} onChange={(value) => onRpe(value)} />
+      )}
 
       <Button
         label="Log set"

@@ -68,6 +68,49 @@ describe('push', () => {
     expect(rows[0]?.repsDone).toBe(5);
   });
 
+  it('keeps both legs of one unilateral set, and still refuses a true duplicate', async () => {
+    // The two legs share a set number, so the one-row-per-set constraint has to
+    // read the side or the second leg is rejected as a duplicate of the first.
+    const result = await push([
+      {
+        id: 'dev_test:1',
+        kind: 'setLog.upsert',
+        entityId: 'log-left',
+        payload: aSetLog({ id: 'log-left', side: 'left', rpe: 8, idempotencyKey: 'ex-1:1:left' }),
+      },
+      {
+        id: 'dev_test:2',
+        kind: 'setLog.upsert',
+        entityId: 'log-right',
+        payload: aSetLog({ id: 'log-right', side: 'right', rpe: 6, idempotencyKey: 'ex-1:1:right' }),
+      },
+    ]);
+    expect(result.accepted).toEqual(['dev_test:1', 'dev_test:2']);
+    expect(result.rejected).toEqual([]);
+
+    const rows = await db.select().from(setLog);
+    expect(rows).toHaveLength(2);
+    expect(rows.find((row) => row.side === 'left')?.rpe).toBe(8);
+    expect(rows.find((row) => row.side === 'right')?.rpe).toBe(6);
+
+    // A third row on a side already logged is the duplicate the constraint is for.
+    const again = await push([
+      {
+        id: 'dev_test:3',
+        kind: 'setLog.upsert',
+        entityId: 'log-left-again',
+        payload: aSetLog({
+          id: 'log-left-again',
+          side: 'left',
+          idempotencyKey: 'ex-1:1:left-again',
+        }),
+      },
+    ]);
+    expect(again.accepted).toEqual([]);
+    expect(again.rejected[0]?.reason).toBe('conflict');
+    expect(await db.select().from(setLog)).toHaveLength(2);
+  });
+
   it('applies a batch in the order the phone queued it', async () => {
     const result = await push([
       { id: 'dev_test:1', kind: 'setLog.upsert', entityId: 'log-1', payload: aSetLog() },

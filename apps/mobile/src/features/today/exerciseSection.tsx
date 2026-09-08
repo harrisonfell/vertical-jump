@@ -156,6 +156,7 @@ export function ExerciseSection({
                 loadLb={loadLb}
                 {...(set.durationS === undefined ? null : { durationS: set.durationS })}
                 {...(set.targetRpe === undefined ? null : { targetRpe: set.targetRpe })}
+                perSide={exercise.bothSides}
                 {...(detail === undefined ? null : { detail })}
                 onLog={(result) => onLog(set, result)}
                 onUndo={() => onUndo(set)}

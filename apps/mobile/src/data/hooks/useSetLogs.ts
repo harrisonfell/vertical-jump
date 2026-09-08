@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { useDbOrNull, useToday } from '../db';
-import type { SetLog } from '../types';
+import type { SetLog, Side } from '../types';
 import {
   editSet,
   listSetLogs,
@@ -10,6 +10,8 @@ import {
   type SetLogPatch,
 } from '../store/setLogs';
 import { queryKeys } from './keys';
+
+const SIDES: readonly Side[] = ['left', 'right'];
 
 export function useSetLogs(sessionId: string | undefined): UseQueryResult<SetLog[]> {
   const db = useDbOrNull();
@@ -110,6 +112,8 @@ export interface LiftSetRow {
   readonly repsDone: number | null;
   readonly loadKg: number | null;
   readonly rpe: number | null;
+  /** 'left' or 'right' on a set logged per side; null is both sides at once. */
+  readonly side: Side | null;
   readonly meanVelocityBest: number | null;
   readonly velocityLossPct: number | null;
 }
@@ -125,6 +129,7 @@ interface LiftSetJoinRow {
   readonly reps_done: number | null;
   readonly load_kg: number | null;
   readonly rpe: number | null;
+  readonly side: string | null;
   readonly mean_velocity_best: number | null;
   readonly velocity_loss_pct: number | null;
 }
@@ -147,13 +152,13 @@ export function useLiftSets(): UseQueryResult<LiftSetRow[]> {
       const rows = await db.getAllAsync<LiftSetJoinRow>(
         `SELECT se.exercise_id, se.exercise_name, se.load_type, se.load_mode,
                 s.id AS session_id, s.scheduled_date,
-                sl.set_number, sl.reps_done, sl.load_kg, sl.rpe,
+                sl.set_number, sl.reps_done, sl.load_kg, sl.rpe, sl.side,
                 sl.mean_velocity_best, sl.velocity_loss_pct
            FROM set_log sl
            JOIN session_exercise se ON se.id = sl.session_exercise_id
            JOIN session s ON s.id = sl.session_id
           WHERE sl.load_kg IS NOT NULL
-          ORDER BY s.scheduled_date, se.order_index, sl.set_number`,
+          ORDER BY s.scheduled_date, se.order_index, sl.set_number, sl.side`,
       );
       return rows.map((row) => ({
         exerciseId: row.exercise_id,
@@ -166,6 +171,7 @@ export function useLiftSets(): UseQueryResult<LiftSetRow[]> {
         repsDone: row.reps_done,
         loadKg: row.load_kg,
         rpe: row.rpe,
+        side: SIDES.find((entry) => entry === row.side) ?? null,
         meanVelocityBest: row.mean_velocity_best,
         velocityLossPct: row.velocity_loss_pct,
       }));

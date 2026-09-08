@@ -333,6 +333,58 @@ describe('the files', () => {
     expect(text).toContain(',93,205,');
   });
 
+  it('carries the side of a unilateral set, and counts the set once', async () => {
+    await seed();
+    // Both legs of set 2, under one set number, as the runner writes them.
+    await db.insert(setLog).values([
+      {
+        id: 'log-left',
+        sessionId: 'session-done',
+        sessionExerciseId: 'ex-1',
+        setNumber: 2,
+        repsDone: 8,
+        loadKg: 18.14,
+        rpe: 8,
+        side: 'left',
+        completedAt: '2026-09-03T17:30:00.000Z',
+        idempotencyKey: 'ex-1:2:left',
+        createdAt: 'x',
+      },
+      {
+        id: 'log-right',
+        sessionId: 'session-done',
+        sessionExerciseId: 'ex-1',
+        setNumber: 2,
+        repsDone: 8,
+        loadKg: 18.14,
+        rpe: 6,
+        side: 'right',
+        completedAt: '2026-09-03T17:32:00.000Z',
+        idempotencyKey: 'ex-1:2:right',
+        createdAt: 'x',
+      },
+    ]);
+
+    const response = await exportRoute(
+      request('/api/export?format=csv&file=set-logs', { bearer: SECRET }),
+    );
+    const text = await response.text();
+    const header = text.split('\r\n')[0]?.split(',') ?? [];
+    const sideAt = header.indexOf('side');
+    expect(sideAt).toBeGreaterThan(-1);
+    const cellsOf = (id: string): string[] =>
+      text.split('\r\n').find((line) => line.startsWith(`${id},`))?.split(',') ?? [];
+    expect(cellsOf('log-left')[sideAt]).toBe('left');
+    expect(cellsOf('log-right')[sideAt]).toBe('right');
+    // A set logged once for both sides leaves the cell empty rather than guessing.
+    expect(cellsOf('log-1')[sideAt]).toBe('');
+
+    // Two rows, one set: the row was prescribed once, so it counts once, which
+    // is how the phone counts it too.
+    const source = await readExportSource(db, NOW);
+    expect(source.sessions.find((row) => row.id === 'session-done')?.loggedSetCount).toBe(2);
+  });
+
   it('derives session status the way the phone does', async () => {
     await seed();
     const source = await readExportSource(db, NOW);

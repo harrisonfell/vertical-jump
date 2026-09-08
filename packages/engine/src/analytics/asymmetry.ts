@@ -32,8 +32,14 @@ export function asymmetryPct(leftIn: number, rightIn: number): number {
 
 /**
  * Which leg goes first (house rule `house.sc.weaker_side_first`): the weaker
- * side from the latest single-leg test, or the athlete's own answer when no
- * test exists yet.
+ * side from the latest single-leg test, then the side logged unilateral work
+ * reports as working harder, then the athlete's own answer.
+ *
+ * The order is the order of evidence. A test measures inches, so it decides
+ * whenever it exists and lands outside the band; a per-side RPE is what the
+ * athlete reports about the same two legs, which is worth more than an answer
+ * typed in setup before either leg had been loaded; the setup answer is the
+ * last word only when nothing has been logged or measured.
  *
  * @param tests every single-leg test, any order; the latest by date wins, and
  *   ties inside one date fall to the last entry so a retest supersedes.
@@ -41,22 +47,26 @@ export function asymmetryPct(leftIn: number, rightIn: number): number {
  * @param bandPct a signed gap inside this many percent reads as level, so the
  *   ordering never turns on noise. Pass
  *   `constants.climbing.asymmetryBandPct`.
+ * @param logged the harder side from logged unilateral sets, from
+ *   `harderSideFrom`. Absent or null means the logs name no side.
  * @returns the weaker side, or null when nothing decides it.
  */
 export function weakerSideFrom(
   tests: readonly SingleLegTest[],
   answer: Side | null | undefined,
   bandPct: number,
+  logged?: Side | null,
 ): Side | null {
+  const fallback = logged ?? answer ?? null;
   let latest: SingleLegTest | undefined;
   for (const test of tests) {
     if (latest === undefined || test.date >= latest.date) latest = test;
   }
   if (latest !== undefined) {
-    if (Math.abs(latest.asymmetryPct) <= bandPct) return answer ?? null;
+    if (Math.abs(latest.asymmetryPct) <= bandPct) return fallback;
     return latest.asymmetryPct > 0 ? 'right' : 'left';
   }
-  return answer ?? null;
+  return fallback;
 }
 
 /** Where a gap sits: level, worth watching, or wide enough to work on. */

@@ -226,6 +226,7 @@ export function buildProgressModel(sources: ProgressSources): ProgressModel {
       tests: sources.singleLegTests,
       answer: athlete?.weakerSide ?? null,
       bandPct: ruleset.constants.climbing.asymmetryBandPct,
+      liftSets: sources.liftSets,
     }),
     readinessGate: buildReadinessGate({
       today: sources.today,

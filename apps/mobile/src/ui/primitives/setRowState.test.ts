@@ -20,6 +20,7 @@ const loadable: SetRowConfig = { kind: 'loadable' };
 const timed: SetRowConfig = { kind: 'timed', durationS: 30 };
 const rpe: SetRowConfig = { kind: 'rpe', initialLoadLb: null };
 const ladder: SetRowConfig = { kind: 'loadable', promptsLanding: true };
+const perSide: SetRowConfig = { kind: 'rpe', initialLoadLb: null, perSide: true };
 
 describe('a loadable row', () => {
   it('logs as written on one tap', () => {
@@ -112,6 +113,8 @@ describe('an RPE row', () => {
     expect(logResult(state)).toEqual({
       loadLb: 185,
       rpe: null,
+      rpeLeft: null,
+      rpeRight: null,
       secondsHeld: null,
       landing: null,
     });
@@ -138,6 +141,77 @@ describe('an RPE row', () => {
     expect(state.done).toBe(false);
     expect(state.loadLb).toBe(185);
     expect(state.rpe).toBeNull();
+  });
+});
+
+describe('a unilateral RPE row', () => {
+  /**
+   * The session that asked for this: single-leg RDLs where the same weight is an
+   * easy 6 on the right leg and an 8 on the left. Two answers, one set.
+   */
+  it('keeps an effort per leg', () => {
+    const state = run(perSide, [
+      { type: 'press' },
+      { type: 'setLoad', loadLb: 40 },
+      { type: 'setRpe', rpe: 8, side: 'left' },
+      { type: 'setRpe', rpe: 6, side: 'right' },
+      { type: 'log' },
+    ]);
+    expect(state.done).toBe(true);
+    expect(logResult(state)).toEqual({
+      loadLb: 40,
+      rpe: null,
+      rpeLeft: 8,
+      rpeRight: 6,
+      secondsHeld: null,
+      landing: null,
+    });
+  });
+
+  it('logs on the load alone, so neither leg is required to answer', () => {
+    const state = run(perSide, [{ type: 'press' }, { type: 'setLoad', loadLb: 40 }, { type: 'log' }]);
+    expect(state.done).toBe(true);
+    expect(state.rpeLeft).toBeNull();
+    expect(state.rpeRight).toBeNull();
+  });
+
+  it('takes one leg answer without inventing the other', () => {
+    const state = run(perSide, [
+      { type: 'press' },
+      { type: 'setLoad', loadLb: 40 },
+      { type: 'setRpe', rpe: 8, side: 'left' },
+      { type: 'log' },
+    ]);
+    expect(state.rpeLeft).toBe(8);
+    expect(state.rpeRight).toBeNull();
+    expect(state.rpe).toBeNull();
+  });
+
+  it('drops both legs across an undo, and keeps the load', () => {
+    const state = run(perSide, [
+      { type: 'press' },
+      { type: 'setLoad', loadLb: 40 },
+      { type: 'setRpe', rpe: 8, side: 'left' },
+      { type: 'setRpe', rpe: 6, side: 'right' },
+      { type: 'log' },
+      { type: 'press' },
+    ]);
+    expect(state.done).toBe(false);
+    expect(state.loadLb).toBe(40);
+    expect(state.rpeLeft).toBeNull();
+    expect(state.rpeRight).toBeNull();
+  });
+
+  it('leaves a bilateral row answering once, as it always has', () => {
+    const state = run(rpe, [
+      { type: 'press' },
+      { type: 'setLoad', loadLb: 185 },
+      { type: 'setRpe', rpe: 7 },
+      { type: 'log' },
+    ]);
+    expect(state.rpe).toBe(7);
+    expect(state.rpeLeft).toBeNull();
+    expect(state.rpeRight).toBeNull();
   });
 });
 

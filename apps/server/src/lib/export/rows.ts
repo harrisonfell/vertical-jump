@@ -125,6 +125,12 @@ export async function readExportSource(db: Database, now: Date = new Date()): Pr
     logsBySession.set(log.sessionId, list);
   }
 
+  // Per set, not per row written: a unilateral set logged on both legs is two
+  // rows under one set number, and it is still the one set the plan prescribed.
+  // The phone counts it the same way, so the two exports agree.
+  const countSets = (logs: readonly SetLogRow[]): number =>
+    new Set(logs.map((log) => `${log.sessionExerciseId}:${log.setNumber}`)).size;
+
   const derived: SessionWithStatus[] = sessions.map((row) => {
     const own = events.filter((event) => event.sessionId === row.id);
     const logs = logsBySession.get(row.id) ?? [];
@@ -139,10 +145,11 @@ export async function readExportSource(db: Database, now: Date = new Date()): Pr
       .map((event) => event.at)
       .sort();
     const markedCompleteAt = completes[completes.length - 1] ?? null;
+    const loggedSetCount = countSets(logs);
     return {
       ...row,
-      status: deriveStatus(logs.length, markedCompleteAt, row.scheduledDate, today),
-      loggedSetCount: logs.length,
+      status: deriveStatus(loggedSetCount, markedCompleteAt, row.scheduledDate, today),
+      loggedSetCount,
       startedAt,
       markedCompleteAt,
       whoopWorkoutId: linkBySession.get(row.id) ?? null,
@@ -198,7 +205,7 @@ export function testsCsv(tests: readonly TestWithReps[]): string {
 export function setLogsCsv(logs: readonly SetLogRow[]): string {
   const header = [
     'set_log_id', 'session_id', 'session_exercise_id', 'set_number', 'reps_done',
-    'load_kg', 'load_lb', 'duration_s', 'distance_m', 'box_height_mm', 'landing', 'rpe',
+    'load_kg', 'load_lb', 'duration_s', 'distance_m', 'box_height_mm', 'landing', 'rpe', 'side',
     'mean_velocity_best', 'mean_velocity_last', 'velocity_loss_pct', 'load_source',
     'entry_source', 'completed_at', 'planned_date', 'offset_days', 'idempotency_key', 'edited_at',
   ];
@@ -207,6 +214,7 @@ export function setLogsCsv(logs: readonly SetLogRow[]): string {
     round(log.loadKg, 3),
     log.loadKg === null ? null : displayLoadLb(log.loadKg),
     log.durationS, log.distanceM, log.boxHeightMm, log.landing, log.rpe,
+    log.side,
     round(log.meanVelocityBest, 2), round(log.meanVelocityLast, 2), round(log.velocityLossPct, 1),
     log.loadSource, log.entrySource, log.completedAt, log.plannedDate, log.offsetDays,
     log.idempotencyKey, log.editedAt,

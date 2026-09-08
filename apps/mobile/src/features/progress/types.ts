@@ -264,6 +264,12 @@ export interface AsymmetryModel {
   readonly legend: string;
   /** The direction across tests, from two tests up. */
   readonly trendLine: string | null;
+  /**
+   * What the two legs reported on unilateral work logged per side, or null when
+   * nothing has been logged that way. Not a test and not a measurement: the
+   * effort the athlete gave each leg at the same load.
+   */
+  readonly effortLine: string | null;
   /** Which leg goes first on unilateral work, or null when none is named. */
   readonly weakerSide: 'left' | 'right' | null;
   readonly orderLine: string;

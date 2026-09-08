@@ -46,6 +46,7 @@ interface SetLogRow {
   readonly box_height_mm: number | null;
   readonly landing: string | null;
   readonly rpe: number | null;
+  readonly side: string | null;
   readonly mean_velocity_best: number | null;
   readonly mean_velocity_last: number | null;
   readonly velocity_loss_pct: number | null;
@@ -60,6 +61,7 @@ interface SetLogRow {
 }
 
 const LANDINGS = ['good', 'ok', 'poor'] as const;
+const SIDES = ['left', 'right'] as const;
 const SOURCES = ['typed', 'imported', 'estimated'] as const;
 
 function mapLog(row: SetLogRow): SetLog {
@@ -75,6 +77,7 @@ function mapLog(row: SetLogRow): SetLog {
     boxHeightMm: row.box_height_mm,
     landing: LANDINGS.find((entry) => entry === row.landing) ?? null,
     rpe: row.rpe,
+    side: SIDES.find((entry) => entry === row.side) ?? null,
     meanVelocityBest: row.mean_velocity_best,
     meanVelocityLast: row.mean_velocity_last,
     velocityLossPct: row.velocity_loss_pct,

@@ -1,7 +1,7 @@
 import { mmToIn } from '@vert/engine';
 import type { LoadMode, SetLog as EngineSetLog } from '@vert/engine';
 import type { SqlExecutor } from '../executor';
-import type { Json, Landing } from '../types';
+import type { Json, Landing, Side } from '../types';
 import { fromJson, newId, nowIso, oneOf, oneOfOrNull, toJsonRequired } from './rows';
 
 /**
@@ -26,6 +26,7 @@ import { fromJson, newId, nowIso, oneOf, oneOfOrNull, toJsonRequired } from './r
 
 const LOAD_MODES: readonly LoadMode[] = ['entered', 'epley', 'rpe', 'week1', 'velocity', 'none'];
 const LANDINGS: readonly Landing[] = ['good', 'ok', 'poor'];
+const SIDES: readonly Side[] = ['left', 'right'];
 
 interface EngineLogRow {
   readonly id: string;
@@ -36,6 +37,7 @@ interface EngineLogRow {
   readonly box_height_mm: number | null;
   readonly landing: string | null;
   readonly rpe: number | null;
+  readonly side: string | null;
   readonly mean_velocity_best: number | null;
   readonly mean_velocity_last: number | null;
   readonly velocity_loss_pct: number | null;
@@ -95,6 +97,10 @@ function toEngineLog(row: EngineLogRow): EngineSetLog {
   if (row.velocity_loss_pct !== null) log.velocityLoss = row.velocity_loss_pct;
   const landing = oneOfOrNull(row.landing, LANDINGS);
   if (landing !== null) log.landing = landing;
+  // The side has to reach the engine or the per-side effort gap dies here: it
+  // is what names the weaker leg on next week's unilateral rows.
+  const side = oneOfOrNull(row.side, SIDES);
+  if (side !== null) log.side = side;
   return log;
 }
 
@@ -112,7 +118,7 @@ export async function listWeekEngineLogs(
 ): Promise<EngineSetLog[]> {
   const rows = await db.getAllAsync<EngineLogRow>(
     `SELECT l.id, l.set_number, l.reps_done, l.load_kg, l.duration_s, l.box_height_mm,
-            l.landing, l.rpe, l.mean_velocity_best, l.mean_velocity_last, l.velocity_loss_pct,
+            l.landing, l.rpe, l.side, l.mean_velocity_best, l.mean_velocity_last, l.velocity_loss_pct,
             l.load_source, l.completed_at, l.planned_date, l.idempotency_key,
             x.exercise_id AS exercise_id, x.load_mode AS load_mode,
             s.order_index AS order_index, s.scheduled_date AS scheduled_date,

@@ -235,6 +235,7 @@ export function fixtureLiftSet(overrides: Partial<LiftSetRow> = {}): LiftSetRow 
     repsDone: 5,
     loadKg: lbToKg(35),
     rpe: 8,
+    side: null,
     meanVelocityBest: null,
     velocityLossPct: null,
     ...overrides,

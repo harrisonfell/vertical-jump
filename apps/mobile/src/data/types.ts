@@ -253,6 +253,12 @@ export interface SetLog {
   readonly boxHeightMm: number | null;
   readonly landing: Landing | null;
   readonly rpe: number | null;
+  /**
+   * The leg or arm this set ran on, or null for a set logged once for both.
+   * A unilateral row answered per side writes one row per side under the same
+   * set number, so the row is still three sets rather than six.
+   */
+  readonly side: Side | null;
   readonly meanVelocityBest: number | null;
   readonly meanVelocityLast: number | null;
   readonly velocityLossPct: number | null;

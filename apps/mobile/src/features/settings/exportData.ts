@@ -98,7 +98,7 @@ export function testsCsv(tests: readonly JumpTestWithReps[]): string {
 export function setLogsCsv(logs: readonly SetLog[]): string {
   const header = [
     'set_log_id', 'session_id', 'session_exercise_id', 'set_number', 'reps_done',
-    'load_kg', 'load_lb', 'duration_s', 'distance_m', 'box_height_mm', 'landing', 'rpe',
+    'load_kg', 'load_lb', 'duration_s', 'distance_m', 'box_height_mm', 'landing', 'rpe', 'side',
     'mean_velocity_best', 'mean_velocity_last', 'velocity_loss_pct', 'load_source',
     'entry_source', 'completed_at', 'planned_date', 'offset_days', 'idempotency_key', 'edited_at',
   ];
@@ -107,6 +107,7 @@ export function setLogsCsv(logs: readonly SetLog[]): string {
     round(log.loadKg, 3),
     log.loadKg === null ? null : displayLoadLb(log.loadKg, 'barbell'),
     log.durationS, log.distanceM, log.boxHeightMm, log.landing, log.rpe,
+    log.side,
     round(log.meanVelocityBest, 2), round(log.meanVelocityLast, 2), round(log.velocityLossPct, 1),
     log.loadSource, log.entrySource, log.completedAt, log.plannedDate, log.offsetDays,
     log.idempotencyKey, log.editedAt,

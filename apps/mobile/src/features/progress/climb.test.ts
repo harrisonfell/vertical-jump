@@ -205,6 +205,54 @@ describe('asymmetry copy thresholds', () => {
     expect(buildAsymmetry({ tests: [], answer: 'left', bandPct: band })).toBeNull();
   });
 
+  it('reports what the legs said on unilateral work logged per side', () => {
+    // Single-leg RDLs at 30, 35 and 40 lb: the right leg never past RPE 6 and
+    // the left up at 8. The test day was level, so the logs name the leg.
+    const rdl = [30, 35, 40].flatMap((lb, index) => [
+      fixtureLiftSet({
+        exerciseId: 'single_leg_rdl',
+        sessionId: 'session-1-1',
+        setNumber: index + 1,
+        repsDone: 8,
+        loadKg: lbToKg(lb),
+        rpe: 8,
+        side: 'left',
+      }),
+      fixtureLiftSet({
+        exerciseId: 'single_leg_rdl',
+        sessionId: 'session-1-1',
+        setNumber: index + 1,
+        repsDone: 8,
+        loadKg: lbToKg(lb),
+        rpe: 6,
+        side: 'right',
+      }),
+    ]);
+
+    const model = buildAsymmetry({
+      tests: [fixtureSingleLeg('2026-10-13', 19.0, 19.6)],
+      answer: null,
+      bandPct: band,
+      liftSets: rdl,
+    });
+    expect(model?.effortLine).toBe(
+      'Left RPE 8, right RPE 6 at the same loads. The left leg is working harder, so it goes first.',
+    );
+    // The test was inside the band, so the logs decide the ordering.
+    expect(model?.weakerSide).toBe('left');
+    expect(model?.orderLine).toBe('Left leg first on every unilateral set.');
+  });
+
+  it('says nothing about effort when no set was logged per side', () => {
+    const model = buildAsymmetry({
+      tests: [fixtureSingleLeg('2026-10-13', 17.9, 19.2)],
+      answer: null,
+      bandPct: band,
+      liftSets: [fixtureLiftSet()],
+    });
+    expect(model?.effortLine).toBeNull();
+  });
+
   it('formats a signed whole percent and a side word', () => {
     expect(signedPct(-6.77)).toBe('−7%');
     expect(signedPct(6.77)).toBe('+7%');

@@ -2,8 +2,10 @@ import {
   ASYMMETRY_THRESHOLDS,
   asymmetryTrend,
   readAsymmetry,
+  readSideEffort,
   weakerSideFrom,
   type AsymmetryReading,
+  type SidedSetInput,
 } from '@vert/engine/analytics';
 import type { SingleLegTest } from '@/data';
 import { formatDayShort } from '../../ui/charts/scale';
@@ -65,6 +67,13 @@ export interface AsymmetryInput {
   readonly answer: 'left' | 'right' | null;
   /** A signed gap inside this many percent reads as level. */
   readonly bandPct: number;
+  /**
+   * Every loaded set on file. The ones logged per side carry an effort gap,
+   * which names the harder-working leg between test days and is what the
+   * plan's own unilateral rows are ordered by. Passing the whole list is
+   * deliberate: the engine decides what pairs, this screen does not.
+   */
+  readonly liftSets?: readonly SidedSetInput[];
 }
 
 /**
@@ -110,7 +119,15 @@ export function buildAsymmetry(input: AsymmetryInput): AsymmetryModel | null {
     })
     .reverse();
 
-  const weakerSide = weakerSideFrom(engineTests, input.answer, input.bandPct);
+  // The same reading the plan orders its unilateral rows by, so the two
+  // surfaces can never name different legs.
+  const effort = readSideEffort(input.liftSets ?? []);
+  const weakerSide = weakerSideFrom(
+    engineTests,
+    input.answer,
+    input.bandPct,
+    effort?.harderSide ?? null,
+  );
   const trend = asymmetryTrend(engineTests);
 
   return {
@@ -119,6 +136,7 @@ export function buildAsymmetry(input: AsymmetryInput): AsymmetryModel | null {
     note: asymmetryNote(latestReading),
     legend: ASYMMETRY_LEGEND,
     trendLine: trend === null ? null : trend.line,
+    effortLine: effort === null ? null : effort.line,
     weakerSide,
     orderLine:
       weakerSide === null

@@ -10,6 +10,7 @@
  * timestamps, and those live in account.ts and whoop.ts.
  */
 
+import { sql } from 'drizzle-orm';
 import {
   boolean,
   index,
@@ -20,6 +21,7 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import type { Json } from '../../lib/api-contract';
 
@@ -258,6 +260,8 @@ export const setLog = pgTable(
     boxHeightMm: integer('box_height_mm'),
     landing: text('landing'),
     rpe: real('rpe'),
+    /** Which leg or arm ran the set; NULL is a set logged for both at once. */
+    side: text('side'),
     meanVelocityBest: real('mean_velocity_best'),
     meanVelocityLast: real('mean_velocity_last'),
     velocityLossPct: real('velocity_loss_pct'),
@@ -273,7 +277,15 @@ export const setLog = pgTable(
   },
   (table) => [
     index('set_log_by_session').on(table.sessionId, table.completedAt),
-    unique('set_log_by_set').on(table.sessionExerciseId, table.setNumber),
+    // One row per set per side. Over `COALESCE(side, 'both')` rather than over
+    // `side`, because Postgres counts NULLs as distinct in a unique index and a
+    // bare `side` column would let two both-sides logs share a set number, which
+    // is the duplicate this constraint exists to refuse.
+    uniqueIndex('set_log_by_set').on(
+      table.sessionExerciseId,
+      table.setNumber,
+      sql`coalesce(${table.side}, 'both')`,
+    ),
   ],
 );
 

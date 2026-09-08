@@ -23,3 +23,4 @@ export * from './recovery.js';
 export * from './gate.js';
 export * from './readiness.js';
 export * from './asymmetry.js';
+export * from './sideEffort.js';

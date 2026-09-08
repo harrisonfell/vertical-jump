@@ -45,6 +45,7 @@ function log(partial: Partial<SetLog> & { setNumber: number }): SetLog {
     boxHeightMm: null,
     landing: null,
     rpe: null,
+    side: null,
     meanVelocityBest: null,
     meanVelocityLast: null,
     velocityLossPct: null,

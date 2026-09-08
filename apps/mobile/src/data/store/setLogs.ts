@@ -1,5 +1,5 @@
 import type { SqlExecutor } from '../executor';
-import type { EntrySource, Landing, LocalDate, SetLog, Timestamp } from '../types';
+import type { EntrySource, Landing, LocalDate, SetLog, Side, Timestamp } from '../types';
 import { daysBetween } from '../../lib/localDay';
 import type { SyncOp } from '../types';
 import { newId, nowIso, oneOf, oneOfOrNull } from './rows';
@@ -19,6 +19,7 @@ export type SyncOps<T> = (saved: T) => readonly SyncOp[];
 
 const LANDINGS: readonly Landing[] = ['good', 'ok', 'poor'];
 const SOURCES: readonly EntrySource[] = ['typed', 'imported', 'estimated'];
+const SIDES: readonly Side[] = ['left', 'right'];
 
 /** Sets stay editable for 7 days; notes and RPE stay editable forever. */
 export const EDIT_WINDOW_DAYS = 7;
@@ -35,6 +36,7 @@ interface SetLogRow {
   readonly box_height_mm: number | null;
   readonly landing: string | null;
   readonly rpe: number | null;
+  readonly side: string | null;
   readonly mean_velocity_best: number | null;
   readonly mean_velocity_last: number | null;
   readonly velocity_loss_pct: number | null;
@@ -61,6 +63,7 @@ function mapSetLog(row: SetLogRow): SetLog {
     boxHeightMm: row.box_height_mm,
     landing: oneOfOrNull(row.landing, LANDINGS),
     rpe: row.rpe,
+    side: oneOfOrNull(row.side, SIDES),
     meanVelocityBest: row.mean_velocity_best,
     meanVelocityLast: row.mean_velocity_last,
     velocityLossPct: row.velocity_loss_pct,
@@ -86,6 +89,11 @@ export interface LogSetInput {
   readonly boxHeightMm?: number | null;
   readonly landing?: Landing | null;
   readonly rpe?: number | null;
+  /**
+   * Which leg or arm ran this set. Omitted, or null, is a set logged once for
+   * both sides, which is what a plain tap on a unilateral row still writes.
+   */
+  readonly side?: Side | null;
   readonly meanVelocityBest?: number | null;
   readonly meanVelocityLast?: number | null;
   readonly velocityLossPct?: number | null;
@@ -100,16 +108,24 @@ export interface LogSetInput {
 }
 
 /**
- * The default key makes one row per (session, exercise, set): a double tap, a
- * retry after a crash, and a replayed queue item all collapse onto the same
- * row rather than inflating the ledger.
+ * The default key makes one row per (session, exercise, set, side): a double
+ * tap, a retry after a crash, and a replayed queue item all collapse onto the
+ * same row rather than inflating the ledger.
+ *
+ * The side is part of the key because the two legs of one unilateral set are
+ * two rows under one set number; a set logged for both sides at once carries no
+ * side and keeps exactly the key it has always had, so no queued op and no row
+ * already on file changes meaning.
  */
 export function defaultIdempotencyKey(input: {
   sessionId: string;
   sessionExerciseId: string;
   setNumber: number;
+  side?: Side | null;
 }): string {
-  return `set:${input.sessionId}:${input.sessionExerciseId}:${input.setNumber}`;
+  const base = `set:${input.sessionId}:${input.sessionExerciseId}:${input.setNumber}`;
+  const side = input.side ?? null;
+  return side === null ? base : `${base}:${side}`;
 }
 
 function offsetDays(plannedDate: LocalDate | null | undefined, loggedOn: LocalDate | undefined): number {
@@ -136,10 +152,10 @@ export async function logSet(
     await db.runAsync(
       `INSERT INTO set_log
          (id, session_id, session_exercise_id, set_number, reps_done, load_kg, duration_s,
-          distance_m, box_height_mm, landing, rpe, mean_velocity_best, mean_velocity_last,
+          distance_m, box_height_mm, landing, rpe, side, mean_velocity_best, mean_velocity_last,
           velocity_loss_pct, load_source, entry_source, completed_at, planned_date, offset_days,
           idempotency_key, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT DO NOTHING`,
       [
         id,
@@ -153,6 +169,7 @@ export async function logSet(
         input.boxHeightMm ?? null,
         input.landing ?? null,
         input.rpe ?? null,
+        input.side ?? null,
         input.meanVelocityBest ?? null,
         input.meanVelocityLast ?? null,
         input.velocityLossPct ?? null,
@@ -167,14 +184,18 @@ export async function logSet(
     );
 
     // Either key wins the race: the caller's own key, or the one-row-per-set
-    // index that makes a double tap collapse onto the row already written.
+    // index that makes a double tap collapse onto the row already written. The
+    // index reads the side too, so the left leg never resolves to the right
+    // leg's row.
     const row =
       (await db.getFirstAsync<SetLogRow>('SELECT * FROM set_log WHERE idempotency_key = ?', [
         key,
       ])) ??
       (await db.getFirstAsync<SetLogRow>(
-        'SELECT * FROM set_log WHERE session_exercise_id = ? AND set_number = ?',
-        [input.sessionExerciseId, input.setNumber],
+        `SELECT * FROM set_log
+           WHERE session_exercise_id = ? AND set_number = ?
+             AND COALESCE(side, 'both') = ?`,
+        [input.sessionExerciseId, input.setNumber, input.side ?? 'both'],
       ));
     if (row === null) throw new Error('logSet: the set log did not save.');
     saved = mapSetLog(row);
@@ -185,7 +206,11 @@ export async function logSet(
   return saved;
 }
 
-/** Tap again to undo, within the session. Deletes the log for that one set. */
+/**
+ * Tap again to undo, within the session. Deletes the log for that one set,
+ * both legs included: the row was prescribed once, so taking it back takes back
+ * everything logged under that set number.
+ */
 export async function undoSet(
   db: SqlExecutor,
   sessionExerciseId: string,
@@ -289,13 +314,19 @@ export async function editSet(
   return saved;
 }
 
-/** Which set numbers of an exercise already have a log, for the row state. */
+/**
+ * Which set numbers of an exercise already have a log, for the row state.
+ *
+ * Distinct, so a unilateral set logged on both legs counts as the one set the
+ * row prescribed and the runner's done count, next-set jump and fold label all
+ * read the same as they did before sides existed.
+ */
 export async function loggedSetNumbers(
   db: SqlExecutor,
   sessionExerciseId: string,
 ): Promise<number[]> {
   const rows = await db.getAllAsync<{ set_number: number }>(
-    'SELECT set_number FROM set_log WHERE session_exercise_id = ? ORDER BY set_number',
+    'SELECT DISTINCT set_number FROM set_log WHERE session_exercise_id = ? ORDER BY set_number',
     [sessionExerciseId],
   );
   return rows.map((row) => row.set_number);

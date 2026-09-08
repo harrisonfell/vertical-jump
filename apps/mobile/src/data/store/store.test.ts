@@ -13,7 +13,7 @@ import {
   undoSessionComplete,
   weekAdherenceInputs,
 } from './sessions';
-import { logSet, undoSet } from './setLogs';
+import { defaultIdempotencyKey, listSetLogs, logSet, loggedSetNumbers, undoSet } from './setLogs';
 import { createJumpTest, deleteJumpTest, listPrs, recomputePrs } from './jumpTests';
 import { enqueue, getSyncStatus, listPending, markAttempted, markSynced } from './sync';
 import { getRecoveryForDay, listRecovery, upsertWhoopRecovery } from './whoop';
@@ -226,6 +226,100 @@ describe('set logs', () => {
 
     const session = await getSession(db, sessionId, TODAY);
     expect(session?.startedAt).toBe('2026-09-08T18:00:00.000Z');
+  });
+});
+
+describe('a unilateral set logged per side', () => {
+  /**
+   * The session that asked for this: single-leg RDLs at 30, 35 and 40 lb, the
+   * right leg never above RPE 6 and the left up at 8. Three sets, two legs, two
+   * different answers, and the row is still the three sets it prescribed.
+   */
+  const SESSION_LB: readonly { lb: number; left: number; right: number }[] = [
+    { lb: 30, left: 6, right: 5 },
+    { lb: 35, left: 7, right: 6 },
+    { lb: 40, left: 8, right: 6 },
+  ];
+
+  async function logBothLegs(sessionId: string, exerciseId: string): Promise<void> {
+    for (const [index, entry] of SESSION_LB.entries()) {
+      for (const side of ['left', 'right'] as const) {
+        await logSet(db, {
+          sessionId,
+          sessionExerciseId: exerciseId,
+          setNumber: index + 1,
+          repsDone: 8,
+          loadKg: entry.lb * 0.45359237,
+          rpe: side === 'left' ? entry.left : entry.right,
+          side,
+        });
+      }
+    }
+  }
+
+  it('keeps both legs, under one set number each', async () => {
+    const { programId, weekId } = await seedProgram();
+    const { sessionId, exerciseId } = await makeSession(programId, weekId, TODAY, 0);
+
+    await logBothLegs(sessionId, exerciseId);
+
+    const logs = await listSetLogs(db, sessionId);
+    expect(logs).toHaveLength(6);
+    expect(logs.filter((log) => log.side === 'left')).toHaveLength(3);
+    expect(logs.filter((log) => log.side === 'right')).toHaveLength(3);
+    const third = logs.filter((log) => log.setNumber === 3);
+    expect(third.find((log) => log.side === 'left')?.rpe).toBe(8);
+    expect(third.find((log) => log.side === 'right')?.rpe).toBe(6);
+  });
+
+  it('is still three sets to the runner and to the session', async () => {
+    const { programId, weekId } = await seedProgram();
+    const { sessionId, exerciseId } = await makeSession(programId, weekId, TODAY, 0);
+
+    await logBothLegs(sessionId, exerciseId);
+
+    expect(await loggedSetNumbers(db, exerciseId)).toEqual([1, 2, 3]);
+    const session = await getSession(db, sessionId, TODAY);
+    expect(session?.loggedSetCount).toBe(3);
+  });
+
+  it('collapses a replayed tap onto the same leg rather than inflating it', async () => {
+    const { programId, weekId } = await seedProgram();
+    const { sessionId, exerciseId } = await makeSession(programId, weekId, TODAY, 0);
+
+    const input = {
+      sessionId,
+      sessionExerciseId: exerciseId,
+      setNumber: 1,
+      repsDone: 8,
+      side: 'left',
+    } as const;
+    const first = await logSet(db, input);
+    const again = await logSet(db, input);
+    expect(again.id).toBe(first.id);
+
+    const other = await logSet(db, { ...input, side: 'right' });
+    expect(other.id).not.toBe(first.id);
+    expect(await listSetLogs(db, sessionId)).toHaveLength(2);
+  });
+
+  it('takes back both legs when the set is undone', async () => {
+    const { programId, weekId } = await seedProgram();
+    const { sessionId, exerciseId } = await makeSession(programId, weekId, TODAY, 0);
+
+    await logBothLegs(sessionId, exerciseId);
+    expect(await undoSet(db, exerciseId, 3)).toBe(true);
+
+    const logs = await listSetLogs(db, sessionId);
+    expect(logs.filter((log) => log.setNumber === 3)).toHaveLength(0);
+    expect(await loggedSetNumbers(db, exerciseId)).toEqual([1, 2]);
+  });
+
+  it('leaves the key of a both-sides set exactly as it was', () => {
+    const both = { sessionId: 'sess', sessionExerciseId: 'ex', setNumber: 2 };
+    expect(defaultIdempotencyKey(both)).toBe('set:sess:ex:2');
+    expect(defaultIdempotencyKey({ ...both, side: null })).toBe('set:sess:ex:2');
+    expect(defaultIdempotencyKey({ ...both, side: 'left' })).toBe('set:sess:ex:2:left');
   });
 });
 

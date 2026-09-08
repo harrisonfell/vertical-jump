@@ -77,7 +77,10 @@ interface ExerciseRow {
  */
 const DERIVED_SELECT = `
 SELECT s.*,
-  (SELECT COUNT(*) FROM set_log l WHERE l.session_id = s.id) AS logged_set_count,
+  -- Per set, not per row written: a unilateral set logged on both legs is two
+  -- rows under one set number, and it is still the one set the plan prescribed.
+  (SELECT COUNT(DISTINCT l.session_exercise_id || ':' || l.set_number)
+     FROM set_log l WHERE l.session_id = s.id) AS logged_set_count,
   COALESCE(
     (SELECT MIN(e.at) FROM session_event e WHERE e.session_id = s.id AND e.kind = 'start'),
     (SELECT MIN(l.completed_at) FROM set_log l WHERE l.session_id = s.id)
