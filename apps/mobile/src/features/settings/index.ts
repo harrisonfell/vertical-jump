@@ -1,5 +1,6 @@
 /** The Settings feature's public surface. Routes import from here. */
 export { SettingsScreen, APP_VERSION } from './settingsScreen';
+export { AppearanceSection, appearanceCaption } from './appearanceSection';
 export { AthleteSection, ReassessSheet, painLine } from './athleteSection';
 export type { AthleteAnswer } from './athleteAnswer';
 export {

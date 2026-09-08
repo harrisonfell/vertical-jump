@@ -21,8 +21,9 @@ import { CHANGES_YOUR_PROGRAM, shortCalendarDate, trainingAgeLabel } from './reg
  * The Athlete section: the five onboarding answers, pain, the age flag, and
  * clearance.
  *
- * Every answer here changes the program, so every row says so, and none of
- * them writes on its own: an edit collects the new answer and hands it back,
+ * Every answer here changes the program, which the section says once rather
+ * than on every row, and none of them writes on its own: an edit collects the
+ * new answer and hands it back,
  * and the screen shows the regeneration confirm before anything is saved. Pain
  * is the exception the rule book insists on, and it is handled by its own row.
  *
@@ -123,7 +124,11 @@ export function AthleteSection({
         : 'Self-screen passed';
 
   return (
-    <SettingSection title="Athlete" testID="settings-athlete">
+    <SettingSection
+      title="Athlete"
+      note="Every answer here changes your program, unless the row says otherwise."
+      testID="settings-athlete"
+    >
       <SettingRow
         label="Goal"
         value="Vertical jump"
@@ -133,7 +138,6 @@ export function AthleteSection({
       <SettingRow
         label="Sport"
         value={sportLabel(athlete.sport)}
-        caption={CHANGES_YOUR_PROGRAM}
         chevron
         onPress={() => open('sport')}
         testID="settings-sport"
@@ -142,7 +146,6 @@ export function AthleteSection({
       <SettingRow
         label="Second goal"
         value={secondGoalLabel(climbing.secondaryGoal)}
-        caption={CHANGES_YOUR_PROGRAM}
         chevron
         onPress={() => open('secondGoal')}
         testID="settings-second-goal"
@@ -151,7 +154,6 @@ export function AthleteSection({
       <SettingRow
         label="Training age"
         value={trainingAgeLabel(athlete.trainingAgeYears)}
-        caption={CHANGES_YOUR_PROGRAM}
         chevron
         onPress={() => open('trainingAge')}
         testID="settings-training-age"
@@ -160,7 +162,6 @@ export function AthleteSection({
       <SettingRow
         label="Availability"
         value={athlete.daysPerWeek === null ? 'Not set' : `${athlete.daysPerWeek} days a week`}
-        caption={CHANGES_YOUR_PROGRAM}
         chevron
         onPress={() => open('days')}
         testID="settings-days"
@@ -172,7 +173,6 @@ export function AthleteSection({
         <SettingRow
           label="Pain"
           value="None reported"
-          caption={CHANGES_YOUR_PROGRAM}
           chevron
           onPress={onReportPain}
           testID="settings-pain"
@@ -183,7 +183,7 @@ export function AthleteSection({
             <SettingRow
               label="Pain"
               value={SEVERITY_WORDS[entry.severityDerived] ?? entry.severityDerived}
-              caption={`${painLine(entry)} · ${CHANGES_YOUR_PROGRAM}`}
+              caption={painLine(entry)}
               testID={`settings-pain-${entry.location}`}
             >
               <View style={{ flexDirection: 'row', gap: space.sm, paddingTop: space.sm }}>
@@ -209,7 +209,6 @@ export function AthleteSection({
       <SettingRow
         label="Finger or pulley injury history"
         value={climbing.fingerHistory ? 'Yes' : 'No'}
-        caption={CHANGES_YOUR_PROGRAM}
         chevron
         onPress={() => open('fingerHistory')}
         testID="settings-finger-history"
@@ -220,7 +219,6 @@ export function AthleteSection({
           <SettingRow
             label="Grip on pulling movements"
             value={climbing.gripMode === 'open_hand' ? 'Open hand only' : 'Any'}
-            caption={CHANGES_YOUR_PROGRAM}
             chevron
             onPress={() => open('grip')}
             testID="settings-grip"
@@ -229,7 +227,6 @@ export function AthleteSection({
           <SettingRow
             label="Finger pain ceiling"
             value={`${climbing.fingerPainCeiling} / 10`}
-            caption={CHANGES_YOUR_PROGRAM}
             chevron
             numeric
             onPress={() => open('ceiling')}
@@ -239,7 +236,6 @@ export function AthleteSection({
           <SettingRow
             label="Weaker side"
             value={weakerSideLabel(climbing.weakerSide === 'unsure' ? null : climbing.weakerSide)}
-            caption={CHANGES_YOUR_PROGRAM}
             chevron
             onPress={() => open('weakerSide')}
             testID="settings-weaker-side"

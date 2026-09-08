@@ -8,13 +8,16 @@ import {
   inToMm,
 } from '@vert/engine/units';
 import { View } from 'react-native';
-import { Button } from '../primitives/button';
 import { ExerciseHeader } from '../primitives/exerciseHeader';
+import { FloatingAction } from '../primitives/floatingAction';
+import { SegmentBar } from '../primitives/segmentBar';
+import { Spine, SpineNode } from '../primitives/spine';
 import { Notice } from '../primitives/notice';
 import { ResultBlock } from '../primitives/resultBlock';
 import { FooterLine, RestBar } from '../primitives/restBar';
 import { SetRow } from '../primitives/setRow';
 import { Strip, type StripSlot } from '../primitives/strip';
+import { Text } from '../text';
 import { space } from '../theme';
 import { KitCase, KitSection } from './kitSection';
 
@@ -44,6 +47,69 @@ const WHOOP_UNLINKED: readonly StripSlot[] = ['Recovery', 'Sleep', 'Strain'].map
 export function KitSession() {
   return (
     <View style={{ gap: space.lg }}>
+      <KitSection
+        title="Spine"
+        note="One node per block, the rule between them, and the accent on the current one only."
+      >
+        <KitCase label="warm-up done, first lift current, the rest to come">
+          <Spine>
+            <SpineNode glyph="day-recovery" state="done" first>
+              <Text variant="title">Warm-up</Text>
+              <Text variant="caption" color="ink3">
+                6 movements · done
+              </Text>
+            </SpineNode>
+            <SpineNode index="1" state="current">
+              <Text variant="title">Back squat</Text>
+              <Text variant="caption" color="ink3">
+                Main lift · 4 sets · 5 × 205 lb
+              </Text>
+            </SpineNode>
+            <SpineNode index="2" state="upcoming">
+              <Text variant="title">Trap bar jump</Text>
+              <Text variant="caption" color="ink3">
+                Power · 3 sets · 3 × 95 lb
+              </Text>
+            </SpineNode>
+            <SpineNode glyph="test" state="upcoming" last>
+              <Text variant="title">Jump test</Text>
+              <Text variant="caption" color="ink3">
+                OVR Jump · 5 attempts
+              </Text>
+            </SpineNode>
+          </Spine>
+        </KitCase>
+      </KitSection>
+
+      <KitSection
+        title="SegmentBar"
+        note="The week as one segment per training day, filled when the day was finished."
+      >
+        <KitCase label="two of four done">
+          <SegmentBar
+            segments={[
+              { key: 'mon', filled: true },
+              { key: 'tue', filled: true },
+              { key: 'thu', filled: false },
+              { key: 'sat', filled: false },
+            ]}
+            line="Week 4: 2 of 4 sessions done"
+            accessibilityLabel="Week 4: 2 of 4 sessions done"
+          />
+        </KitCase>
+      </KitSection>
+
+      <KitSection
+        title="FloatingAction"
+        note="The session's one action, bottom right, flat: a 1px cut of paper, never a shadow."
+      >
+        <KitCase label="over a session that can still be acted on">
+          <View style={{ height: 96 }}>
+            <FloatingAction label="Finish session" onPress={noop} />
+          </View>
+        </KitCase>
+      </KitSection>
+
       <KitSection
         title="Strip"
         note="Whoop's words, unchanged, with the attribution and the band beside the number."
@@ -90,7 +156,6 @@ export function KitSession() {
           <ExerciseHeader
             name="Split squat"
             sub="Secondary · hypertrophy · 3 sets"
-            bothSides
             onVideo={noop}
           />
         </KitCase>
@@ -182,7 +247,7 @@ export function KitSession() {
 
       <KitSection
         title="ResultBlock"
-        note="Paper by default with the header line in green. Committed only for a PR at or above the threshold."
+        note="Paper by default with the header line in green. Committed for a PR at or above the threshold and for the goal-reached card, and for nothing else. Screenshot both schemes here."
       >
         <KitCase label="ordinary test day, on paper">
           <ResultBlock
@@ -208,6 +273,19 @@ export function KitSession() {
             footerRight="Bodyweight 181 lb"
           />
         </KitCase>
+        <KitCase label="goal reached: the second and last surface allowed the green">
+          <ResultBlock
+            eyebrow="Goal reached"
+            value={formatHeightValueIn(inToMm(36.2))}
+            unit="in"
+            line="+4.9 in since 8 Sep · goal 36.0 by 29 Nov"
+            instrument="OVR Jump · standing CMJ"
+            committed
+            bleed={16}
+            footerLeft="Week 11 of 12"
+            footerRight="Bodyweight 179 lb"
+          />
+        </KitCase>
         <KitCase label="calibrating: no PR moment for the first three sessions">
           <ResultBlock
             eyebrow="Jump test · Sat 11 Oct"
@@ -223,13 +301,8 @@ export function KitSession() {
         <KitCase label="resting, with the next set named">
           <RestBar remainingS={180} nextLine="next: set 3 · 3 × 235 lb (+15 lb)" onStop={noop} />
         </KitCase>
-        <KitCase label="every row logged: the finish link joins the bar">
-          <RestBar
-            remainingS={45}
-            nextLine="every set logged"
-            onStop={noop}
-            trailing={<Button label="Finish session" variant="quiet" onPress={noop} />}
-          />
+        <KitCase label="every row logged">
+          <RestBar remainingS={45} nextLine="every set logged" onStop={noop} />
         </KitCase>
         <KitCase label="footer line">
           <FooterLine left="Sets 2 of 22 · contacts 0 of 6" right="Test Sat · in 5 days" />

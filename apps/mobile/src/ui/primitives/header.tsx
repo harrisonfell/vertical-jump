@@ -18,6 +18,11 @@ export interface HeaderProps {
   readonly back?: ReactNode;
   /** A 44px control, normally Settings. */
   readonly right?: ReactNode;
+  /**
+   * A second 44px control, drawn just before `right`. One screen has earned
+   * one: Progress, where the theme is switched at the hour the room changes.
+   */
+  readonly extra?: ReactNode;
   readonly testID?: string;
 }
 
@@ -34,6 +39,7 @@ export function Header({
   subtitle,
   back,
   right,
+  extra,
   testID,
 }: HeaderProps) {
   const { colors } = useTheme();
@@ -76,6 +82,7 @@ export function Header({
               {trailingText}
             </Text>
           )}
+          {extra}
           {right}
         </View>
       </View>

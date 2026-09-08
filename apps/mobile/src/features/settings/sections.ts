@@ -12,6 +12,7 @@
 
 export type SettingsSectionId =
   | 'athlete'
+  | 'appearance'
   | 'program'
   | 'lifts'
   | 'readiness'
@@ -22,6 +23,10 @@ export type SettingsSectionId =
 /** Every section, in the order the screen lays them down. */
 const ALL_SECTIONS: readonly SettingsSectionId[] = [
   'athlete',
+  // Appearance sits second on purpose: it is the one answer here that is about
+  // the room rather than the training, and it is the one the owner reaches for
+  // most often after the profile itself.
+  'appearance',
   'program',
   'lifts',
   'readiness',
@@ -32,7 +37,7 @@ const ALL_SECTIONS: readonly SettingsSectionId[] = [
 
 /** Shown only when the device has no athlete row at all. */
 export const NO_PROFILE_LINE =
-  'No profile yet. Answer the setup questions and your settings appear here.';
+  'No profile yet: your settings appear once the setup questions are answered.';
 
 /** The Program row before there is a program. */
 export const NOT_BUILT_VALUE = 'Not built yet';

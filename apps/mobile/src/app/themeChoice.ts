@@ -12,6 +12,39 @@ export const THEME_OVERRIDE_KEY = 'settings.themeOverride';
 
 export type SchemeChoice = SchemeName | 'system';
 
+/** The three answers, in the order the segmented control lays them down. */
+export const SCHEME_CHOICES: readonly SchemeChoice[] = ['system', 'light', 'dark'];
+
+/** What each answer is called. The words are the control; the colour is not. */
+export const SCHEME_CHOICE_LABEL: Readonly<Record<SchemeChoice, string>> = {
+  system: 'System',
+  light: 'Light',
+  dark: 'Dark',
+};
+
+/** The stored kv string as a choice. Anything unreadable follows the system. */
+export function choiceOf(stored: string | null | undefined): SchemeChoice {
+  return stored === 'light' || stored === 'dark' ? stored : 'system';
+}
+
+/**
+ * What one tap on the header control does: pin the opposite of what is on
+ * screen right now.
+ *
+ * The evening review is where the athlete notices the room has gone dark, and
+ * a control that had to be tapped twice to get past "system" would be a
+ * puzzle. Settings keeps the three-way answer, including the way back to
+ * following the phone.
+ */
+export function toggledChoice(active: SchemeName): SchemeName {
+  return active === 'dark' ? 'light' : 'dark';
+}
+
+/** "Switch to dark theme": what the control will do, never what it is. */
+export function toggleLabel(active: SchemeName): string {
+  return `Switch to ${toggledChoice(active)} theme`;
+}
+
 /** Reads `?theme=` out of a query string. Anything else is not an answer. */
 export function readSchemeParam(search: string): SchemeChoice | null {
   const match = /[?&]theme=([^&#]*)/.exec(search);

@@ -3,7 +3,7 @@ import { Pressable, View, type ViewStyle } from 'react-native';
 import { ariaState, useFocusVisible } from '../a11y';
 import { Glyph, type GlyphName } from '../glyphs';
 import { Text } from '../text';
-import { space, useTheme, type ColorToken } from '../theme';
+import { opacity, space, useTheme, type ColorToken } from '../theme';
 import { FocusRing } from './focusRing';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'quiet' | 'destructive';
@@ -112,7 +112,7 @@ export function Button({
           backgroundColor: pressed && !inert ? skin.pressed : skin.background,
           borderWidth: skin.border === null ? 0 : 1,
           borderColor: skin.border ?? 'transparent',
-          opacity: disabled ? 0.45 : pressed && variant === 'primary' ? 0.86 : 1,
+          opacity: disabled ? opacity.disabled : pressed && variant === 'primary' ? opacity.pressed : 1,
         },
         style,
       ]}

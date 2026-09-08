@@ -23,6 +23,15 @@ const NUMERIC_VARIANTS: ReadonlySet<TypeVariant> = new Set<TypeVariant>([
 /** The variants a screen may ask for. `displayWide` is chosen automatically. */
 export type TextVariant = Exclude<TypeVariant, 'displayWide'>;
 
+/**
+ * Which display instance a given viewport gets. Exported because the readout
+ * has to inset the number by that instance's own sidebearing, and a second
+ * copy of this rule anywhere would be a second chance for the two to disagree.
+ */
+export function displayVariantFor(width: number): 'display' | 'displayWide' {
+  return width >= breakpoint.desktop ? 'displayWide' : 'display';
+}
+
 export interface TextProps extends Omit<RNTextProps, 'style'> {
   readonly variant?: TextVariant;
   /** A token name, not a hex value. Defaults to `ink`. */
@@ -49,8 +58,7 @@ export function Text({
   const theme = useTheme();
   const { width } = useWindowDimensions();
 
-  const resolved: TypeVariant =
-    variant === 'display' && width >= breakpoint.desktop ? 'displayWide' : variant;
+  const resolved: TypeVariant = variant === 'display' ? displayVariantFor(width) : variant;
   const spec = theme.type[resolved];
   const tabular = numeric ?? NUMERIC_VARIANTS.has(resolved);
 

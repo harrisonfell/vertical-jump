@@ -36,9 +36,6 @@ export const SETUP_COPY = {
 
   /* step 1 */
   stepOneTitle: 'Your answers',
-  stepOneGoalLabel: 'Primary goal',
-  stepOneGoalValue: 'Vertical jump',
-  stepOneGoalDetail: 'This app builds one kind of program.',
   stepOneSport: 'What sport do you play most?',
   stepOneTrainingAge: 'How much weight room experience do you have?',
   stepOneAvailability: 'How many days a week can you realistically train?',

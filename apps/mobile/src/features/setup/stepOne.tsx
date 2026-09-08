@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
-import { AnswerGroup, Button, Notice, Text, space } from '@/ui';
+import { AnswerGroup, Button, Notice, space } from '@/ui';
 import { SETUP_COPY } from './copy';
 import { Question, StepFrame } from './parts';
 import {
@@ -62,8 +62,6 @@ export const STEP_ONE_DEFAULTS: StepOneValues = stepOneDefaults();
 export interface SetupStepOneProps {
   readonly initial?: Partial<StepOneValues>;
   readonly onSave: (values: StepOneValues) => void;
-  /** Hidden after the first run: the goal is fixed to Vertical jump. */
-  readonly showGoal?: boolean;
   readonly submitLabel?: string;
   readonly saving?: boolean;
   /** A save that failed, in plain words. The answers stay on screen. */
@@ -76,7 +74,6 @@ export interface SetupStepOneProps {
 export function SetupStepOne({
   initial,
   onSave,
-  showGoal = true,
   submitLabel = SETUP_COPY.stepOneSubmit,
   saving = false,
   error,
@@ -146,14 +143,6 @@ export function SetupStepOne({
 
   const body = (
     <View style={{ gap: space.xl }}>
-      {showGoal ? (
-        <Question label={SETUP_COPY.stepOneGoalLabel} detail={SETUP_COPY.stepOneGoalDetail}>
-          <Text variant="body" color="ink">
-            {SETUP_COPY.stepOneGoalValue}
-          </Text>
-        </Question>
-      ) : null}
-
       <Question
         label={SETUP_COPY.stepOneSecondGoal}
         detail={SETUP_COPY.stepOneSecondGoalDetail}

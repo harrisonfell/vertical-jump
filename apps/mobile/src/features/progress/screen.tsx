@@ -59,10 +59,10 @@ interface Deleted {
  * Progress: the evening review.
  *
  * Progressive disclosure, because the first month of a program is otherwise a
- * page of "needs more data". Above the fold sit the week's line, the one big
- * number, the pace sentence and the charts; everything that answers a
- * follow-up question lives behind a headed section that says how much is in
- * it before it is opened.
+ * page of "needs more data". Above the fold sit the one big number, the pace
+ * sentence, the week's line and the charts, in that order; everything that
+ * answers a follow-up question lives behind a headed section that says how
+ * much is in it before it is opened.
  */
 export function ProgressScreen() {
   const router = useRouter();
@@ -196,9 +196,9 @@ export function ProgressScreen() {
 
   if (!model.hasProgram) {
     return (
-      <Screen header={<AppHeader title="Progress" variant="headline" />}>
+      <Screen header={<AppHeader title="Progress" variant="headline" showTheme />}>
         <EmptyState
-          body="No program yet. Progress fills in from your first jump test and your first logged week."
+          body="No program yet: Progress fills in from your first test and your first logged week."
           actionLabel="Build program"
           onAction={() => router.push(routeHref('setupOne'))}
         />
@@ -215,6 +215,18 @@ export function ProgressScreen() {
         trendCaption={model.trendCaption}
         compact={model.compactHeadline}
       />
+      {/* The week's sentence follows the number rather than delaying it, and
+          the stream notes sit with the instrument they qualify. */}
+      <View style={{ gap: space.sm }}>
+        <Text variant="body" color="ink" numeric style={{ maxWidth: 640 }} testID="progress-review">
+          {model.reviewLine}
+        </Text>
+        {model.streamNotes.map((note) => (
+          <Text key={note} variant="caption" color="ink2" style={{ maxWidth: 560 }}>
+            {note}
+          </Text>
+        ))}
+      </View>
       <Button
         label="Log jump test"
         variant="primary"
@@ -256,7 +268,7 @@ export function ProgressScreen() {
   );
 
   return (
-    <Screen wide header={<AppHeader title="Progress" variant="headline" />} testID="progress">
+    <Screen wide header={<AppHeader title="Progress" variant="headline" showTheme />} testID="progress">
       <SyncLine />
 
       {failed ? (
@@ -327,21 +339,11 @@ export function ProgressScreen() {
         />
       ) : null}
 
-      <Text variant="body" color="ink" numeric style={{ maxWidth: 640 }} testID="progress-review">
-        {model.reviewLine}
-      </Text>
-
       {override === 'default' ? null : (
         <Text variant="caption" color="ink3" testID="progress-dev-state">
           {describeState(override, athlete.data?.goalHeightMm ?? null)}
         </Text>
       )}
-
-      {model.streamNotes.map((note) => (
-        <Text key={note} variant="caption" color="ink2" style={{ maxWidth: 560 }}>
-          {note}
-        </Text>
-      ))}
 
       <TwoColumn left={left} right={right} />
 
@@ -378,7 +380,7 @@ function initialFor(row: JumpTestWithReps): {
 /** The skeleton mirrors the final layout: header, number, panels, sections. */
 export function ProgressSkeleton() {
   return (
-    <Screen wide header={<AppHeader title="Progress" variant="headline" />} testID="progress-skeleton">
+    <Screen wide header={<AppHeader title="Progress" variant="headline" showTheme />} testID="progress-skeleton">
       <Skeleton skeletonFor="line" />
       <Skeleton skeletonFor="header" />
       <Skeleton skeletonFor="chartPanel" count={3} />

@@ -4,7 +4,13 @@ import type { BlockSegment } from './blocks';
 
 /**
  * The block band: one hairline-divided strip across the whole program, with
- * the current week outlined in green.
+ * the current week marked in green.
+ *
+ * The mark is a 2px green bar along the bottom of the week, which is the same
+ * mark the week strip puts under today. "Where you are" is one idea, so it gets
+ * one shape in both places rather than a bar here and an outline there. The
+ * caption names the week as well, because a green bar nobody can read is not a
+ * position.
  *
  * Load weeks sit a tone darker than reduced ones, so the shape of the program
  * reads before any word does: four heavy weeks, one light, five heavy, two
@@ -32,7 +38,11 @@ export function BlockBand({ segments, currentWeek, testID }: BlockBandProps) {
     <View testID={testID} style={{ gap: space.sm }}>
       <View
         accessibilityRole="image"
-        accessibilityLabel={`Program blocks: ${caption}`}
+        accessibilityLabel={
+          currentWeek === null
+            ? `Program blocks: ${caption}`
+            : `Program blocks: ${caption}. Today is in week ${currentWeek}.`
+        }
         style={{ flexDirection: 'row', height: BAND_HEIGHT }}
       >
         {segments.map((segment, index) => (
@@ -49,12 +59,14 @@ export function BlockBand({ segments, currentWeek, testID }: BlockBandProps) {
                   key={w}
                   style={{
                     flex: 1,
+                    justifyContent: 'flex-end',
                     backgroundColor: segment.reduced ? colors.paper2 : colors.paper3,
-                    ...(current
-                      ? { borderWidth: 2, borderColor: colors.green }
-                      : null),
                   }}
-                />
+                >
+                  {current ? (
+                    <View style={{ height: 2, backgroundColor: colors.green }} />
+                  ) : null}
+                </View>
               );
             })}
           </View>

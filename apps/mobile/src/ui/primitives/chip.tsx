@@ -3,7 +3,7 @@ import { Pressable, View } from 'react-native';
 import { ariaState, keyToIndex, rovingTabIndex, selectionState, useFocusVisible } from '../a11y';
 import { Glyph, type GlyphName } from '../glyphs';
 import { Text } from '../text';
-import { space, useTheme } from '../theme';
+import { opacity, space, useTheme } from '../theme';
 import { FocusRing } from './focusRing';
 
 interface KeyEventLike {
@@ -86,7 +86,7 @@ export function Chip({
           : pressed && !disabled
             ? colors.paper3
             : 'transparent',
-        opacity: disabled ? 0.45 : 1,
+        opacity: disabled ? opacity.disabled : 1,
       })}
     >
       <FocusRing visible={focusVisible} />

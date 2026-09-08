@@ -1,5 +1,5 @@
 import { View, useWindowDimensions } from 'react-native';
-import { Glyph, Hairline, Text, breakpoint, space, useTheme } from '@/ui';
+import { DisplayReadout, Glyph, Hairline, Text, breakpoint, space, useTheme } from '@/ui';
 import { Sparkline } from '@/ui/charts';
 import { NO_VALUE } from './derive';
 import type { HeadlineModel } from './types';
@@ -45,7 +45,9 @@ export interface HeadlineProps {
  *
  * One display number a screen. The PR flag rides inline with the instrument
  * label rather than colouring the number, so the surface stays paper and the
- * committed green is kept for the record itself.
+ * committed green is kept for the record itself. The gap is left off the
+ * figure row: it is the goal minus the number beside it, and the pace sentence
+ * below already says what the rate has to be.
  */
 export function Headline({
   model,
@@ -57,6 +59,13 @@ export function Headline({
   const { colors } = useTheme();
   const { width } = useWindowDimensions();
   const phone = width < breakpoint.tablet;
+
+  // How far to trust the number, in one paragraph rather than three stacked
+  // captions: how early the trend is, how noisy the last test was, and where
+  // the PR threshold came from all qualify the same reading.
+  const caveats = [trendCaption, noiseNote, model.thresholdReason]
+    .filter((part): part is string => part !== null && part !== '')
+    .join(' ');
 
   return (
     <View style={{ gap: space.md }} testID="progress-headline">
@@ -73,14 +82,11 @@ export function Headline({
               {`${model.valueIn} in`}
             </Text>
           ) : (
-            <>
-              <Text variant="display" color="ink" testID="progress-headline-value">
-                {model.valueIn}
-              </Text>
-              <Text variant="title" color="ink2">
-                in
-              </Text>
-            </>
+            <DisplayReadout
+              value={model.valueIn}
+              unit="in"
+              valueTestID="progress-headline-value"
+            />
           )}
         </View>
         {model.sparkline.length >= 2 ? (
@@ -108,7 +114,6 @@ export function Headline({
       <View style={{ flexDirection: 'row', flexWrap: phone ? 'wrap' : 'nowrap', gap: phone ? space.lg : space.xl }}>
         <Figure phone={phone} label="PR" value={model.prIn === null ? '' : `${model.prIn} in`} />
         <Figure phone={phone} label="Goal" value={model.goalIn === '' ? '' : `${model.goalIn} in`} />
-        <Figure phone={phone} label="Gap" value={model.gapIn === '' ? '' : `${model.gapIn} in`} />
         <Figure phone={phone} label="Weeks left" value={model.weeksLeft} />
       </View>
       <Hairline />
@@ -118,19 +123,9 @@ export function Headline({
           {paceLine}
         </Text>
       )}
-      {trendCaption === null ? null : (
-        <Text variant="caption" color="ink2">
-          {trendCaption}
-        </Text>
-      )}
-      {noiseNote === null ? null : (
+      {caveats === '' ? null : (
         <Text variant="caption" color="ink3" style={{ maxWidth: 560 }}>
-          {noiseNote}
-        </Text>
-      )}
-      {model.thresholdReason === '' ? null : (
-        <Text variant="caption" color="ink3" style={{ maxWidth: 560 }}>
-          {model.thresholdReason}
+          {caveats}
         </Text>
       )}
     </View>

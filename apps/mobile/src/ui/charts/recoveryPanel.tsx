@@ -21,6 +21,7 @@ import type { IsoDay, ProbeControl, RecoveryDay, RecoveryMeasure } from './props
 import {
   MARK,
   PLOT_PAD,
+  STROKE,
   formatDayLong,
   formatDayShort,
   median,
@@ -247,11 +248,16 @@ export function RecoveryPanel({
                   y1={py(edge)}
                   y2={py(edge)}
                   stroke={colors.rule}
-                  strokeWidth={1}
+                  strokeWidth={STROKE.grid}
                 />
               ))
             : null}
 
+          {/* Whoop's band edges are the graticule here and take the graticule's
+              weight; the athlete's own 90-day median is a reference they are
+              measured against and takes the reference weight; the rolling
+              median below is the reading and takes twice that. Three lines,
+              three weights, and the reader can rank them without the key. */}
           {ownerLevel !== null ? (
             <Line
               x1={left}
@@ -259,7 +265,7 @@ export function RecoveryPanel({
               y1={py(ownerLevel)}
               y2={py(ownerLevel)}
               stroke={colors.ink3}
-              strokeWidth={1}
+              strokeWidth={STROKE.reference}
             />
           ) : null}
 
@@ -287,7 +293,7 @@ export function RecoveryPanel({
               key={`median-${segment[0]?.date ?? 'x'}`}
               d={polylinePath(segment.map((entry) => [px(entry.date), py(entry.value)]))}
               stroke={colors.ink2}
-              strokeWidth={MARK.lineWidth}
+              strokeWidth={STROKE.series}
               strokeLinecap="round"
               strokeLinejoin="round"
               fill="none"

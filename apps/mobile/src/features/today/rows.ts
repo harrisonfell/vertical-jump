@@ -115,6 +115,27 @@ export function exerciseComplete(
   return sets.length > 0 && sets.every((set) => logged.has(set.setNumber));
 }
 
+/**
+ * The exercise's prescription in one phrase: "4 sets · 5 × 205 lb".
+ *
+ * The system's rule is that no exercise shows a single load standing for all
+ * of its sets, so identical rows collapse and unequal ones are listed the way
+ * the engine already writes a history line: "3 sets · 5 × 205 / 4 × 220 /
+ * 3 × 235". Every string here is `displayLoad`, the engine's own notation,
+ * never rebuilt from the numbers.
+ */
+export function setsSummary(sets: readonly SetPrescription[]): string | undefined {
+  if (sets.length === 0) return undefined;
+
+  const distinct: string[] = [];
+  for (const set of sets) {
+    if (!distinct.includes(set.displayLoad)) distinct.push(set.displayLoad);
+  }
+
+  const count = `${sets.length} ${sets.length === 1 ? 'set' : 'sets'}`;
+  return `${count} · ${distinct.join(' / ')}`;
+}
+
 /** "done 5/5", the line an exercise folds to. */
 export function doneLabel(sets: readonly SetPrescription[], logged: ReadonlySet<number>): string {
   const count = sets.filter((set) => logged.has(set.setNumber)).length;

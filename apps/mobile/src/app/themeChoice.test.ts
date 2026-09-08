@@ -1,7 +1,17 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it, vi } from 'vitest';
-import { persistedChoice, readSchemeParam, startingOverride, toScheme } from './themeChoice';
+import {
+  SCHEME_CHOICES,
+  SCHEME_CHOICE_LABEL,
+  choiceOf,
+  persistedChoice,
+  readSchemeParam,
+  startingOverride,
+  toScheme,
+  toggleLabel,
+  toggledChoice,
+} from './themeChoice';
 
 /**
  * `useColorScheme` on the web is a subscription to
@@ -67,6 +77,49 @@ describe('persistedChoice', () => {
   });
 });
 
+describe('the stored preference', () => {
+  it('offers three answers, system first', () => {
+    expect(SCHEME_CHOICES).toEqual(['system', 'light', 'dark']);
+    expect(SCHEME_CHOICES.map((choice) => SCHEME_CHOICE_LABEL[choice])).toEqual([
+      'System',
+      'Light',
+      'Dark',
+    ]);
+  });
+
+  it('reads a stored row back as the answer it was written from', () => {
+    expect(choiceOf('dark')).toBe('dark');
+    expect(choiceOf('light')).toBe('light');
+    // Nothing stored, and anything unreadable, means follow the phone.
+    expect(choiceOf(null)).toBe('system');
+    expect(choiceOf(undefined)).toBe('system');
+    expect(choiceOf('sepia')).toBe('system');
+  });
+
+  it('round-trips: what the control writes is what the next launch reads', () => {
+    for (const choice of ['light', 'dark'] as const) {
+      // setOverride writes the choice verbatim; the launch read narrows it.
+      expect(choiceOf(choice)).toBe(choice);
+      expect(toScheme(choice)).toBe(choice);
+    }
+    // "system" is stored as the absence of a row, which reads back as system.
+    expect(choiceOf(null)).toBe('system');
+    expect(toScheme(null)).toBeUndefined();
+  });
+});
+
+describe('the one-tap header control', () => {
+  it('pins the opposite of what is on screen', () => {
+    expect(toggledChoice('light')).toBe('dark');
+    expect(toggledChoice('dark')).toBe('light');
+  });
+
+  it('is named for what the tap will do', () => {
+    expect(toggleLabel('light')).toBe('Switch to dark theme');
+    expect(toggleLabel('dark')).toBe('Switch to light theme');
+  });
+});
+
 describe('a dark machine asked for ?theme=light', () => {
   it('paints light on the first frame, before kv has answered', async () => {
     systemPrefersDark(true);
@@ -113,5 +166,44 @@ describe('AppThemeProvider reads the query once', () => {
 
   it('keeps the read off module scope, so the static export pass has no window', () => {
     expect(source).toContain("typeof window === 'undefined'");
+  });
+});
+
+/**
+ * The preference is a kv row, which lands one tick after the database opens.
+ * Painting the boot skeleton in the system scheme and correcting it afterwards
+ * is the flash this guards against: the splash is held until the row has been
+ * read, and the read is what marks the provider resolved.
+ */
+describe('the stored preference is written and waited for', () => {
+  const theme = readFileSync(fileURLToPath(new URL('./theme.tsx', import.meta.url)), 'utf8');
+  const providers = readFileSync(
+    fileURLToPath(new URL('./providers.tsx', import.meta.url)),
+    'utf8',
+  );
+
+  it('persists through the kv store the rest of the app already uses', () => {
+    expect(theme).toContain('kvStore.kvSet(db, THEME_OVERRIDE_KEY, choice)');
+    expect(theme).toContain('kvStore.kvDelete(db, THEME_OVERRIDE_KEY)');
+    expect(theme).toContain('kvStore.kvGet(db, THEME_OVERRIDE_KEY)');
+  });
+
+  it('reports the preference resolved only once it has been read', () => {
+    expect(theme).toContain('setRead(true)');
+    expect(theme).toContain('const resolved = read ||');
+    // A database that never opens, and the static export pass, resolve anyway.
+    expect(theme).toContain("status === 'error'");
+    expect(theme).toContain("typeof window === 'undefined'");
+  });
+
+  it('holds the splash until then, so no frame paints in the wrong scheme', () => {
+    expect(providers).toContain('useSplashUntil(resolved)');
+    expect(providers).toContain('SPLASH_MAX_MS');
+    // The fonts hook must no longer hide the splash on its own.
+    const hook = providers.slice(
+      providers.indexOf('export function useAppFonts'),
+      providers.indexOf('const SPLASH_MAX_MS'),
+    );
+    expect(hook).not.toContain('hideAsync');
   });
 });

@@ -1,17 +1,32 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
+import { ScrollView } from 'react-native';
 import type { Week } from '@/data';
 import { usePatchSession, useSetKvValue } from '@/data';
 import { AppHeader, SyncLine } from '@/app';
-import { Button, FooterLine, Notice, RestBar, Screen, Text, space } from '@/ui';
+import {
+  FloatingAction,
+  FooterLine,
+  Notice,
+  RestBar,
+  Screen,
+  SegmentBar,
+  Spine,
+  SpineNode,
+  Text,
+  space,
+  type GlyphName,
+} from '@/ui';
 import { COACH_MARK_FIRST_SESSION, COACH_MARK_LINES, sorenessSkipKey } from './cards';
 import { EditSetSheet } from './editSetSheet';
 import { NO_SETS, RunnerExercise } from './exerciseSection';
 import { FingerRow } from './fingerRow';
 import { FinishSheet } from './finishSheet';
 import { countContacts, footerLeft, footerRight, plannedSets } from './footer';
-import { GroupedBlock } from './groupedBlock';
+import { GroupedBlock, groupSummary } from './groupedBlock';
 import { headerDate, headerDuration, headerTitle } from './header';
+import { exerciseComplete } from './rows';
+import { nodeStates } from './spineModel';
+import { weekBarModel } from './weekBar';
 import { JumpTestBlock } from './jumpTestBlock';
 import { flattenExercises, type TodayExercise } from './model';
 import { isSoreEnough, repeatNotice, sorenessNotices, testMovedFrom } from './notices';
@@ -35,6 +50,9 @@ import { WhoopStrip } from './whoopStrip';
  * on this screen ever waits on a network. What a tap does is in
  * `runnerActions`; this file is the layout.
  */
+
+/** The floating action's own height plus the gap under it. */
+const FLOATING_CLEARANCE = 56 + space.lg;
 
 export interface SessionRunnerProps {
   readonly data: TodayData;
@@ -112,6 +130,100 @@ export function SessionRunner({ data, nextWeek, onFinishSheet }: SessionRunnerPr
     );
   const everythingLogged = planned > 0 && loggedCount >= planned;
 
+  // The spine's nodes, in the order the session is worked through: the warm-up
+  // and cool-down as one node each, the test block as its own, and every other
+  // exercise as a numbered one. The block name is not a heading any more; it
+  // rides the exercise's own meta line, so the spine stays one column of nodes
+  // rather than a ladder of headings with lists hanging off it.
+  type SpineItem = {
+    readonly key: string;
+    readonly glyph?: GlyphName;
+    readonly index?: string;
+    readonly done: boolean;
+    readonly sequenced: boolean;
+    readonly content: ReactNode;
+  };
+
+  const items: SpineItem[] = [];
+  let ordinal = 0;
+
+  for (const block of plan.blocks) {
+    if (block.name === 'jump_test') {
+      if (isSoreEnough(session.sorenessPre)) continue;
+      items.push({
+        key: block.name,
+        glyph: 'test',
+        // The test block reads its own stream, so the runner cannot say
+        // whether today's test is in. It sits on the spine without claiming a
+        // state it does not know.
+        done: false,
+        sequenced: false,
+        content: (
+          <JumpTestBlock
+            today={data.today}
+            sessionId={session.id}
+            bodyweightKg={data.athlete?.bodyweightKg ?? null}
+            eyebrow={`Jump test · ${headerDate(session.scheduledDate)}`}
+            movedFrom={testMovedFrom(data.weekSessions, data.today)}
+            testID="today-jump-test"
+          />
+        ),
+      });
+      continue;
+    }
+
+    if (block.grouped) {
+      items.push({
+        key: block.name,
+        glyph: 'day-recovery',
+        done: groupSummary(block.exercises, data.loggedByExercise).done,
+        sequenced: true,
+        content: (
+          <GroupedBlock
+            label={block.label}
+            exercises={block.exercises}
+            loggedByExercise={data.loggedByExercise}
+            onLogAll={() => actions.logGroup(block.exercises)}
+            onUndoAll={() => actions.undoGroup(block.exercises)}
+            testID={`block-${block.name}`}
+          />
+        ),
+      });
+      continue;
+    }
+
+    for (const exercise of block.exercises) {
+      ordinal += 1;
+      const logged = data.loggedByExercise.get(exercise.id) ?? NO_SETS;
+      items.push({
+        key: exercise.id,
+        index: String(ordinal),
+        done: exerciseComplete(exercise.sets, logged),
+        sequenced: true,
+        content: (
+          <RunnerExercise
+            exercise={exercise}
+            logged={logged}
+            logByKey={data.logByKey}
+            generation={actions.generation[exercise.id] ?? 0}
+            collapsed={!store.expandedExerciseIds.includes(exercise.id)}
+            onToggle={onToggleExercise}
+            onLog={actions.onLogRow}
+            onUndo={actions.onUndo}
+            onEdit={actions.openEdit}
+            onFillRemaining={actions.fillRemaining}
+            landingPending={actions.landingFor === exercise.id}
+            onLanding={actions.answerLanding}
+            onAnchor={actions.onAnchor}
+          />
+        ),
+      });
+    }
+  }
+
+  const states = nodeStates(items);
+  const weekBar = weekBarModel(data.weekSessions, week?.w ?? null);
+
   const title = headerTitle({
     w: week?.w ?? 1,
     W: data.totalWeeks,
@@ -120,15 +232,6 @@ export function SessionRunner({ data, nextWeek, onFinishSheet }: SessionRunnerPr
     suffixes: plan.headerSuffixes,
     restricted: data.restricted,
   });
-
-  const finishLink = (
-    <Button
-      label="Finish session"
-      variant="quiet"
-      onPress={() => setFinishOpen(true)}
-      testID="finish-link"
-    />
-  );
 
   return (
     <Screen
@@ -145,12 +248,7 @@ export function SessionRunner({ data, nextWeek, onFinishSheet }: SessionRunnerPr
       }
       footer={
         rest.running ? (
-          <RestBar
-            remainingS={rest.remainingS}
-            nextLine={rest.nextLabel}
-            onStop={rest.stop}
-            trailing={everythingLogged ? finishLink : undefined}
-          />
+          <RestBar remainingS={rest.remainingS} nextLine={rest.nextLabel} onStop={rest.stop} />
         ) : undefined
       }
       testID="today-runner"
@@ -158,10 +256,28 @@ export function SessionRunner({ data, nextWeek, onFinishSheet }: SessionRunnerPr
       <ScrollView
         ref={scroll}
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingTop: space.lg, paddingBottom: space.xxxl, gap: space.lg }}
+        // The floating action stands 56px off the bottom edge, so the run-out
+        // clears it: the last row of a session must never sit under it.
+        contentContainerStyle={{
+          paddingTop: space.lg,
+          paddingBottom: space.xxxl + FLOATING_CLEARANCE,
+          gap: space.lg,
+        }}
         keyboardShouldPersistTaps="handled"
       >
         <SyncLine />
+
+        {/* The week at a glance: one segment per training day the program
+            scheduled, filled when that day was finished. No ring, no percent. */}
+        {weekBar.line === null ? null : (
+          <SegmentBar
+            segments={weekBar.segments}
+            line={weekBar.line}
+            accessibilityLabel={weekBar.accessibilityLabel}
+            testID="today-week-bar"
+          />
+        )}
+
         <WhoopStrip today={data.today} />
 
         {/* Channel A sits under the strip it reads; channel B is the control
@@ -250,55 +366,20 @@ export function SessionRunner({ data, nextWeek, onFinishSheet }: SessionRunnerPr
           />
         )}
 
-        {plan.blocks.map((block) => (
-          <View key={block.name} style={{ gap: space.sm }}>
-            {/* R27 defers a scheduled test: the notice above says where it went. */}
-            {block.name === 'jump_test' && isSoreEnough(session.sorenessPre) ? null : block.name ===
-              'jump_test' ? (
-              <JumpTestBlock
-                today={data.today}
-                sessionId={session.id}
-                bodyweightKg={data.athlete?.bodyweightKg ?? null}
-                eyebrow={`Jump test · ${headerDate(session.scheduledDate)}`}
-                movedFrom={testMovedFrom(data.weekSessions, data.today)}
-                testID="today-jump-test"
-              />
-            ) : block.grouped ? (
-              <GroupedBlock
-                label={block.label}
-                exercises={block.exercises}
-                loggedByExercise={data.loggedByExercise}
-                onLogAll={() => actions.logGroup(block.exercises)}
-                onUndoAll={() => actions.undoGroup(block.exercises)}
-                testID={`block-${block.name}`}
-              />
-            ) : (
-              <View style={{ gap: space.sm }}>
-                <Text variant="label" color="ink2">
-                  {block.label}
-                </Text>
-                {block.exercises.map((exercise) => (
-                  <RunnerExercise
-                    key={exercise.id}
-                    exercise={exercise}
-                    logged={data.loggedByExercise.get(exercise.id) ?? NO_SETS}
-                    logByKey={data.logByKey}
-                    generation={actions.generation[exercise.id] ?? 0}
-                    collapsed={!store.expandedExerciseIds.includes(exercise.id)}
-                    onToggle={onToggleExercise}
-                    onLog={actions.onLogRow}
-                    onUndo={actions.onUndo}
-                    onEdit={actions.openEdit}
-                    onFillRemaining={actions.fillRemaining}
-                    landingPending={actions.landingFor === exercise.id}
-                    onLanding={actions.answerLanding}
-                    onAnchor={actions.onAnchor}
-                  />
-                ))}
-              </View>
-            )}
-          </View>
-        ))}
+        <Spine testID="today-spine">
+          {items.map((item, index) => (
+            <SpineNode
+              key={item.key}
+              {...(item.index === undefined ? null : { index: item.index })}
+              {...(item.glyph === undefined ? null : { glyph: item.glyph })}
+              state={states[index] ?? 'upcoming'}
+              first={index === 0}
+              last={index === items.length - 1}
+            >
+              {item.content}
+            </SpineNode>
+          ))}
+        </Spine>
 
         <FooterLine
           left={footerLeft({
@@ -313,15 +394,16 @@ export function SessionRunner({ data, nextWeek, onFinishSheet }: SessionRunnerPr
           testID="today-footer"
         />
 
-        <Button
-          label="Finish session"
-          variant="primary"
-          size={56}
-          fullWidth
-          onPress={() => setFinishOpen(true)}
-          testID="finish-session"
-        />
       </ScrollView>
+
+      {/* The session's one action, in the corner the thumb already rests in.
+          It is here only while the session can still be acted on. */}
+      <FloatingAction
+        label="Finish session"
+        onPress={() => setFinishOpen(true)}
+        accessibilityHint="Reviews what was logged before it is written"
+        testID="finish-session"
+      />
 
       <EditSetSheet
         visible={actions.editing !== null}

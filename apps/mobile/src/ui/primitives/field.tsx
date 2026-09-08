@@ -2,7 +2,7 @@ import { useId } from 'react';
 import { Platform, TextInput, View, type TextStyle, type ViewStyle } from 'react-native';
 import { describedBy, useFocusVisible } from '../a11y';
 import { Text } from '../text';
-import { fontFamily, space, type as typeScale, useTheme } from '../theme';
+import { fontFamily, opacity, space, type as typeScale, useTheme } from '../theme';
 import { FocusRing } from './focusRing';
 import { Hairline } from './hairline';
 
@@ -37,10 +37,12 @@ export interface FieldProps {
  * Label above, input on the second neutral with a hairline, helper or error
  * below in a live region. Validation lands on blur, never on every keystroke.
  *
- * An error is carried by weight and by the rule, never by a colour or an icon:
- * the message steps up to the SemiBold face in ink and the field's rule steps
- * up to `ruleStrong`, so the state survives both schemes and colour blindness,
- * and the wording still does the explaining. The input itself is a tone change
+ * An error is carried by three channels at once, so no single one has to hold
+ * it: the message steps up to the SemiBold face, it takes the danger colour,
+ * and the field's rule takes the same colour across its full width. Weight is
+ * what survives colour blindness and a bright gym; colour is what makes the
+ * failing field findable in a form the athlete is scanning, not reading. The
+ * wording still does all the explaining. The input itself is a tone change
  * with one rule under it, never a box: the system separates with tone and
  * hairlines, and a boxed input would be the only outlined object on a screen.
  */
@@ -100,7 +102,7 @@ export function Field({
             backgroundColor: colors.paper2,
             paddingHorizontal: space.md,
             minHeight: multiline ? 88 : 44,
-            opacity: disabled ? 0.45 : 1,
+            opacity: disabled ? opacity.disabled : 1,
           }}
         >
           <FocusRing visible={focusVisible} />
@@ -145,14 +147,14 @@ export function Field({
             </Text>
           )}
         </View>
-        <Hairline strong={invalid} />
+        <Hairline strong={invalid} tone={invalid ? 'danger' : 'ink'} />
       </View>
 
       {message === undefined ? null : (
         <Text
           nativeID={`${id}-message`}
           variant={invalid ? 'captionStrong' : 'caption'}
-          color={invalid ? 'ink' : 'ink3'}
+          color={invalid ? 'danger' : 'ink3'}
           accessibilityLiveRegion="polite"
           role={invalid ? 'alert' : undefined}
         >

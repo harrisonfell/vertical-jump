@@ -21,6 +21,7 @@ export const GLYPH_NAMES = [
   'minus',
   'close',
   'flag',
+  'contrast',
   // destinations
   'today',
   'plan',
@@ -91,6 +92,10 @@ export const GLYPHS: Readonly<Record<GlyphName, readonly GlyphPath[]>> = {
   minus: [{ d: 'M4.5 10h11' }],
   close: [{ d: 'M5.5 5.5l9 9' }, { d: 'M14.5 5.5l-9 9' }],
   flag: [{ d: 'M5.5 3.5v13' }, { d: 'M5.5 4.5h9l-2 3 2 3h-9' }],
+  // Paper and charcoal in one mark: the same disc, half of it inked. The left
+  // half is filled so it never reads as the right-filled "not finished" state
+  // glyph, and the word Theme is beside it wherever it is used.
+  contrast: [{ d: CIRCLE_5 }, { d: 'M10 5a5 5 0 0 0 0 10z', fill: true }],
 
   today: [{ d: 'M3 17h14' }, { d: 'M10 14V4' }, { d: 'M6.2 7.8 10 4l3.8 3.8' }],
   plan: [{ d: 'M3 5.5h14' }, { d: 'M3 10h10' }, { d: 'M3 14.5h12' }],

@@ -1,7 +1,8 @@
 import { View } from 'react-native';
+import { formatInteger } from '@vert/engine/units';
 import { AppHeader, SyncLine } from '@/app';
 import { useSessionWorkoutLink, useUnfinishSession, useWhoopConnection } from '@/data';
-import { Button, ButtonRow, Screen, Table, Text, space } from '@/ui';
+import { Button, ButtonRow, Screen, Text, space } from '@/ui';
 import { countContacts, plannedSets } from './footer';
 import { doneSummaryLine, notFinishedLine, sessionMinutes, whoopWaitLine } from './finish';
 import { headerDate, headerTitle } from './header';
@@ -44,13 +45,25 @@ export function DoneSummary({ data, onEdit }: DoneSummaryProps) {
   const planned = plannedSets(plan);
   const finished = session.status === 'done';
 
-  const rows: readonly { readonly name: string; readonly value: string }[] = [
-    { name: 'Sets', value: `${data.logs.length} of ${planned}` },
-    { name: 'Contacts', value: String(tally.total) },
-    { name: 'High-intensity contacts', value: String(tally.highIntensity) },
-    { name: 'Session RPE', value: session.rpe === null ? 'not recorded' : String(session.rpe) },
-    { name: 'Legs', value: session.legsFeel ?? 'not recorded' },
-  ];
+  // Only what the sentence above does not already carry. A finished session
+  // names its sets, minutes, contacts, tonnage and RPE there, so the capped
+  // count and the legs answer are all that is left; an open session has none
+  // of it yet and gets what it has.
+  const facts = finished
+    ? [
+        ...(tally.highIntensity === 0
+          ? []
+          : [`high-intensity contacts ${formatInteger(tally.highIntensity)}`]),
+        `legs ${session.legsFeel ?? 'not recorded'}`,
+      ]
+    : [
+        ...(tally.total === 0 ? [] : [`contacts ${formatInteger(tally.total)}`]),
+        ...(tally.highIntensity === 0
+          ? []
+          : [`high-intensity ${formatInteger(tally.highIntensity)}`]),
+        ...(session.rpe === null ? [] : [`RPE ${session.rpe}`]),
+        ...(session.legsFeel === null ? [] : [`legs ${session.legsFeel}`]),
+      ];
 
   return (
     <Screen
@@ -72,9 +85,11 @@ export function DoneSummary({ data, onEdit }: DoneSummaryProps) {
       <WhoopStrip today={data.today} />
 
       <View style={{ gap: space.sm }}>
-        <Text variant="label" color="ink2">
-          {finished ? 'Session complete' : 'Session open'}
-        </Text>
+        {finished ? (
+          <Text variant="label" color="ink2">
+            Session complete
+          </Text>
+        ) : null}
         <Text variant="body" color="ink" numeric>
           {finished
             ? doneSummaryLine({
@@ -87,22 +102,17 @@ export function DoneSummary({ data, onEdit }: DoneSummaryProps) {
               })
             : notFinishedLine(data.logs.length, planned, false, week?.w ?? 1)}
         </Text>
+        {facts.length === 0 ? null : (
+          <Text variant="caption" color="ink2" numeric>
+            {facts.join(' · ')}
+          </Text>
+        )}
         {whoopLine === null ? null : (
           <Text variant="caption" color="ink3">
             {whoopLine}
           </Text>
         )}
       </View>
-
-      <Table
-        caption="Session summary"
-        columns={[
-          { key: 'name', header: 'Measure', render: (row) => row.name },
-          { key: 'value', header: 'Value', numeric: true, render: (row) => row.value },
-        ]}
-        rows={rows}
-        rowKey={(row) => row.name}
-      />
 
       <ButtonRow>
         <Button label="Edit sets" variant="secondary" onPress={onEdit} testID="edit-sets" />

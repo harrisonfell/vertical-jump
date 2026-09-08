@@ -14,7 +14,7 @@ import { useTheme } from '@/ui';
 import { BootGate } from './boot';
 import { ErrorBoundary } from './errorBoundary';
 import { useRestTimerPersistence } from './restTimerPersistence';
-import { AppThemeProvider } from './theme';
+import { AppThemeProvider, useThemeOverride } from './theme';
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -68,13 +68,36 @@ const FONTS = {
  */
 export function useAppFonts(): boolean {
   const [fontsLoaded, fontError] = useFonts(FONTS);
-  const ready = fontsLoaded || fontError !== null || typeof window === 'undefined';
+  return fontsLoaded || fontError !== null || typeof window === 'undefined';
+}
 
+/**
+ * The longest the splash is ever held for the stored scheme.
+ *
+ * The read is one kv row behind the database opening, so in practice this
+ * never fires. It exists because a splash that waits on a promise is a splash
+ * that can wait forever, and a phone stuck on the launch image is worse than
+ * one frame in the wrong scheme.
+ */
+const SPLASH_MAX_MS = 2000;
+
+/**
+ * Holds the launch image until the scheme is settled.
+ *
+ * The stored preference is a kv row, so it lands one tick after the database
+ * opens; hiding the splash on the fonts alone meant a phone set to light on a
+ * dark system painted the boot skeleton in charcoal and then flipped. The
+ * splash is the honest thing to show for that tick.
+ */
+function useSplashUntil(ready: boolean): void {
   useEffect(() => {
-    if (ready) void SplashScreen.hideAsync();
+    if (ready) {
+      void SplashScreen.hideAsync();
+      return;
+    }
+    const timer = setTimeout(() => void SplashScreen.hideAsync(), SPLASH_MAX_MS);
+    return () => clearTimeout(timer);
   }, [ready]);
-
-  return ready;
 }
 
 /**
@@ -89,6 +112,8 @@ export function useAppFonts(): boolean {
  */
 export function AppChrome({ children }: { readonly children: ReactNode }) {
   const { scheme } = useTheme();
+  const { resolved } = useThemeOverride();
+  useSplashUntil(resolved);
   useOnlineWatcher();
   useServerSync();
   useSnapshotSync();

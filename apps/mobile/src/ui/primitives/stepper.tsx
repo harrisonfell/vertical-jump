@@ -3,7 +3,7 @@ import { Platform, Pressable, TextInput, View, type TextStyle } from 'react-nati
 import { ariaState, describedBy, useFocusVisible } from '../a11y';
 import { Glyph } from '../glyphs';
 import { Text } from '../text';
-import { fontFamily, space, type as typeScale, useTheme } from '../theme';
+import { fontFamily, opacity, space, type as typeScale, useTheme } from '../theme';
 import { FocusRing } from './focusRing';
 import { Hairline } from './hairline';
 import { parseNumeric, stepDisabled, stepValue, type StepBounds } from './stepperMath';
@@ -68,7 +68,7 @@ function StepButton({ direction, onPress, disabled, label }: StepButtonProps) {
         borderWidth: 1,
         borderColor: colors.ruleStrong,
         backgroundColor: pressed && !disabled ? colors.paper3 : 'transparent',
-        opacity: disabled ? 0.35 : 1,
+        opacity: disabled ? opacity.disabled : 1,
       })}
     >
       <FocusRing visible={focusVisible} />
@@ -158,7 +158,7 @@ export function Stepper({
     gap: space.xs,
     paddingHorizontal: space.sm,
     backgroundColor: colors.paper2,
-    opacity: disabled ? 0.45 : 1,
+    opacity: disabled ? opacity.disabled : 1,
   };
 
   return (

@@ -19,8 +19,8 @@ import type { TodayData } from './useTodayData';
  *
  * Each is a fact with an action beside it and nothing else: a missed session
  * can be logged or dismissed, a long break offers the re-entry week, a pain
- * reassessment asks its question. None of them nags, and the calendar never
- * shifts underneath them.
+ * reassessment asks its question. The control says what it does, so the line
+ * above it never says it a second time.
  */
 
 export function TodayCards({ data }: { readonly data: TodayData }) {
@@ -43,7 +43,6 @@ export function TodayCards({ data }: { readonly data: TodayData }) {
       {restricted && data.restrictedPain !== null ? (
         <Notice
           text={restrictedNotice(data.restrictedPain.location)}
-          detail="Update pain status when it eases."
           actionLabel="Update pain status"
           onAction={() => router.push(href('/clearance'))}
           testID="today-restricted"
@@ -53,7 +52,7 @@ export function TodayCards({ data }: { readonly data: TodayData }) {
       {reassess === undefined ? null : (
         <Notice
           text={reassessmentRow(reassess.location)}
-          detail="Moderate treatment continues until you answer. The check is in Settings, under Pain."
+          detail="Moderate treatment continues until you answer."
           actionLabel="Open settings"
           onAction={() => router.push(href('/settings'))}
           testID="today-reassessment"
@@ -64,7 +63,7 @@ export function TodayCards({ data }: { readonly data: TodayData }) {
         <View style={{ gap: space.sm }}>
           <Notice
             text={missedLine(missed.scheduledDate, missed.dayType)}
-            detail="The calendar does not shift. Log it on its own date, or let it stand."
+            detail="The calendar does not shift. Log it on its own date."
             testID="today-missed"
           />
           <ButtonRow>

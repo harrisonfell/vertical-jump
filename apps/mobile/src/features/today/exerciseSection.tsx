@@ -13,11 +13,12 @@ import {
   useSheet,
   type SetRowLogResult,
 } from '@/ui';
-import { loadTypeLabel } from './blocks';
+import { categoryOf } from '@/features/catalog';
+import { blockLabel, loadTypeLabel } from './blocks';
 import { climbPrescription } from './climbRows';
 import { LandingPrompt } from './landingPrompt';
 import type { TodayExercise } from './model';
-import { doneLabel, exerciseComplete, rowDetail, rowIndex, rowKind } from './rows';
+import { doneLabel, exerciseComplete, rowDetail, rowIndex, rowKind, setsSummary } from './rows';
 
 /**
  * One exercise: its header, its rows, and the two controls that belong to the
@@ -46,9 +47,20 @@ export interface ExerciseSectionProps {
   readonly disabled?: boolean;
 }
 
-/** "Main lift · heavy strength · est. 270 lb · Epley from 250 lb × 3". */
+/**
+ * The one muted line under the name: "Main lift · 4 sets · 5 × 205 lb · est.
+ * 270 lb".
+ *
+ * It opens with the block the exercise belongs to, which the spine no longer
+ * repeats as a heading of its own, and then the prescription in the shape the
+ * athlete reads it in. The load type ("heavy strength") comes off the line:
+ * "4 sets · 5 × 205 lb" says the same thing in the system's own notation, and
+ * the category glyph before the name already marks what kind of work it is.
+ */
 export function subLine(exercise: TodayExercise): string | undefined {
-  const parts = [loadTypeLabel(exercise.loadType)];
+  const parts = [blockLabel(exercise.block)];
+  const sets = setsSummary(exercise.sets);
+  if (sets !== undefined) parts.push(sets);
   if (exercise.headerNote !== null && exercise.headerNote !== '') parts.push(exercise.headerNote);
   if (exercise.boxHeightIn !== null) parts.push(`box ${exercise.boxHeightIn} in`);
   // "last 5 × 205 / 4 × 220 / 3 × 235", already formatted by the engine.
@@ -99,6 +111,10 @@ export function ExerciseSection({
     [exercise.loadMode, exercise.sets],
   );
 
+  // What kind of work this is, from the engine's own catalog. It rides the
+  // header glyph so a wet thumb can tell a jump from a lift without reading.
+  const category = categoryOf(exercise.exerciseId);
+
   return (
     <View
       onLayout={(event) => onAnchor?.(exercise.id, event.nativeEvent.layout.y)}
@@ -106,9 +122,9 @@ export function ExerciseSection({
     >
       <ExerciseHeader
         name={exercise.name}
+        {...(category === undefined ? null : { category })}
         sub={subLine(exercise)}
         note={noteLine(exercise)}
-        bothSides={exercise.bothSides}
         collapsed={folded}
         doneLabel={doneLabel(exercise.sets, logged)}
         onToggle={complete ? onToggle : undefined}

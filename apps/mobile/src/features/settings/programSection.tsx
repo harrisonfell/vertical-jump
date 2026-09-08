@@ -14,7 +14,6 @@ import {
   NOT_BUILT_VALUE,
 } from './sections';
 import {
-  CHANGES_YOUR_PROGRAM,
   formatCalendarDate,
   weekdaysLabel,
   type ParamChange,
@@ -111,11 +110,14 @@ export function ProgramSection({
       : undefined;
 
   return (
-    <SettingSection title="Program" testID="settings-program">
+    <SettingSection
+      title="Program"
+      note="These rebuild the weeks you have not started, unless the row says otherwise."
+      testID="settings-program"
+    >
       <SettingRow
         label="Training days"
         value={weekdaysLabel(draft.weekdays)}
-        caption={CHANGES_YOUR_PROGRAM}
         chevron
         onPress={() => setEditing(true)}
         testID="settings-weekdays"
@@ -124,7 +126,6 @@ export function ProgramSection({
       <SettingRow
         label="Goal height"
         value={draft.goalHeightMm === null ? 'Not set' : formatHeightIn(draft.goalHeightMm)}
-        caption={CHANGES_YOUR_PROGRAM}
         chevron
         numeric
         onPress={() => setEditing(true)}
@@ -134,7 +135,6 @@ export function ProgramSection({
       <SettingRow
         label="Target date"
         value={draft.targetDate === null ? 'Not set' : formatCalendarDate(draft.targetDate)}
-        caption={CHANGES_YOUR_PROGRAM}
         chevron
         numeric
         onPress={() => setEditing(true)}
@@ -170,7 +170,6 @@ export function ProgramSection({
           <SettingRow
             label="Wall work days"
             value={weekdaysLabel(draft.wallWorkDays)}
-            caption={CHANGES_YOUR_PROGRAM}
             chevron
             onPress={() => setEditing(true)}
             testID="settings-wall-days"
@@ -199,7 +198,6 @@ export function ProgramSection({
           <SettingRow
             label="Climbing counts as hard finger work"
             value={draft.wallFingerHard ? 'Yes' : 'No'}
-            caption={CHANGES_YOUR_PROGRAM}
             chevron
             onPress={() => setEditing(true)}
             testID="settings-wall-finger"
@@ -218,7 +216,6 @@ export function ProgramSection({
           <SettingRow
             label="Valgus control (RNT) twice a week"
             value={draft.valgusControl ? 'On' : 'Off'}
-            caption={CHANGES_YOUR_PROGRAM}
             chevron
             onPress={() => setEditing(true)}
             testID="settings-valgus"

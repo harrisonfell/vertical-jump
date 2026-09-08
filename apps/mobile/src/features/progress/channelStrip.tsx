@@ -1,6 +1,6 @@
 import { View } from 'react-native';
 import { Circle, Line, Svg } from 'react-native-svg';
-import { Glyph, Text, space, useTheme } from '@/ui';
+import { Glyph, RECOVERY_BANDS, RECOVERY_LABEL, Text, space, useTheme } from '@/ui';
 import { MARK } from '@/ui/charts';
 import type { ReadinessGateDay } from './types';
 
@@ -76,7 +76,11 @@ export function ChannelStrip({ days, width, testNoun }: ChannelStripProps) {
           <View
             accessible
             accessibilityRole="image"
-            accessibilityLabel={rowLabel(row.label, days, row.reading)}
+            accessibilityLabel={
+              row.key === 'autonomic'
+                ? `${rowLabel(row.label, days, row.reading)} ${bandLabel(days)}`
+                : rowLabel(row.label, days, row.reading)
+            }
           >
             <Svg width={plotWidth} height={ROW_HEIGHT}>
               <Line
@@ -159,6 +163,41 @@ export function ChannelStrip({ days, width, testNoun }: ChannelStripProps) {
         </Text>
       </View>
 
+      {/* The autonomic dots are tinted by Whoop's band, so the bands are named
+          here with the same marks. Without this key the band would be carried
+          by hue alone, which is the one thing the data palette may never do. */}
+      <View
+        style={{
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          columnGap: space.md,
+          rowGap: space.xs,
+          paddingLeft: LABEL_WIDTH + space.md,
+        }}
+      >
+        {RECOVERY_BANDS.map((band) => (
+          <View
+            key={band}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: space.xs }}
+          >
+            <View
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+              style={{
+                width: MARK.dotRadius * 2,
+                height: MARK.dotRadius * 2,
+                borderRadius: MARK.dotRadius,
+                backgroundColor: colors.data[`recovery.${band}`],
+              }}
+            />
+            <Text variant="caption" color="ink2">
+              {`${RECOVERY_LABEL[band]} recovery`}
+            </Text>
+          </View>
+        ))}
+      </View>
+
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.xs }}>
         <Glyph name="flag" color={colors.ink2} size={16} />
         <Text variant="caption" color="ink2" style={{ flex: 1 }}>
@@ -167,6 +206,15 @@ export function ChannelStrip({ days, width, testNoun }: ChannelStripProps) {
       </View>
     </View>
   );
+}
+
+/** How many days sat in each band, so the tint is never the only way to know. */
+function bandLabel(days: readonly ReadinessGateDay[]): string {
+  const counted = RECOVERY_BANDS.map(
+    (band) =>
+      `${days.filter((day) => day.recoveryBand === band).length} ${RECOVERY_LABEL[band].toLowerCase()}`,
+  ).join(', ');
+  return `Recovery bands: ${counted}.`;
 }
 
 /** What a screen reader hears in place of one row of dots. */

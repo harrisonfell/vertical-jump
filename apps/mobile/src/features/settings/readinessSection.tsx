@@ -28,8 +28,7 @@ import { shortCalendarDate } from './regenerate';
 /** Seven, because the shipped baseline window is seven tests. */
 export const TESTS_SHOWN = 7;
 
-export const READINESS_NOTE =
-  'The neuromuscular channel of the daily gate. Applies to the next gate; it does not rebuild your program.';
+export const READINESS_NOTE = 'The neuromuscular channel of the daily gate.';
 
 export interface ReadinessSectionProps {
   readonly config: ReadinessConfigValues;
@@ -63,7 +62,7 @@ export function ReadinessSection({ config, tests, onSave, saving }: ReadinessSec
       <SettingRow
         label="Readiness test"
         value={kindLabel(config)}
-        caption="Swappable. The gate reads the best attempt of the day."
+        caption="The gate reads the best attempt of the day."
         chevron
         onPress={sheet.show}
         testID="settings-readiness-test"

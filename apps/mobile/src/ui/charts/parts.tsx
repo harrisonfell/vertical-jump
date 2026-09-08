@@ -3,7 +3,7 @@ import { Pressable, View, type ViewStyle } from 'react-native';
 import { Line } from 'react-native-svg';
 import { Text } from '../text';
 import { useTheme, type ColorToken } from '../theme';
-import { MARK, PLOT_PAD } from './scale';
+import { MARK, PLOT_PAD, STROKE } from './scale';
 
 /**
  * Chart text is real `<Text>` in an absolutely positioned overlay, never SVG
@@ -97,7 +97,7 @@ export function AxisMarks({ width, height, xTicks, yTicks = [], gridlines = true
               y1={tick.position}
               y2={tick.position}
               stroke={colors.rule}
-              strokeWidth={1}
+              strokeWidth={STROKE.grid}
             />
           ))
         : null}
@@ -107,17 +107,32 @@ export function AxisMarks({ width, height, xTicks, yTicks = [], gridlines = true
         y1={bottom}
         y2={bottom}
         stroke={colors.ruleStrong}
-        strokeWidth={1}
+        strokeWidth={STROKE.reference}
       />
+      {/* Ticks are drawn whether or not the graticule is: a panel that turns
+          gridlines off still has to say what its axis labels point at, and
+          both axes carry the same 3 px tick so the stack reads as one figure
+          rather than three charts that happen to be stacked. */}
+      {yTicks.map((tick) => (
+        <Line
+          key={`ytick-${tick.value}`}
+          x1={left - MARK.tickLength}
+          x2={left}
+          y1={tick.position}
+          y2={tick.position}
+          stroke={colors.ruleStrong}
+          strokeWidth={STROKE.reference}
+        />
+      ))}
       {xTicks.map((tick) => (
         <Line
           key={`xtick-${tick.value}`}
           x1={tick.position}
           x2={tick.position}
           y1={bottom}
-          y2={bottom + 3}
+          y2={bottom + MARK.tickLength}
           stroke={colors.ruleStrong}
-          strokeWidth={1}
+          strokeWidth={STROKE.reference}
         />
       ))}
     </>
@@ -125,27 +140,34 @@ export function AxisMarks({ width, height, xTicks, yTicks = [], gridlines = true
 }
 
 /** The axis tick text, in the overlay so it keeps tabular figures. */
-export function AxisLabels({ width, height, xTicks, yTicks = [] }: AxisProps) {
+export function AxisLabels({ height, xTicks, yTicks = [] }: AxisProps) {
   const bottom = height - PLOT_PAD.bottom;
+  // The y label's own column: everything left of the tick, less 2 px of air.
+  const yWidth = PLOT_PAD.left - MARK.tickLength - 2;
+  const last = xTicks.length - 1;
   return (
     <>
       {yTicks.map((tick) => (
         <PlotText
           key={`ylab-${tick.value}`}
-          x={PLOT_PAD.left - 4}
+          x={yWidth}
           y={tick.position}
           anchor="end"
-          width={PLOT_PAD.left - 4}
+          width={yWidth}
         >
           {tick.text}
         </PlotText>
       ))}
-      {xTicks.map((tick) => (
+      {/* Every label sits on its own tick's true position. The end labels turn
+          their anchor rather than sliding inwards: a date label nudged 6 px to
+          keep it on the canvas points at the wrong day, which is the one thing
+          an axis may not do. */}
+      {xTicks.map((tick, index) => (
         <PlotText
           key={`xlab-${tick.value}`}
-          x={Math.min(Math.max(tick.position, 24), width - 24)}
-          y={bottom + 4}
-          anchor="middle"
+          x={tick.position}
+          y={bottom + MARK.tickLength + 2}
+          anchor={index === 0 ? 'start' : index === last ? 'end' : 'middle'}
           vertical="top"
           width={56}
         >
@@ -159,10 +181,27 @@ export function AxisLabels({ width, height, xTicks, yTicks = [] }: AxisProps) {
 /** The crosshair rule. It snaps to a day, so the reader aims at a date. */
 export function Crosshair({ x, top, bottom }: { x: number; top: number; bottom: number }) {
   const { colors } = useTheme();
-  return <Line x1={x} x2={x} y1={top} y2={bottom} stroke={colors.ruleStrong} strokeWidth={1} />;
+  return (
+    <Line
+      x1={x}
+      x2={x}
+      y1={top}
+      y2={bottom}
+      stroke={colors.ruleStrong}
+      strokeWidth={STROKE.reference}
+    />
+  );
 }
 
-export type LegendGlyph = 'line' | 'dashed' | 'dot' | 'hollow' | 'column' | 'tick' | 'band';
+export type LegendGlyph =
+  | 'line'
+  | 'dashed'
+  | 'dot'
+  | 'hollow'
+  | 'ring'
+  | 'column'
+  | 'tick'
+  | 'band';
 
 export interface LegendItem {
   readonly glyph: LegendGlyph;
@@ -225,10 +264,12 @@ export function Legend({ items, note }: LegendProps) {
  * may read this as licence for a rounded rectangle.
  */
 const DOT_SIZE = MARK.dotRadius * 2;
+/** The PR key: the same dot inside the same ring, at the plot's own two radii. */
+const RING_SIZE = (MARK.dotRadius + MARK.prRing) * 2;
 
 function LegendGlyphMark({ glyph, color }: { glyph: LegendGlyph; color: string }) {
   const { colors } = useTheme();
-  const box: ViewStyle = { width: 14, alignItems: 'center', justifyContent: 'center', height: 12 };
+  const box: ViewStyle = { width: 16, alignItems: 'center', justifyContent: 'center', height: 15 };
   if (glyph === 'dot') {
     return (
       <View style={box}>
@@ -256,6 +297,32 @@ function LegendGlyphMark({ glyph, color }: { glyph: LegendGlyph; color: string }
             backgroundColor: colors.paper,
           }}
         />
+      </View>
+    );
+  }
+  if (glyph === 'ring') {
+    return (
+      <View style={box}>
+        <View
+          style={{
+            width: RING_SIZE,
+            height: RING_SIZE,
+            borderRadius: RING_SIZE / 2,
+            borderWidth: STROKE.reference,
+            borderColor: color,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <View
+            style={{
+              width: MARK.dotRadius,
+              height: MARK.dotRadius,
+              borderRadius: MARK.dotRadius / 2,
+              backgroundColor: color,
+            }}
+          />
+        </View>
       </View>
     );
   }

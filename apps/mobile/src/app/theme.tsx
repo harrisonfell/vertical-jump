@@ -8,11 +8,12 @@ import {
   type ReactNode,
 } from 'react';
 import { Platform } from 'react-native';
-import { useDbOrNull } from '@/data';
+import { useDbOrNull, useDbState } from '@/data';
 import { kvStore } from '@/data/store';
 import { ThemeProvider, type SchemeName } from '@/ui';
 import {
   THEME_OVERRIDE_KEY,
+  choiceOf,
   persistedChoice,
   startingOverride,
   toScheme,
@@ -27,7 +28,15 @@ import {
  * The decision itself lives in `themeChoice.ts`, which is pure and tested.
  */
 
-export { THEME_OVERRIDE_KEY, readSchemeParam, type SchemeChoice } from './themeChoice';
+export {
+  SCHEME_CHOICES,
+  SCHEME_CHOICE_LABEL,
+  THEME_OVERRIDE_KEY,
+  readSchemeParam,
+  toggleLabel,
+  toggledChoice,
+  type SchemeChoice,
+} from './themeChoice';
 
 /**
  * The query string this load carries, or none off the web.
@@ -65,18 +74,31 @@ function initialOverride(): SchemeName | undefined {
 
 interface ThemeOverrideControl {
   readonly override: SchemeName | undefined;
-  /** Settings calls this; it writes kv and re-renders the whole tree. */
+  /** The stored preference as the athlete answered it: system, light, or dark. */
+  readonly choice: SchemeChoice;
+  /**
+   * True once the stored preference has been read (or once it is known there
+   * is nothing to read). The splash is held until then, so a phone whose
+   * system is dark and whose stored answer is light never paints one frame of
+   * charcoal before it corrects itself.
+   */
+  readonly resolved: boolean;
+  /** Settings and the Progress header call this; it writes kv and re-renders. */
   setOverride(choice: SchemeChoice): void;
 }
 
 const ThemeOverrideContext = createContext<ThemeOverrideControl>({
   override: undefined,
+  choice: 'system',
+  resolved: true,
   setOverride: () => undefined,
 });
 
 export function AppThemeProvider({ children }: { readonly children: ReactNode }) {
   const db = useDbOrNull();
+  const { status } = useDbState();
   const [override, setOverrideState] = useState<SchemeName | undefined>(initialOverride);
+  const [read, setRead] = useState(false);
 
   useEffect(() => {
     if (db === null) return;
@@ -96,6 +118,7 @@ export function AppThemeProvider({ children }: { readonly children: ReactNode })
 
       if (!cancelled) {
         setOverrideState(search === null ? toScheme(stored) : startingOverride(search, stored));
+        setRead(true);
       }
     };
 
@@ -116,9 +139,14 @@ export function AppThemeProvider({ children }: { readonly children: ReactNode })
     [db],
   );
 
+  // A database that failed to open has no preference to wait for, and neither
+  // does the static export pass, which never runs an effect at all. Both are
+  // resolved by definition: holding the splash on them would hold it forever.
+  const resolved = read || status === 'error' || typeof window === 'undefined';
+
   const control = useMemo<ThemeOverrideControl>(
-    () => ({ override, setOverride }),
-    [override, setOverride],
+    () => ({ override, choice: choiceOf(override), resolved, setOverride }),
+    [override, resolved, setOverride],
   );
 
   return (

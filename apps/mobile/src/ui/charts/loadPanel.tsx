@@ -2,7 +2,7 @@ import { scaleLinear } from 'd3-scale';
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { Line, Rect, Svg } from 'react-native-svg';
-import { useTheme } from '../theme';
+import { opacity, useTheme } from '../theme';
 import { ChartTable } from './chartTable';
 import { HoverArea } from './hoverArea';
 import { LABEL_LINE_HEIGHT } from './labelGeometry';
@@ -18,7 +18,7 @@ import {
   type AxisTick,
 } from './parts';
 import type { IsoDay, LoadWeek, ProbeControl } from './props';
-import { MARK, PLOT_PAD, addDays, formatDayShort, parseDay, toDay } from './scale';
+import { MARK, PLOT_PAD, STROKE, addDays, formatDayShort, parseDay, toDay } from './scale';
 
 /** Whoop's strain scale tops out at 21. The rug is read against that ceiling. */
 const STRAIN_MAX = 21;
@@ -33,6 +33,19 @@ const RUG_HEIGHT = 12;
 const WIDE_LABEL_WIDTH = 834;
 /** The most weeks that ever carry a direct sRPE label: this week and two back. */
 const MAX_SRPE_LABELS = 3;
+
+/**
+ * The last week with anything logged against it: the one the athlete is in.
+ * Everything after it is scheduled and has no load to state yet.
+ */
+export function currentWeekIndex(weeks: readonly LoadWeek[]): number {
+  let current = -1;
+  for (let i = 0; i < weeks.length; i += 1) {
+    const week = weeks[i];
+    if (week !== undefined && (week.sessionsDone > 0 || week.srpeLoad > 0)) current = i;
+  }
+  return current;
+}
 
 export interface LoadPanelProps extends ProbeControl {
   readonly weeks: readonly LoadWeek[];
@@ -56,9 +69,11 @@ export function formatCount(value: number): string {
  * Weekly training load.
  *
  * Sessions done of scheduled is the measure: a filled column inside its full
- * scheduled track, separated by a surface gap rather than a stroke. Done is
- * `ink2` and the track `paper3`, never full ink, so the panel stays evidence for
- * the jump chart above it rather than a second wall of dark columns.
+ * scheduled track, separated by a surface gap rather than a stroke. The current
+ * week's column takes the accent and carries its own load as a direct label;
+ * every earlier week is `ink2` at the dim step, so the panel stays evidence for
+ * the jump chart above it rather than a second wall of dark columns. The track
+ * is `paper3` throughout, never full ink.
  *
  * The sRPE load rides the done column's top as a direct label, on the weeks
  * close enough to now to act on, and Whoop strain sits in its own rug strip
@@ -101,10 +116,11 @@ export function LoadPanel({
     const band = Math.max(4, px(addDays(programStart, 7)) - px(programStart));
     const columnWidth = Math.min(MARK.maxColumnWidth, Math.max(4, band - 8));
 
-    return { left, right, top, bottom, rugTop, base, px, y, band, columnWidth };
+    return { left, right, top, bottom, rugTop, base, px, y, band, columnWidth, maxScheduled };
   }, [weeks, programStart, targetDate, width, height]);
 
-  const { left, right, top, bottom, rugTop, base, px, y, band, columnWidth } = geometry;
+  const { left, right, top, bottom, rugTop, base, px, y, band, columnWidth, maxScheduled } =
+    geometry;
 
   const xTicks: readonly AxisTick[] = useMemo(() => {
     const startDay = parseDay(programStart);
@@ -116,6 +132,20 @@ export function LoadPanel({
       return { value: day, position: px(iso), text: formatDayShort(iso) };
     });
   }, [programStart, targetDate, width, px]);
+
+  /**
+   * Two ticks and no more: none and the week's full card. A column's height is
+   * a count of sessions, and a count read off an unlabelled axis is a shape.
+   * The intermediate values are whole sessions the reader can step off between
+   * the two, so a graticule here would be ink spent saying what 3 of 4 is.
+   */
+  const yTicks: readonly AxisTick[] = useMemo(
+    () => [
+      { value: 0, position: base, text: '0' },
+      { value: maxScheduled, position: y(maxScheduled), text: `${maxScheduled}` },
+    ],
+    [base, maxScheduled, y],
+  );
 
   const columns = useMemo(
     () =>
@@ -165,12 +195,10 @@ export function LoadPanel({
    * after it are scheduled and have no load to state yet. Labelling from there
    * backwards keeps the number on the weeks the athlete can still act on.
    */
+  const current = useMemo(() => currentWeekIndex(weeks), [weeks]);
+  const currentKey = weeks[current]?.weekStart ?? null;
+
   const labelled = useMemo(() => {
-    let current = -1;
-    for (let i = 0; i < weeks.length; i += 1) {
-      const week = weeks[i];
-      if (week !== undefined && (week.sessionsDone > 0 || week.srpeLoad > 0)) current = i;
-    }
     if (current < 0) return new Set<string>();
     const count = width >= WIDE_LABEL_WIDTH ? MAX_SRPE_LABELS : 1;
     const keys = new Set<string>();
@@ -179,15 +207,28 @@ export function LoadPanel({
       if (week !== undefined && week.srpeLoad > 0) keys.add(week.weekStart);
     }
     return keys;
-  }, [weeks, width]);
+  }, [current, weeks, width]);
 
   return (
     <ChartFrame title="Weekly load">
       <HoverArea width={width} height={height} onProbe={handleProbe}>
         <Svg width={width} height={height}>
-          <AxisMarks width={width} height={height} xTicks={xTicks} gridlines={false} />
+          <AxisMarks
+            width={width}
+            height={height}
+            xTicks={xTicks}
+            yTicks={yTicks}
+            gridlines={false}
+          />
           {/* The rug's own rule: strain lives below it, load above. */}
-          <Line x1={left} x2={right} y1={rugTop} y2={rugTop} stroke={colors.rule} strokeWidth={1} />
+          <Line
+            x1={left}
+            x2={right}
+            y1={rugTop}
+            y2={rugTop}
+            stroke={colors.rule}
+            strokeWidth={STROKE.reference}
+          />
 
           {columns.map((column) => (
             <Rect
@@ -199,6 +240,9 @@ export function LoadPanel({
               fill={colors.paper3}
             />
           ))}
+          {/* One column in the accent: the week the athlete is in. Every other
+              done column is ink at the dim step, which is what makes the
+              current one findable without a legend. */}
           {columns.map((column) =>
             column.week.sessionsDone > 0 ? (
               <Rect
@@ -207,7 +251,8 @@ export function LoadPanel({
                 y={column.topDone}
                 width={columnWidth}
                 height={Math.max(0, base - column.topDone)}
-                fill={colors.ink2}
+                fill={column.week.weekStart === currentKey ? colors.green : colors.ink2}
+                fillOpacity={column.week.weekStart === currentKey ? 1 : opacity.dim}
               />
             ) : null,
           )}
@@ -257,7 +302,12 @@ export function LoadPanel({
           style={{ position: 'absolute', top: 0, left: 0, width, height }}
           pointerEvents="box-none"
         >
-          <AxisLabels width={width} height={height} xTicks={showXAxis ? xTicks : []} />
+          <AxisLabels
+            width={width}
+            height={height}
+            xTicks={showXAxis ? xTicks : []}
+            yTicks={yTicks}
+          />
 
           {/* The week's load, on top of its own done column, on a paper backing
               so it stays legible where the column beside it is taller. */}

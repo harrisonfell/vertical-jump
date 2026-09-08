@@ -3,7 +3,8 @@
  *
  * Motion conveys state and nothing else: a sheet arriving, a disclosure
  * opening, a skeleton breathing. There is no decorative motion in this system,
- * no celebration, no orchestration. Everything lands inside 250 ms.
+ * no celebration, no orchestration. Everything on a daily surface lands inside
+ * 250 ms; one surface in the app, the committed record, gets 320 ms to arrive.
  */
 
 /** Durations in milliseconds. Nothing outside this set. */
@@ -14,6 +15,16 @@ export const duration = {
   base: 200,
   /** The largest move the system makes: a sheet sliding up. */
   sheet: 250,
+  /**
+   * The committed surface arriving, and nothing else.
+   *
+   * It is the one moment the system raises its voice, and a record that snaps
+   * into place at the sheet's own speed reads as another row rendering. 320 ms
+   * of ease-out is long enough to be seen and short enough that it is over
+   * before the athlete has finished reading the eyebrow. It runs once, on the
+   * surface itself, and is skipped entirely under reduced motion.
+   */
+  arrive: 320,
 } as const;
 
 /** The single easing curve, as its cubic-bezier control points. */

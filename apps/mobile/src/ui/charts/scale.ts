@@ -25,6 +25,22 @@ const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
 /** Gaps longer than this are drawn broken rather than bridged with a line. */
 export const MAX_GAP_DAYS = 21;
 
+/**
+ * The three stroke weights every chart draws with, and nothing outside them.
+ *
+ * A printed figure separates its layers by weight before it separates them by
+ * colour, and this file is where that separation is decided once for all three
+ * panels. `grid` is the sub-pixel weight the graticule sits at, so a gridline
+ * can never be mistaken for a reading. `reference` is the weight of everything
+ * the reader measures against but did not measure: axis rules and ticks, the
+ * required-pace line, the band edges, the 90-day median, today, the crosshair,
+ * the observed path. `series` is twice that, and only ever carries data the
+ * athlete produced: the trend, the projection, the rolling median.
+ *
+ * Three weights, one to two, is the whole hierarchy. There is no fourth.
+ */
+export const STROKE = { grid: 0.75, reference: 1, series: 2 } as const;
+
 /** Data-mark geometry, fixed across every chart in the app. */
 export const MARK = {
   /** An 8px dot: r = 4. */
@@ -32,11 +48,20 @@ export const MARK = {
   /** Every mark's touch and pointer target, whatever the mark's own size. */
   hitSize: 24,
   /** Series lines and the rolling median. */
-  lineWidth: 2,
+  lineWidth: STROKE.series,
   /** The surface gap and ring that separate touching marks. */
   gap: 2,
   /** Columns never fill their band. */
   maxColumnWidth: 24,
+  /** Axis ticks, on both axes, on every panel. */
+  tickLength: 3,
+  /**
+   * The PR ring's radius past the dot it encircles. A record is a mark with
+   * something drawn around it, not a mark in another colour: the ring reads at
+   * a glance and survives every colour-vision simulation, and its own legend
+   * key is the same two circles at the same two radii.
+   */
+  prRing: 3.5,
 } as const;
 
 /**

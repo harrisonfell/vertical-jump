@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
-import { FocusRing, Glyph, Hairline, Text, space, useFocusVisible, useTheme } from '@/ui';
+import { FocusRing, Glyph, Hairline, Text, opacity, space, useFocusVisible, useTheme } from '@/ui';
 import { ariaState } from '@/ui/a11y';
 
 /**
@@ -89,7 +89,7 @@ export function SettingRow({
         minHeight: 56,
         justifyContent: 'center',
         backgroundColor: pressed ? colors.paper3 : 'transparent',
-        opacity: disabled ? 0.6 : 1,
+        opacity: disabled ? opacity.disabled : 1,
       })}
     >
       <FocusRing visible={focusVisible} />

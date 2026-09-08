@@ -297,6 +297,7 @@ describe('what Settings shows', () => {
     expect(view.program).toBe('not_built');
     expect(view.sections).toEqual([
       'athlete',
+      'appearance',
       'program',
       'lifts',
       'readiness',
@@ -314,7 +315,7 @@ describe('what Settings shows', () => {
     expect(view.empty).toBe(true);
     expect(view.sections).toEqual([]);
     expect(NO_PROFILE_LINE).toBe(
-      'No profile yet. Answer the setup questions and your settings appear here.',
+      'No profile yet: your settings appear once the setup questions are answered.',
     );
   });
 

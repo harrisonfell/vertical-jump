@@ -1,6 +1,16 @@
 /** The application shell: providers, first-run routing, and the two chrome lines. */
 
-export { AppThemeProvider, readSchemeParam, useThemeOverride, THEME_OVERRIDE_KEY } from './theme';
+export {
+  AppThemeProvider,
+  SCHEME_CHOICES,
+  SCHEME_CHOICE_LABEL,
+  THEME_OVERRIDE_KEY,
+  readSchemeParam,
+  toggleLabel,
+  toggledChoice,
+  useThemeOverride,
+  type SchemeChoice,
+} from './theme';
 export { BootGate, BootSkeleton, BOOT_ERROR_COPY } from './boot';
 export { ErrorBoundary, ERROR_BOUNDARY_COPY, type ErrorBoundaryProps } from './errorBoundary';
 export { AppGateRoute, useAppGate, type AppGate } from './gate';

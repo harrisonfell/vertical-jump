@@ -18,13 +18,13 @@ export interface SchemeColors {
   readonly paper: string;
   /** A second neutral for panels, the bottom bar, and inputs. */
   readonly paper2: string;
-  /** A third neutral for pressed states. */
+  /** A third neutral for pressed states. Every ink level clears AA on it. */
   readonly paper3: string;
   /** Primary text and hairlines. */
   readonly ink: string;
   /** Secondary text. */
   readonly ink2: string;
-  /** Tertiary text, still at or above 4.5:1 on paper and paper2. */
+  /** Tertiary text, still at or above 4.5:1 on all three grounds. */
   readonly ink3: string;
   /** The single accent. */
   readonly green: string;
@@ -32,6 +32,10 @@ export interface SchemeColors {
   readonly greenSoft: string;
   /** Text on a committed green surface. */
   readonly onGreen: string;
+  /** Known but not current: a stale mirror, a queue that has not drained. */
+  readonly warn: string;
+  /** Wrong and blocking: an invalid answer, a sync that failed. */
+  readonly danger: string;
   /** 1px hairline. */
   readonly rule: string;
   /** A heavier rule for chart axes. */
@@ -44,45 +48,49 @@ export const colors: Readonly<Record<SchemeName, SchemeColors>> = {
   light: {
     paper: '#f0f5f2',
     paper2: '#e5ece7',
-    paper3: '#dae2dc',
-    ink: '#161d18',
-    ink2: '#4f5851',
-    ink3: '#636b65',
+    paper3: '#dbe2dd',
+    ink: '#171c19',
+    ink2: '#494f4b',
+    ink3: '#5c625e',
     green: '#005e2f',
     greenSoft: '#c8e7d1',
     onGreen: '#eff8f2',
-    rule: 'rgba(22, 29, 24, 0.16)',
-    ruleStrong: 'rgba(22, 29, 24, 0.42)',
+    warn: '#7b4c00',
+    danger: '#921a1f',
+    rule: 'rgba(23, 28, 25, 0.16)',
+    ruleStrong: 'rgba(23, 28, 25, 0.42)',
     data: {
-      'category.strength': '#2a78d6',
-      'category.plyometrics': '#d9662e',
-      'category.technique': '#4a3aa7',
-      'category.mobility': '#d4638f',
-      'recovery.low': '#c9302d',
-      'recovery.moderate': '#cf9c00',
-      'recovery.high': '#009342',
+      'category.strength': '#1c7adb',
+      'category.plyometrics': '#e75623',
+      'category.technique': '#543595',
+      'category.mobility': '#b67594',
+      'recovery.low': '#af3d34',
+      'recovery.moderate': '#b5820c',
+      'recovery.high': '#009b72',
     },
   },
   dark: {
     paper: '#171411',
     paper2: '#211d1a',
     paper3: '#2c2824',
-    ink: '#e9e4dc',
-    ink2: '#a9a49c',
-    ink3: '#8d8982',
+    ink: '#e8e4dd',
+    ink2: '#b1ada7',
+    ink3: '#95928b',
     green: '#60bb83',
     greenSoft: '#173523',
     onGreen: '#040c06',
-    rule: 'rgba(233, 228, 220, 0.16)',
-    ruleStrong: 'rgba(233, 228, 220, 0.4)',
+    warn: '#e1b265',
+    danger: '#ee867b',
+    rule: 'rgba(232, 228, 221, 0.16)',
+    ruleStrong: 'rgba(232, 228, 221, 0.4)',
     data: {
-      'category.strength': '#3987e5',
-      'category.plyometrics': '#d95926',
-      'category.technique': '#9085e9',
-      'category.mobility': '#d55181',
-      'recovery.low': '#e0574c',
-      'recovery.moderate': '#c98500',
-      'recovery.high': '#27a05b',
+      'category.strength': '#3e7cc5',
+      'category.plyometrics': '#e75623',
+      'category.technique': '#b79dff',
+      'category.mobility': '#ad5d7c',
+      'recovery.low': '#cb473d',
+      'recovery.moderate': '#da8c00',
+      'recovery.high': '#1a7f73',
     },
   },
 };

@@ -1,8 +1,10 @@
 import { Platform, Pressable, View } from 'react-native';
 import { usePathname, useRouter } from 'expo-router';
-import { Glyph, Header, Text, space, useTheme } from '@/ui';
+import { Glyph, Header, Text, space, useTheme, type GlyphName } from '@/ui';
 import { href, routeHref } from './routes';
 import { fallbackFor, isTabRoute, splitHeaderTitle } from './headerTitle';
+import { useThemeOverride } from './theme';
+import { toggleLabel, toggledChoice } from './themeChoice';
 
 /**
  * The slim sticky header: the way back on the left, the sentence that says
@@ -23,6 +25,11 @@ export interface AppHeaderProps {
   /** Drop the settings control on screens that are already a settings page. */
   readonly showSettings?: boolean;
   /**
+   * Adds the one-tap theme control. Progress asks for it: the evening review
+   * is the hour the room goes dark, and Settings is two taps away.
+   */
+  readonly showTheme?: boolean;
+  /**
    * Force the back control on or off. Left unset, it appears on every route
    * that is not one of the three tabs, which is exactly the set of screens the
    * tab bar cannot bring the athlete home from.
@@ -33,7 +40,7 @@ export interface AppHeaderProps {
 
 interface ControlProps {
   readonly label: string;
-  readonly glyph: 'chevron' | 'settings';
+  readonly glyph: GlyphName;
   readonly onPress: () => void;
   readonly testID: string;
   /** The word is visible beside the glyph unless it would crowd the line. */
@@ -99,6 +106,28 @@ function BackControl() {
   );
 }
 
+/**
+ * Light or dark, in one tap, from the screen the athlete is on when they
+ * notice. It pins the opposite of what is on screen and persists it; the three
+ * -way answer, including following the phone again, lives in Settings.
+ *
+ * The glyph never stands alone: the control's accessible name is the sentence
+ * that says what the tap will do.
+ */
+function ThemeControl() {
+  const { scheme } = useTheme();
+  const { setOverride } = useThemeOverride();
+
+  return (
+    <HeaderControl
+      label={toggleLabel(scheme)}
+      glyph="contrast"
+      testID="header-theme"
+      onPress={() => setOverride(toggledChoice(scheme))}
+    />
+  );
+}
+
 function SettingsControl() {
   const router = useRouter();
   return (
@@ -117,6 +146,7 @@ export function AppHeader({
   trailingText,
   variant = 'headline',
   showSettings = true,
+  showTheme = false,
   showBack,
   testID,
 }: AppHeaderProps) {
@@ -133,6 +163,7 @@ export function AppHeader({
       variant={variant}
       {...(testID === undefined ? null : { testID })}
       {...(back ? { back: <BackControl /> } : null)}
+      {...(showTheme ? { extra: <ThemeControl /> } : null)}
       {...(showSettings ? { right: <SettingsControl /> } : null)}
     />
   );

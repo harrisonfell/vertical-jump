@@ -133,7 +133,12 @@ export function ReadinessRow({
           </Text>
 
           {saveError === null ? null : (
-            <Text variant="caption" color="ink" accessibilityLiveRegion="polite">
+            <Text
+              variant="captionStrong"
+              color="danger"
+              accessibilityLiveRegion="polite"
+              role="alert"
+            >
               {saveError}
             </Text>
           )}

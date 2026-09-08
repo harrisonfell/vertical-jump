@@ -17,21 +17,45 @@ export interface NoticeProps {
   readonly onAction?: () => void;
   /** Announces itself when it appears after a change the athlete made. */
   readonly live?: boolean;
+  /**
+   * `danger` is for a notice that reports a failure rather than a rule: a save
+   * that did not land, an import that was rejected. It closes the block with
+   * danger-coloured rules and takes the SemiBold face, and it announces as an
+   * alert. The ground stays the second neutral, because a filled red panel
+   * would be the loudest object in an app whose one loud moment is a personal
+   * record.
+   */
+  readonly tone?: 'neutral' | 'danger';
   readonly testID?: string;
 }
 
 /**
  * A rule-derived notice: body text on the second neutral, closed by hairlines
- * above and below. No stripe, no icon, no colour. It is a fact, so it looks
- * like the rest of the page and simply sits a tone apart.
+ * above and below. No stripe, no icon. It is a fact, so it looks like the rest
+ * of the page and simply sits a tone apart.
+ *
+ * The one exception is `tone="danger"`, where the closing rules and the text
+ * take the danger colour and the block announces as an alert. The words still
+ * carry the whole meaning ("Couldn't save the test. Check your connection,
+ * then save again."), so colour only changes how fast the block is found on a
+ * screen the athlete is scanning rather than reading.
  */
-export function Notice({ text, detail, actionLabel, onAction, live = false, testID }: NoticeProps) {
+export function Notice({
+  text,
+  detail,
+  actionLabel,
+  onAction,
+  live = false,
+  tone = 'neutral',
+  testID,
+}: NoticeProps) {
   const { colors } = useTheme();
   const { focusVisible, focusProps } = useFocusVisible();
+  const bad = tone === 'danger';
 
   return (
     <View testID={testID}>
-      <Hairline />
+      <Hairline {...(bad ? { tone: 'danger' as const } : null)} />
       <View
         style={{
           backgroundColor: colors.paper2,
@@ -42,9 +66,10 @@ export function Notice({ text, detail, actionLabel, onAction, live = false, test
       >
         <Text
           variant="body"
-          color="ink"
+          color={bad ? 'danger' : 'ink'}
           style={{ maxWidth: 560 }}
           {...(live ? { accessibilityLiveRegion: 'polite' as const } : null)}
+          {...(bad ? { role: 'alert' as const } : null)}
         >
           {text}
         </Text>
@@ -74,7 +99,7 @@ export function Notice({ text, detail, actionLabel, onAction, live = false, test
           </Pressable>
         )}
       </View>
-      <Hairline />
+      <Hairline {...(bad ? { tone: 'danger' as const } : null)} />
     </View>
   );
 }

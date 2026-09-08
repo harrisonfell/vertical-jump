@@ -34,7 +34,7 @@ import { localDay } from '@/lib/localDay';
  */
 
 const EMPTY_BODY =
-  'No program yet. Answer five questions about your training and pick a target date, and the whole twelve weeks are built from the rule book.';
+  'No program yet: twelve weeks are built from five answers and a target date.';
 
 function PlanSkeletonView() {
   return (

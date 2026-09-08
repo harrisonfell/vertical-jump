@@ -98,6 +98,14 @@ export function Strip({
   const actionLabel =
     state === 'revoked' ? 'Reconnect' : state === 'notConnected' ? 'Connect Whoop' : null;
 
+  // Two of the five states mean the numbers above are not today's. `stale` and
+  // `revoked` take the warn tone so the caption is found before the number is
+  // trusted; `notConnected` stays muted, because nothing is claiming to be
+  // current in the first place, and `importing` is work in progress, not a
+  // fault. The words say all of it either way.
+  const degraded = state === 'stale' || state === 'revoked';
+  const captionTone = degraded ? 'warn' : 'ink3';
+
   // Three repeats of "not connected" say one thing three times, so the row
   // says it once and the caption beside it offers the way back in.
   const unlinked = slots.length > 0 && slots.every((slot) => slot.state === 'notConnected');
@@ -149,10 +157,16 @@ export function Strip({
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
           {state === 'importing' ? (
             <Glyph name="sync" color={colors.ink3} size={14} />
+          ) : state === 'stale' ? (
+            <Glyph name="sync" color={colors.warn} size={14} />
           ) : state === 'revoked' || state === 'notConnected' ? (
-            <Glyph name="offline" color={colors.ink3} size={14} />
+            <Glyph name="offline" color={colors[captionTone]} size={14} />
           ) : null}
-          <Text variant="caption" color="ink3" accessibilityLiveRegion="polite">
+          <Text
+            variant={degraded ? 'captionStrong' : 'caption'}
+            color={captionTone}
+            accessibilityLiveRegion="polite"
+          >
             {caption}
           </Text>
           {actionLabel === null || onAction === undefined ? null : (

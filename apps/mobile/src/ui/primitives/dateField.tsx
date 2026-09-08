@@ -5,7 +5,7 @@ import { ariaState, describedBy, useFocusVisible } from '../a11y';
 import { Glyph } from '../glyphs';
 import { Sheet } from '../sheet';
 import { Text } from '../text';
-import { space, useTheme } from '../theme';
+import { opacity, space, useTheme } from '../theme';
 import { Button } from './button';
 import { Field } from './field';
 import { FocusRing } from './focusRing';
@@ -164,7 +164,7 @@ export function DateField({
             backgroundColor: pressed ? colors.paper3 : colors.paper2,
             paddingHorizontal: space.md,
             minHeight: 44,
-            opacity: disabled ? 0.45 : 1,
+            opacity: disabled ? opacity.disabled : 1,
           })}
         >
           <FocusRing visible={focusVisible} />

@@ -26,6 +26,7 @@ import {
 } from '@/data';
 import { EmptyState, Notice, Screen, Skeleton, Text, space } from '@/ui';
 import { useSetupPrefill } from '@/state/setupPrefill';
+import { AppearanceSection } from './appearanceSection';
 import { AthleteSection, ReassessSheet, type AthleteAnswer } from './athleteSection';
 import { AutoregulationSection } from './autoregulationSection';
 import { DataSection } from './dataSection';
@@ -318,6 +319,7 @@ export function SettingsScreen() {
         onReportPain={() => router.push(href('/clearance'))}
       />
     ),
+    appearance: <AppearanceSection />,
     program: (
       <ProgramSection
         athlete={{ ...athlete, ...answers }}

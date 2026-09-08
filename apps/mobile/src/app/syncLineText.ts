@@ -96,3 +96,26 @@ export function syncLineText(input: SyncLineInput): string | null {
   const saved = `${changeCount(input.pending)} saved on this phone`;
   return input.online ? saved : `Offline ${MIDDLE_DOT} ${saved}`;
 }
+
+/**
+ * How worried the line should look, which is a different question from what it
+ * says. The four states map onto the copy above one for one:
+ *
+ *   `synced`  "Synced 6:41 PM"                    nothing is owed
+ *   `queued`  "4 changes saved on this phone"     working normally, offline-first
+ *   `offline` "Offline · 4 changes saved..."      the phone cannot reach the server
+ *   `stale`   "4 changes not synced for 2 days"   the only copy on earth is this phone
+ *
+ * `queued` stays quiet on purpose. Writing to a local queue is how this app is
+ * designed to work, so colouring it would train the athlete to ignore the line
+ * on the day it finally matters.
+ */
+export type SyncLineState = 'synced' | 'queued' | 'offline' | 'stale';
+
+export function syncLineState(input: SyncLineInput): SyncLineState | null {
+  if (syncLineText(input) === null) return null;
+  if (input.pending <= 0) return 'synced';
+  const days = waitingDays(input.oldestPendingAt, input.now ?? new Date());
+  if (days >= STALE_AFTER_DAYS) return 'stale';
+  return input.online ? 'queued' : 'offline';
+}

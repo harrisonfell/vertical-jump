@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { useRouter } from 'expo-router';
 import { View } from 'react-native';
-import { AppHeader, SyncLine, href } from '@/app';
+import { AppHeader, SyncLine } from '@/app';
 import { useMoveSession } from '@/data';
-import { Button, ButtonRow, EmptyState, Notice, Screen, Sheet, Text, space, useSheet } from '@/ui';
+import { Button, ButtonRow, Notice, Screen, Sheet, Text, space, useSheet } from '@/ui';
 import { headerDate, restDayTitle } from './header';
 import { moveDecision, plannedMinutes, NOTHING_TO_MOVE } from './move';
 import { JumpTestBlock } from './jumpTestBlock';
@@ -20,7 +19,6 @@ import { WhoopStrip } from './whoopStrip';
  */
 
 export function RestDay({ data }: { readonly data: TodayData }) {
-  const router = useRouter();
   const test = useSheet();
   const move = useMoveSession();
   const [refusal, setRefusal] = useState<string | null>(null);
@@ -61,19 +59,11 @@ export function RestDay({ data }: { readonly data: TodayData }) {
       <SyncLine />
       <WhoopStrip today={data.today} />
 
-      {data.program === null ? (
-        <EmptyState
-          body="No program yet. Answer five questions and it builds from your own numbers."
-          actionLabel="Build program"
-          onAction={() => router.push(href('/setup/one'))}
-        />
-      ) : null}
-
       {refusal === null ? null : <Notice text={refusal} live testID="today-move-refused" />}
 
       <View style={{ gap: space.md }}>
         <Text variant="body" color="ink2">
-          Rest is prescribed. It is what makes the next session count.
+          Rest is prescribed.
         </Text>
         <ButtonRow>
           <Button

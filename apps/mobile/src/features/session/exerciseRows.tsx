@@ -1,9 +1,10 @@
 import { View } from 'react-native';
-import { ExerciseHeader, Glyph, Hairline, Text, space, useTheme } from '@/ui';
+import { ExerciseHeader, Glyph, Hairline, Text, opacity, space, useTheme } from '@/ui';
 import type { SessionExercise, SetLog } from '@/data/types';
 // The store-to-engine seam lives with Plan; imported by module so the
 // session bundle does not pull the Plan screen in with it.
 import { readPrescriptions } from '@/features/plan';
+import { categoryOf } from '@/features/catalog';
 import { groupExercises } from './blockNames';
 import { compareSets, rowNoteLine, usesAddedLoadDisplay, type SetRowModel } from './detail';
 import { rowNotesFor, type RowNotes } from './planNotes';
@@ -38,7 +39,7 @@ function SetLine({ row, dim }: { readonly row: SetRowModel; readonly dim: boolea
           gap: space.md,
           minHeight: 44,
           paddingVertical: space.sm,
-          opacity: dim ? 0.7 : 1,
+          opacity: dim ? opacity.dim : 1,
         }}
       >
         <Text variant="caption" color="ink3" numeric style={{ width: 24 }}>
@@ -95,14 +96,15 @@ export function ExerciseRows({ exercise, logs, notes, future = false }: Exercise
   // The weaker-side and grip lines were true of the day, not of the exercise,
   // so they sit with the rotation note rather than in the load line.
   const note = rowNoteLine(exercise.rotationNote, notes.sideNote, notes.fingerNote);
+  const category = categoryOf(exercise.exerciseId);
 
   return (
     <View>
       <ExerciseHeader
         name={exercise.exerciseName}
+        {...(category === undefined ? null : { category })}
         sub={sub === '' ? undefined : sub}
         {...(note === null ? null : { note })}
-        bothSides={exercise.bothSides}
       />
       {rows.map((row) => (
         <SetLine key={row.key} row={row} dim={!future && !row.logged} />

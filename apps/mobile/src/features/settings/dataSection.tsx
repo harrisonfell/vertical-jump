@@ -106,7 +106,7 @@ export function DataSection({
             />
           </View>
         ))}
-        {saveError === null ? null : <Notice text={saveError} live />}
+        {saveError === null ? null : <Notice text={saveError} tone="danger" live />}
       </SettingSection>
 
       <SettingSection title="This device" testID="settings-device">

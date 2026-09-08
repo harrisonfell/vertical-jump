@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
-import { FocusRing, Glyph, Hairline, Text, space, useFocusVisible, useTheme } from '@/ui';
+import { FocusRing, Glyph, Hairline, Text, opacity, space, useFocusVisible, useTheme } from '@/ui';
 
 /**
  * The three pieces every setup step is made of: a labelled question, a
@@ -15,8 +15,6 @@ import { FocusRing, Glyph, Hairline, Text, space, useFocusVisible, useTheme } fr
 const QUESTION_MEASURE = 560;
 
 export interface QuestionProps {
-  /** A short position marker above the question: "1 of 7". */
-  readonly eyebrow?: string;
   readonly label: string;
   /** One muted line under the label: the boundary, the reason, the rule. */
   readonly detail?: string;
@@ -29,15 +27,10 @@ export interface QuestionProps {
  * with tracking is the slowest text in the app to read, and these are the
  * answers the rule book acts on.
  */
-export function Question({ eyebrow, label, detail, children }: QuestionProps) {
+export function Question({ label, detail, children }: QuestionProps) {
   return (
     <View style={{ gap: space.sm }}>
       <View style={{ gap: space.xs }}>
-        {eyebrow === undefined ? null : (
-          <Text variant="label" color="ink3">
-            {eyebrow}
-          </Text>
-        )}
         <Text variant="title" color="ink" style={{ maxWidth: QUESTION_MEASURE }}>
           {label}
         </Text>
@@ -96,7 +89,7 @@ export function CheckRow({
           gap: space.md,
           paddingVertical: space.sm,
           backgroundColor: pressed && !disabled ? colors.paper3 : 'transparent',
-          opacity: disabled ? 0.45 : 1,
+          opacity: disabled ? opacity.disabled : 1,
         })}
       >
         <FocusRing visible={focusVisible} inset={2} />

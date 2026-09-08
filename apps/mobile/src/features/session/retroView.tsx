@@ -72,7 +72,6 @@ export function RetroView({
                 <ExerciseHeader
                   name={exercise.exerciseName}
                   {...(exercise.headerNote === null ? null : { sub: exercise.headerNote })}
-                  bothSides={exercise.bothSides}
                 />
                 {rows.map((row) => (
                   <SetRow

@@ -54,7 +54,7 @@ export function TodayScreen() {
       <Screen header={<AppHeader title="Today" variant="headline" />} testID="today-no-program">
         <SyncLine />
         <EmptyState
-          body="No program yet. Answer five questions, add your jump numbers, and the whole block is built from them."
+          body="No program yet: the whole block is built from five answers and your jump numbers."
           actionLabel="Build program"
           onAction={() => router.push(href('/setup/one'))}
         />

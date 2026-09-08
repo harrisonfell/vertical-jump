@@ -9,7 +9,7 @@ import {
 } from '../a11y';
 import { Glyph } from '../glyphs';
 import { Text } from '../text';
-import { space, useTheme } from '../theme';
+import { opacity, space, useTheme } from '../theme';
 import { FocusRing } from './focusRing';
 import { Hairline } from './hairline';
 
@@ -79,7 +79,7 @@ export function AnswerRow({
           gap: space.md,
           paddingVertical: space.sm,
           backgroundColor: pressed && !disabled ? colors.paper3 : 'transparent',
-          opacity: disabled ? 0.45 : 1,
+          opacity: disabled ? opacity.disabled : 1,
         })}
       >
         <FocusRing visible={focusVisible} />

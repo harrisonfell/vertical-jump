@@ -1,5 +1,5 @@
 import { formatRest } from '@vert/engine/units';
-import { useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '../text';
@@ -14,8 +14,6 @@ export interface RestBarProps {
   /** "next: set 3 · 3 × 235 lb (+15 lb)", built by the screen from the engine. */
   readonly nextLine?: string;
   readonly onStop: () => void;
-  /** A text link that appears once every row is logged: "Finish session". */
-  readonly trailing?: ReactNode;
   /** Adds the bottom safe-area inset. Off when the tab bar is under it. */
   readonly safeArea?: boolean;
   readonly testID?: string;
@@ -44,7 +42,6 @@ export function RestBar({
   remainingS,
   nextLine,
   onStop,
-  trailing,
   safeArea = false,
   testID,
 }: RestBarProps) {
@@ -90,14 +87,16 @@ export function RestBar({
           >
             {`Rest ${formatRest(remainingS)}`}
           </Text>
+          {/* The load is the half of this bar the athlete acts on, and it is
+              read at arm's length with a wet phone: it takes the one stronger
+              face the caption size has rather than a larger size, which would
+              put two numbers on the bar competing to be the big one. */}
           {nextLine === undefined ? null : (
-            <Text variant="caption" color="ink2" numeric numberOfLines={1}>
+            <Text variant="captionStrong" color="ink2" numeric numberOfLines={1}>
               {nextLine}
             </Text>
           )}
         </View>
-
-        {trailing}
 
         <Button label="Skip rest" variant="secondary" onPress={onStop} />
       </View>

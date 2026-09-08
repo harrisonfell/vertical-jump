@@ -1,10 +1,11 @@
 /** The UI kit's public surface. Screens import from here, never from a file. */
 
-export { Text, type TextProps, type TextVariant } from './text';
+export { Text, displayVariantFor, type TextProps, type TextVariant } from './text';
 export {
   ThemeProvider,
   breakpoint,
   fontFamily,
+  opacity,
   radius,
   space,
   type,
@@ -14,6 +15,20 @@ export {
   type Theme,
   type TypeVariant,
 } from './theme';
+export {
+  CATEGORY_GLYPH,
+  CATEGORY_LABEL,
+  CATEGORY_NAMES,
+  CategoryMark,
+  RECOVERY_BANDS,
+  RECOVERY_LABEL,
+  categoryToken,
+  isCategoryName,
+  recoveryToken,
+  type CategoryMarkProps,
+  type CategoryName,
+  type RecoveryBandName,
+} from './dataMarks';
 export { colors, type DataTokenName, type SchemeColors, type SchemeName } from './tokens.generated';
 
 export { withAlpha, BACKDROP_ALPHA } from './color';
@@ -146,6 +161,7 @@ export {
 } from './primitives/strip';
 export { Notice, type NoticeProps } from './primitives/notice';
 export { ResultBlock, type ResultBlockProps } from './primitives/resultBlock';
+export { DisplayReadout, type DisplayReadoutProps } from './primitives/displayReadout';
 export {
   FooterLine,
   RestBar,
@@ -157,6 +173,23 @@ export {
   ProgressBar,
   type ProgressBarProps,
 } from './primitives/progressBar';
+export {
+  SEGMENT_GAP,
+  SEGMENT_HEIGHT,
+  SegmentBar,
+  type SegmentBarProps,
+} from './primitives/segmentBar';
+export {
+  SPINE_GAP,
+  SPINE_STATE_WORD,
+  SPINE_WIDTH,
+  Spine,
+  SpineNode,
+  type SpineNodeProps,
+  type SpineNodeState,
+  type SpineProps,
+} from './primitives/spine';
+export { FloatingAction, type FloatingActionProps } from './primitives/floatingAction';
 export { Table, type TableColumn, type TableProps } from './primitives/table';
 export { Disclosure, type DisclosureProps } from './primitives/disclosure';
 export { EmptyState, type EmptyStateProps } from './primitives/emptyState';

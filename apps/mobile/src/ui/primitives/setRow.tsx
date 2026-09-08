@@ -4,7 +4,7 @@ import { Pressable, View } from 'react-native';
 import { ariaState, useFocusVisible } from '../a11y';
 import { Glyph } from '../glyphs';
 import { Text } from '../text';
-import { space, useTheme } from '../theme';
+import { opacity, space, useTheme } from '../theme';
 import { Button } from './button';
 import { ChipRow, type ChipOption } from './chip';
 import { FocusRing } from './focusRing';
@@ -201,7 +201,7 @@ export function SetRow({
             minHeight: SET_ROW_GRID.minHeight,
             paddingVertical: space.sm,
             backgroundColor: pressed && !disabled ? colors.paper3 : 'transparent',
-            opacity: disabled ? 0.45 : 1,
+            opacity: disabled ? opacity.disabled : 1,
           })}
         >
           <FocusRing visible={focusVisible} />

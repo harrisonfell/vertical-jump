@@ -30,6 +30,25 @@ export const radius = {
   none: 0,
 } as const;
 
+/**
+ * The three opacities the system uses as state, named so no component invents
+ * a fourth. Colour cannot carry these: a disabled control that changed hue
+ * would be claiming a meaning, and the meaning here is "not available", which
+ * is the absence of one.
+ *
+ * `disabled` is deliberately deep enough that a control reads as out of play
+ * at arm's length; the label beside it always says why, so the dimming is
+ * never the only signal. `dim` is the softer step for a row that happened but
+ * was not logged, which is history rather than a control.
+ */
+export const opacity = {
+  disabled: 0.45,
+  /** A primary action under the thumb: pressed, not off. */
+  pressed: 0.86,
+  /** A set that was prescribed and never logged. Past tense, not disabled. */
+  dim: 0.7,
+} as const;
+
 /** Font families, one per generated static instance. */
 export const fontFamily = {
   regular: 'Archivo-Regular',
@@ -57,9 +76,22 @@ export const type = {
   rowNumber: { size: 20, lineHeight: 24, family: fontFamily.semibold, letterSpacing: 0 },
   title: { size: 19, lineHeight: 24, family: fontFamily.medium, letterSpacing: 0 },
   headline: { size: 24, lineHeight: 28, family: fontFamily.semibold, letterSpacing: 0 },
-  display: { size: 64, lineHeight: 64, family: fontFamily.display, letterSpacing: -1.28 },
-  displayWide: { size: 96, lineHeight: 96, family: fontFamily.display, letterSpacing: -1.92 },
+  // The two readout sizes are tracked tighter than the rest of the scale, at
+  // -0.024em rather than -0.02em: at 64 and 96 px the default fit leaves the
+  // digits reading as four separate objects, and a readout has to read as one.
+  // Tabular figures take negative tracking uniformly, so the columns hold.
+  display: { size: 64, lineHeight: 64, family: fontFamily.display, letterSpacing: -1.54 },
+  displayWide: { size: 96, lineHeight: 96, family: fontFamily.display, letterSpacing: -2.3 },
 } as const;
+
+/**
+ * The left sidebearing of a digit on the display instance, measured off the
+ * shipped face rather than guessed: 3 px of white at 96 and 2 px at 64. A
+ * readout set flush to a column is therefore inset by that much and reads as
+ * indented; every display number in the app hangs it back out again so the
+ * first stem, not the glyph box, lands on the column.
+ */
+export const displayOptical = { display: 2, displayWide: 3 } as const;
 
 export type TypeVariant = keyof typeof type;
 export type ColorToken = keyof Omit<SchemeColors, 'data'>;

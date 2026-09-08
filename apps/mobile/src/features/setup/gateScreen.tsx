@@ -138,10 +138,9 @@ export function GateScreen() {
     <Screen testID="setup-gate">
       <StepFrame title={SETUP_COPY.gateTitle} lead={SETUP_COPY.gateLead}>
         <View style={{ gap: space.xl }}>
-          {GATE_QUESTIONS.map((question, index) => (
+          {GATE_QUESTIONS.map((question) => (
             <Question
               key={question.key}
-              eyebrow={`${index + 1} of ${GATE_QUESTIONS.length}`}
               label={question.text}
               {...(question.detail === undefined ? null : { detail: question.detail })}
             >

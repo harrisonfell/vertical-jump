@@ -8,6 +8,7 @@ import {
   rowIndex,
   rowKind,
   rowPrescription,
+  setsSummary,
 } from './rows';
 
 function set(patch: Partial<SetPrescription> = {}): SetPrescription {
@@ -136,5 +137,34 @@ describe('completion', () => {
 
   it('counts what is done', () => {
     expect(doneLabel(sets, new Set([1, 3]))).toBe('done 2/3');
+  });
+});
+
+describe('setsSummary', () => {
+  it('collapses identical rows into one prescription', () => {
+    expect(setsSummary([set({ setNumber: 1 }), set({ setNumber: 2 }), set({ setNumber: 3 })])).toBe(
+      '3 sets · 5 × 205 lb',
+    );
+  });
+
+  it('lists unequal rows rather than averaging them into one load', () => {
+    expect(
+      setsSummary([
+        set({ setNumber: 1, displayLoad: '5 × 205 lb' }),
+        set({ setNumber: 2, displayLoad: '4 × 220 lb' }),
+        set({ setNumber: 3, displayLoad: '3 × 235 lb' }),
+      ]),
+    ).toBe('3 sets · 5 × 205 lb / 4 × 220 lb / 3 × 235 lb');
+  });
+
+  it('keeps the notation the engine wrote for bodyweight and holds', () => {
+    expect(setsSummary([set({ displayLoad: '8 × BW' })])).toBe('1 set · 8 × BW');
+    expect(setsSummary([set({ displayLoad: '30 s hold' }), set({ setNumber: 2, displayLoad: '30 s hold' })])).toBe(
+      '2 sets · 30 s hold',
+    );
+  });
+
+  it('says nothing for an exercise with no sets', () => {
+    expect(setsSummary([])).toBeUndefined();
   });
 });

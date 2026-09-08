@@ -27,21 +27,35 @@ This system rejects, by the owner's decision, everything in the original Base44 
 
 Tinted neutrals carry everything; a single green marks what matters today.
 
+Authored in OKLCH in `apps/mobile/src/ui/tokens.oklch.ts`; `npm run tokens` converts to sRGB hex and fails the build on any contrast, tint, or colour-vision violation. React Native never sees the OKLCH.
+
 ### Primary
-- **Deep Green** (exact value to be resolved during implementation; OKLCH, hue family around 150 to 160, lightness roughly 35 to 42%, moderate chroma): the only accent. Used for the current selection, the checked row, the goal tick on a track, the primary action, today's marker on a chart, and the header line of the test block. At a PR of 1.0 in or more, and on the goal-reached card, it may carry the whole surface.
+- **Deep Green** `oklch(42% 0.115 155)` → `#005e2f` light, `oklch(72% 0.12 155)` → `#60bb83` dark: the only accent. Used for the current selection, the checked row, the goal tick on a track, the primary action, today's marker on a chart, and the header line of the test block. 7.16:1 on paper, 7.76:1 on charcoal. At a PR of 1.0 in or more, and on the goal-reached card, it may carry the whole surface, with **onGreen** `#eff8f2` on it at 7.28:1.
+- **Green Soft** `#c8e7d1` light, `#173523` dark: the quiet ground under a selected row or chip, always with the green mark still on it.
 
 ### Neutral
-- **Paper** (to be resolved; light, chroma about 0.005 tinted toward the green hue): the daytime ground. Never pure white.
-- **Ink** (to be resolved; near-black tinted toward the green hue): text and hairlines. Never pure black.
-- **Charcoal** (to be resolved; warm near-black, no blue tint) and **Bone** (warm off-white): the night scheme's ground and text. Same structure, same green, re-tuned for contrast on dark.
+Every neutral is tinted toward the accent hue at chroma 0.005 to 0.01, asserted by the generator so it can never drift back to grey.
+- **Paper** `oklch(96.5% 0.006 155)` → `#f0f5f2`: the daytime ground. Never pure white. Two tones follow it for panels and pressed rows: `#e5ece7` and `#dae2dc`.
+- **Ink** `oklch(22% 0.01 155)` → `#161d18`: text and hairlines. Never pure black. Secondary `#465049` and tertiary `#5a635d` both clear 4.5:1 on all three grounds, pressed included.
+- **Charcoal** `oklch(19.5% 0.008 70)` → `#171411` and **Bone** `oklch(92% 0.01 80)` → `#e9e4dc`: the night scheme's ground and text, warm and with no blue in them. Same structure, same green, re-tuned.
+- **Hairline**: ink at 16% alpha; the chart-axis rule at 42% light, 40% dark.
+
+### State
+Two tones the accent cannot carry, because green already means "this is the live one". Both are the accent's tonal weight, tinted the same way, and neither ever appears without words.
+- **Warn** `#7b4c00` light, `#e1b265` dark: known but not current. A stale Whoop mirror, a queue the phone cannot drain.
+- **Danger** `#921a1f` light, `#ee867b` dark: wrong and blocking. An invalid answer, a save that did not land, a week of training that has synced nowhere in two days.
 
 ### Data Palette
-- Four training categories (Plyometrics, Strength, Mobility, Technique) and three recovery bands (low, moderate, high) get a small dedicated palette used only inside charts, chips, and glyphs. Values to be resolved during implementation. Each is always paired with a label or glyph.
+Charts, chips, and glyph fills only. Each colour sits at least 22 CIEDE2000 from the accent so it can never read as "selected", and each pair inside a group stays separable under protanopia, deuteranopia, and tritanopia. Each is always paired with a label or glyph.
+- Categories, light: Strength `#1c7adb`, Plyometrics `#e75623`, Technique `#543595`, Mobility `#b67594`. Dark: `#3e7cc5`, `#e75623`, `#b79dff`, `#ad5d7c`.
+- Recovery, light: low `#af3d34`, moderate `#b5820c`, high `#009b72`. Dark: `#cb473d`, `#da8c00`, `#1a7f73`. High sits on a deep sea green rather than grass so it cannot be mistaken for the accent.
 
 ### Named Rules
 **The Restrained Rule.** On every daily surface, green is at or under 10%. Its rarity is what makes the checked row and the goal tick legible.
 
 **The PR Exception.** A same-instrument personal record at or above that instrument's PR threshold (1.0 in by default, recalibrated from the device's own noise after three sessions), and the goal-reached card, may go committed: green carries 30 to 60% of the surface, with paper or bone text on it. This is the one place the system raises its voice. It never fires during the first three calibration sessions on a new instrument or on a stream change. An ordinary test result stays on paper; only the test block's header line takes the accent.
+
+The committed surface is composed rather than coloured: three bands (what happened, the reading, what it belongs to) separated by a hairline in the surface's own text colour, 24px of padding, and 32px of silence above and below the number. It carries no ornament of any kind. It is also the one surface in the app that arrives rather than appears, at 320ms of ease-out on opacity and a 6px settle, once, and never under reduced motion.
 
 **The Data Palette Rule.** Category, day-type, and recovery colors never appear on UI chrome, buttons, or backgrounds, and never work alone. If a chip loses its color, its label still tells you everything.
 
@@ -65,7 +79,7 @@ Tinted neutrals carry everything; a single green marks what matters today.
 ### Named Rules
 **The Tabular Rule.** Every number is set with tabular figures and right-aligned when it sits in a column. Prescriptions use the real multiplication sign and one format per row type: "5 × 205 lb", "8 × BW", "30 s hold", "15 m", "3 × 3 @ 0.75 to 1.00 m/s". Heights show one decimal, contact times whole milliseconds, velocities two decimals. No set row ever shows an exercise-level percentage.
 
-**The One Big Number Rule.** A screen may make one number large. If two numbers compete for the display size, neither is the point.
+**The One Big Number Rule.** A screen may make one number large. If two numbers compete for the display size, neither is the point. That number is set through one readout component, never by hand: display tracking at -0.024em, the unit on the number's own baseline, and the number hung left by its digit's measured sidebearing (2px at 64, 3px at 96) so the first stem and not the glyph box lands on the column the eyebrow and the instrument label are already on.
 
 ## 4. Elevation
 
@@ -74,12 +88,23 @@ Flat. Surfaces sit at one level; hierarchy comes from type scale, tone (a second
 ### Named Rules
 **The Hairline Rule.** Separation is a 1px rule in the ink color at low opacity, or a change of tone. Never a border-radius-and-shadow card, never a colored side stripe.
 
+## 5. Components
+
+Four system components carry the structure the session and the week are read through. All four are flat, hairline-separated, and pair every colour with a word.
+
+- **The timeline spine.** The session view runs one hairline down its left edge with a node on it for every block: the warm-up group, each exercise, the test block. Nodes are leading numbers or registry glyphs, never photographs, and the block name moved off its own heading onto the exercise's meta line. Exactly one node is green: the first that is not finished. A node the runner cannot honestly read as finished (the jump test, which owns its own query) sits on the spine without a state.
+- **The exercise meta line.** One muted line under the name: "Main lift · 4 sets · 5 × 205 lb". Identical sets collapse, unequal sets are listed ("5 × 205 / 4 × 220 / 3 × 235"), so the Tabular Rule holds and no single load ever stands for a whole exercise. Per-set data stays on the set rows.
+- **The floating action.** One primary action per session, 56px, green, pinned bottom right above the tab bar, with no shadow: what separates it from the rows sliding under it is a 1px cut of the paper ground. If a screen needs two of these, one of them is not an action for that screen.
+- **The segmented week bar.** The compact week summary is one segment per training day the program scheduled, filled when that day was finished, over the sentence that says the same thing ("Week 4: 2 of 4 sessions done"). Never a ring, never a percentage.
+- **The theme preference.** Three answers, stored in the kv table as `settings.themeOverride`: system (no row), light, dark. The launch splash is held until that row has been read, so no frame ever paints in the scheme the athlete did not ask for. Settings holds the three-way segmented control; the Progress header holds a one-tap control that pins the opposite of what is on screen, named for what the tap will do.
+
 ## 6. Do's and Don'ts
 
 ### Do:
 - **Do** keep every daily surface light paper with ink and one green; let the night scheme follow the system setting.
 - **Do** set every digit in tabular figures and right-align numeric columns.
 - **Do** draw charts with direct labels on points, a dashed goal line, labeled axes, and recovery aligned beside output at the same time scale.
+- **Do** draw every chart line at one of three stroke weights and no others: 0.75 for the graticule, 1 for anything the reader measures against (axis rules and ticks, band edges, required pace, medians, today, the crosshair, the observed path), 2 for the readings themselves (trend, projection, rolling median). Both axes carry a 3px tick, an axis label sits on its tick's true position and turns its anchor at the ends rather than sliding inwards, and a PR is a ring around its own mark whose legend key is the same two circles at the same two radii.
 - **Do** reserve the green-filled surface for a PR of 1.0 in or more and the goal-reached card. Nothing else earns it.
 - **Do** pair every category and recovery color with a label or glyph.
 - **Do** keep touch targets at 44px or larger on the session screen.

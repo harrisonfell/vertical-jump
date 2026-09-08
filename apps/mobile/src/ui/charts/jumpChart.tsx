@@ -24,6 +24,7 @@ import type { IsoDay, JumpChartData, ProbeControl, SeriesPoint } from './props';
 import {
   MARK,
   PLOT_PAD,
+  STROKE,
   bandPath,
   fixedHeightDomain,
   formatDayLong,
@@ -173,12 +174,16 @@ export function JumpChart({
     setProbe(nearestDay(x, px, testDays));
   };
 
+  // The key is the marks and the lines that carry no direct label of their
+  // own. Latest, PR, baseline, and goal are named on the plot itself, so the
+  // key names the vocabulary and the plot names the values.
   const legend: LegendItem[] = [
     { glyph: 'dot', label: 'Canonical test', color: colors.ink },
     { glyph: 'hollow', label: 'Flagged or baseline', color: colors.ink2 },
-    { glyph: 'line', label: 'Trend', color: colors.ink },
-    { glyph: 'line', label: 'Required pace', color: colors.ink3 },
   ];
+  if (prTest !== undefined) legend.push({ glyph: 'ring', label: 'PR', color: colors.ink });
+  legend.push({ glyph: 'line', label: 'Trend', color: colors.ink });
+  legend.push({ glyph: 'line', label: 'Required pace', color: colors.ink3 });
   if (data.projection !== undefined) {
     legend.push({ glyph: 'dashed', label: 'Projection', color: colors.ink2 });
     legend.push({ glyph: 'band', label: 'Projection range', color: colors.ink });
@@ -224,18 +229,32 @@ export function JumpChart({
             x2={right}
             y2={py(data.goalIn)}
             stroke={colors.ink3}
-            strokeWidth={1}
+            strokeWidth={STROKE.reference}
           />
 
+          {/* Today is a reference and is drawn at a reference's weight, with a
+              tick under the axis rule so it is anchored to a date the way the
+              dated ticks are. Without the tick it is a green rule floating in
+              the plot, and the reader has to guess which day it stands on. */}
           {showToday ? (
-            <Line
-              x1={todayX}
-              y1={top}
-              x2={todayX}
-              y2={bottom}
-              stroke={colors.green}
-              strokeWidth={1}
-            />
+            <>
+              <Line
+                x1={todayX}
+                y1={top}
+                x2={todayX}
+                y2={bottom}
+                stroke={colors.green}
+                strokeWidth={STROKE.reference}
+              />
+              <Line
+                x1={todayX}
+                y1={bottom}
+                x2={todayX}
+                y2={bottom + MARK.tickLength}
+                stroke={colors.green}
+                strokeWidth={STROKE.reference}
+              />
+            </>
           ) : null}
 
           {(data.streamBreaks ?? []).map((brk) => (
@@ -246,7 +265,7 @@ export function JumpChart({
               x2={px(brk.date)}
               y2={top + 10}
               stroke={colors.ruleStrong}
-              strokeWidth={1}
+              strokeWidth={STROKE.reference}
             />
           ))}
 
@@ -256,7 +275,7 @@ export function JumpChart({
               key={`obs-${segment[0]?.date ?? 'x'}`}
               d={polylinePath(segment.map((test) => [px(test.date), py(test.heightIn)]))}
               stroke={colors.ink3}
-              strokeWidth={1}
+              strokeWidth={STROKE.reference}
               fill="none"
             />
           ))}
@@ -279,7 +298,7 @@ export function JumpChart({
             r={MARK.dotRadius}
             fill={colors.paper}
             stroke={colors.green}
-            strokeWidth={2}
+            strokeWidth={STROKE.series}
           />
 
           <Marker
@@ -289,6 +308,21 @@ export function JumpChart({
             surface={colors.paper}
             ink={colors.ink2}
           />
+
+          {/* The record, ringed. The ring is a second circle at the plot's own
+              radius rather than a second colour, so it holds under every
+              colour-vision simulation, and the direct label beside it still
+              reads "PR" in words. */}
+          {prTest === undefined ? null : (
+            <Circle
+              cx={px(prTest.date)}
+              cy={py(prTest.heightIn)}
+              r={MARK.dotRadius + MARK.prRing}
+              fill="none"
+              stroke={colors.ink}
+              strokeWidth={STROKE.reference}
+            />
+          )}
 
           {data.tests.map((test) => (
             <Marker
