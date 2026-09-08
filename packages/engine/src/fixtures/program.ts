@@ -74,12 +74,31 @@ export type TypedLoad = (
  * picks up an Epley estimate exactly as the brief's worked trap-bar case does.
  */
 export const defaultTypedLoad: TypedLoad = (exercise, squatMaxKg, rpe) => {
+  const tendon = tendonLoadLb(exercise);
+  if (tendon !== undefined) return lbToKg(tendon);
   const ratio = exercise.oneRmHintRatio;
   if (!exercise.loadable || ratio === undefined) return undefined;
   const effort = rpe === undefined ? 0.75 : 0.62 + (rpe - 6) * 0.05;
   const lb = squatMaxKg * 2.2046226218 * ratio * effort;
   return lbToKg(Math.round(lb / 5) * 5);
 };
+
+/**
+ * The dumbbell a fixture athlete puts in their hand for a heavy slow
+ * resistance row, in pounds. Not a share of a squat max: a calf raise is
+ * loaded by what the calf can carry for eight slow reps, which has no
+ * relationship to a barbell squat, so the hint ratio the other rows use would
+ * be a made-up percentage of the wrong number.
+ *
+ * A plausible fixture default rather than a measured one, so the review screens
+ * show a real number where the load now goes instead of a blank.
+ */
+const TENDON_SLOW_RESISTANCE_LB = 45;
+
+function tendonLoadLb(exercise: Exercise): number | undefined {
+  if (!exercise.loadable || exercise.tendonMode !== 'slow_resistance') return undefined;
+  return TENDON_SLOW_RESISTANCE_LB;
+}
 
 /** The added load a climber puts on the belt, which is not a share of a squat. */
 const ADDED_LOAD_BY_EFFORT_LB = { hard: 40, moderate: 35, easy: 30 } as const;

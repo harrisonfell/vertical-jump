@@ -82,6 +82,13 @@ function readScheme(value: unknown, path: string): LoadScheme {
   if (record['holdSecondsRange'] !== undefined) {
     scheme.holdSecondsRange = range(record['holdSecondsRange'], `${path}.holdSecondsRange`);
   }
+  if (record['slowResistance'] !== undefined) {
+    const tempo = obj(record['slowResistance'], `${path}.slowResistance`);
+    scheme.slowResistance = {
+      tempoUpS: num(tempo['tempoUpS'], `${path}.slowResistance.tempoUpS`),
+      tempoDownS: num(tempo['tempoDownS'], `${path}.slowResistance.tempoDownS`),
+    };
+  }
   return scheme;
 }
 

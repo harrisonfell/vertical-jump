@@ -28,12 +28,14 @@
  * sharpen rather than fatigue.
  */
 import type { Athlete } from '../types/athlete.js';
+import type { LoadType } from '../types/core.js';
 import type { Exercise } from '../types/exercise.js';
 import type { SetPrescription } from '../types/plan.js';
-import { kgToLb, lbToKg, type LoadGrid } from '../units.js';
+import { formatTempo, kgToLb, lbToKg, type LoadGrid } from '../units.js';
 import { defaultRole, hasWorkingMax, type PrescribeContext } from './context.js';
 import { resolveCapPctFrom } from './caps.js';
 import {
+  DEFAULT_BODYWEIGHT_REPS,
   ascendingPercents,
   applyTopSetCap,
   descendingRepsFrom,
@@ -97,8 +99,20 @@ function ballisticRows(context: RowContext, capPct: number): SetPrescription[] {
   return rows;
 }
 
-/** R158 with R76: the only per-set display when there is no working max. */
-function rpeRows(context: RowContext, reps: number[]): SetPrescription[] {
+/**
+ * R158 with R76: the only per-set display when there is no working max.
+ *
+ * @param rpeAt which effort a set carries, by 0-based index. The default is the
+ *   ladder, which ascends across the sets of an ascending scheme. A straight
+ *   scheme passes its own, because a row whose load is meant to be the same on
+ *   every set cannot ask for a different effort on each one.
+ */
+function rpeRows(
+  context: RowContext,
+  reps: number[],
+  rpeAt: (index: number) => number = (index) =>
+    rpeForSet(index, context.athlete.level, context.ctx.isFirstProgramWeek1, context.ctx.ruleset),
+): SetPrescription[] {
   // R105: a reduced week takes its volume off the reps as well as the sets,
   // in RPE mode exactly as in percent mode.
   const cap = context.ctx.reducedRepsCap;
@@ -110,12 +124,7 @@ function rpeRows(context: RowContext, reps: number[]): SetPrescription[] {
     const raw = reps[index] ?? 1;
     const setReps = cap === undefined ? raw : Math.max(floor, Math.min(raw, cap));
     const dayRpeCap = context.ctx.dayRpeCap;
-    const laddered = rpeForSet(
-      index,
-      context.athlete.level,
-      context.ctx.isFirstProgramWeek1,
-      context.ctx.ruleset,
-    );
+    const laddered = rpeAt(index);
     const rpe = dayRpeCap === undefined ? laddered : Math.min(laddered, dayRpeCap);
     const row = baseRow(index + 1, context.rest);
     row.reps = setReps;
@@ -279,11 +288,59 @@ function loadableRows(context: RowContext): SetPrescription[] {
   return [...ramps, ...working];
 }
 
+/**
+ * A tendon row the athlete loads: `tendonMode` is `slow_resistance` and the
+ * exercise is loadable, which in the seed is the heavy slow calf raise.
+ *
+ * Prehab is otherwise unloaded, and reading it that way rendered this row as
+ * "8 x BW": the one exercise whose name, its dumbbell and its `loadable` flag
+ * all say the load is the point showed no load at all, so a completed set left
+ * nothing behind to progress and the last-time line had nothing to say.
+ */
+function isLoadedTendonRow(exercise: Exercise, loadType: LoadType): boolean {
+  return loadType === 'prehab' && exercise.loadable && exercise.tendonMode === 'slow_resistance';
+}
+
+/**
+ * The loaded tendon row: reps and a tempo the athlete keeps, at a load they
+ * type against one effort target.
+ *
+ * There is no working max for a calf raise and an Epley estimate off a tendon
+ * row would be noise, so this is RPE mode (R74, R158) exactly as any lift
+ * without a working max is, which is what puts the load in the log and lets it
+ * climb week to week. The effort is one number across the sets rather than the
+ * ascending ladder, because the prehab scheme is straight: heavy slow
+ * resistance is the same load every set, and it takes the top of the standing
+ * ladder, so the level cap and the week-1 cap both still bind it.
+ */
+function loadedTendonRows(context: RowContext): SetPrescription[] {
+  const { scheme, ctx, athlete } = context;
+  const fallback = scheme.repDescent?.[0] ?? DEFAULT_BODYWEIGHT_REPS;
+  const reps = ctx.repsPerSet ?? fallback;
+  const ladder = ctx.ruleset.constants.rpeLadder;
+  const top = rpeForSet(
+    Math.max(0, ladder.length - 1),
+    athlete.level,
+    ctx.isFirstProgramWeek1,
+    ctx.ruleset,
+  );
+  const rows = rpeRows(
+    context,
+    new Array<number>(context.setCount).fill(reps),
+    () => top,
+  );
+  const tempo = scheme.slowResistance;
+  if (tempo === undefined) return rows;
+  const line = formatTempo(tempo.tempoUpS, tempo.tempoDownS);
+  return rows.map((row) => ({ ...row, detailLine: line }));
+}
+
 function buildRows(context: RowContext): SetPrescription[] {
   const { exercise, loadType, scheme } = context;
   if (exercise.displayMode === 'distance') return distanceRows(context);
   if (exercise.displayMode === 'time') return holdRows(context);
   if (exercise.codCutsPerRep !== undefined) return codRows(context);
+  if (isLoadedTendonRow(exercise, loadType)) return loadedTendonRows(context);
   if (
     !exercise.loadable ||
     loadType === 'bodyweight' ||

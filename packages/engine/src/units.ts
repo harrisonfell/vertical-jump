@@ -155,6 +155,17 @@ export function formatHold(seconds: number): string {
   return `${formatInteger(seconds)} s hold`;
 }
 
+/**
+ * A lifting tempo for a row's second line: "3 s up, 3 s down".
+ *
+ * Heavy slow resistance is the load and the tempo together, so the tempo is a
+ * prescription rather than a cue: a calf raise at the same weight taken at
+ * speed is a different exercise.
+ */
+export function formatTempo(upS: number, downS: number): string {
+  return `${formatInteger(upS)} s up, ${formatInteger(downS)} s down`;
+}
+
 /** A distance stored in metres: "15 m". */
 export function formatDistance(meters: number): string {
   return `${formatInteger(meters)} m`;

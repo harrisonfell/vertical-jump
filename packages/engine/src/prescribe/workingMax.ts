@@ -64,7 +64,8 @@ function snapKg(valueKg: number, grid: LoadGrid, stepLb: number): number {
 /**
  * The best qualifying Epley estimate over `logs`, or null when none qualifies.
  * Qualifying means 10 reps or fewer, inside the lookback window, for a lift
- * that is not an Olympic lift. The confidence factor is folded into the value.
+ * that is neither an Olympic lift nor a tendon row. The confidence factor is
+ * folded into the value.
  */
 export function bestEpley(
   logs: SetLog[],
@@ -73,6 +74,13 @@ export function bestEpley(
   asOf: IsoInstant,
 ): WorkingMaxCandidate | null {
   if (exercise.isOlympicLift) return null;
+  // A heavy slow resistance row carries a load the athlete types, but a slow
+  // eight-rep calf raise is a tendon exposure and not a strength attempt: an
+  // Epley estimate off it is noise, and a working max nobody prescribes from
+  // would still be shown, dropped by R97 and charted as a lift. It stays in
+  // RPE mode for its whole life, which is why the load never has to become a
+  // one-rep max to be useful.
+  if (exercise.tendonMode === 'slow_resistance') return null;
   const rules = ruleset.constants.workingMax;
   const asOfMs = Date.parse(asOf);
   const cutoff = asOfMs - rules.epleyLookbackWeeks * MS_PER_WEEK;

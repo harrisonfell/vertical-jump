@@ -57,8 +57,20 @@ export interface LoadScheme {
   repDescentAdvanced?: number[];
   /** R66: prehab isometric hold, constant within a session. */
   holdSecondsRange?: Range;
+  /**
+   * The loaded half of prehab: a tendon row in `slow_resistance` mode is the
+   * load and the tempo, so the tempo is prescribed here rather than left to a
+   * cue. Present on prehab; absent on every load type that has no tempo.
+   */
+  slowResistance?: SlowResistance;
   /** R154 exempts power from the level cap; every other ascending type obeys it. */
   respectsLevelCap: boolean;
+}
+
+/** How a heavy slow resistance row is performed: seconds up, seconds down. */
+export interface SlowResistance {
+  tempoUpS: number;
+  tempoDownS: number;
 }
 
 /** One span of the layout table, "Strength 1-4" and so on. */

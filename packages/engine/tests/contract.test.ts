@@ -116,6 +116,8 @@ describe('ruleset', () => {
     expect(schemes.hypertrophy.repDescent).toEqual([12, 10, 8]);
     expect(schemes.endurance.mode).toBe('straight');
     expect(schemes.prehab.holdSecondsRange).toEqual({ bottom: 30, top: 45 });
+    // The loaded half of prehab: the tempo a heavy slow resistance row is done at.
+    expect(schemes.prehab.slowResistance).toEqual({ tempoUpS: 3, tempoDownS: 3 });
     expect(schemes.mobility.mode).toBe('none');
     expect(schemes.bodyweight.mode).toBe('none');
     expect(schemes.ballistic.mode).toBe('straight');

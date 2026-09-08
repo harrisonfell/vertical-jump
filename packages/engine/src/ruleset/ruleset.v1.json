@@ -840,6 +840,10 @@
           "bottom": 30,
           "top": 45
         },
+        "slowResistance": {
+          "tempoUpS": 3,
+          "tempoDownS": 3
+        },
         "respectsLevelCap": false
       },
       "mobility": {
