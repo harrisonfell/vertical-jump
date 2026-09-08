@@ -126,6 +126,14 @@ export interface SetPrescription {
   detailLine?: string;
   /** R158 per-set RPE; the only per-set display in RPE mode. */
   targetRpe?: number;
+  /**
+   * The load may be left blank: bodyweight alone completes this set, and
+   * anything added rides on top of it. Set on a tendon row, where the same
+   * movement is a bodyweight calf raise until a dumbbell is in the hand, so a
+   * runner that refused to log without a weight would refuse the set the
+   * athlete actually did.
+   */
+  optionalLoad?: boolean;
   /** One value, the longest applicable rule (R164). */
   restS: number;
   /** Plain words naming the rule the rest came from, for the session detail. */

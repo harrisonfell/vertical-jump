@@ -1,11 +1,12 @@
 /**
- * The loaded tendon row: heavy slow resistance.
+ * The tendon row: heavy slow resistance at bodyweight, with a dumbbell the
+ * athlete may add.
  *
- * Prehab is otherwise unloaded, and reading the whole load type that way
- * rendered the heavy slow calf raise as "8 x BW". It is the one prehab
- * exercise in the seed that is loadable, carries a dumbbell, and is named for
- * its load, so the load is the intervention and a row that hides it leaves a
- * completed set with nothing behind it to progress.
+ * Prehab is unloaded as a load type, and reading it that way left the heavy
+ * slow calf raise a bare "8 x BW": no tempo, and nowhere to record a weight if
+ * one is in the hand, so the load could never climb. The row now states the
+ * tempo and offers the load without demanding it, because a bodyweight calf
+ * raise is a complete set and is where the row starts.
  *
  * Every other prehab row is untouched here, which is the other half of the
  * contract: an isometric hold is still a hold.
@@ -83,11 +84,19 @@ describe('the heavy slow calf raise', () => {
     expect(calfRaise.loadType).toBe('prehab');
   });
 
-  it('asks for a load at one effort instead of reading as bodyweight', () => {
+  it('reads as bodyweight with a weight the athlete may add', () => {
     const sets = getPerSetPrescription(calfRaise, makeAthlete('intermediate'), makeContext({ sets: 2 }));
-    expect(displays(sets)).toEqual(['8 reps · RPE 8 · __ lb', '8 reps · RPE 8 · __ lb']);
+    expect(displays(sets)).toEqual(['8 × BW · RPE 8 · + __ lb', '8 × BW · RPE 8 · + __ lb']);
     expect(sets.every((set) => set.loadKg === undefined)).toBe(true);
     expect(sets.every((set) => set.loadPercent === undefined)).toBe(true);
+  });
+
+  it('marks the load optional, so a bodyweight set is a complete set', () => {
+    // The runner refuses to log an RPE row until a load is typed. Without this
+    // flag the row would refuse the bodyweight calf raise outright, which is
+    // the way the exercise is usually done and the way it starts.
+    const sets = getPerSetPrescription(calfRaise, makeAthlete('intermediate'), makeContext({ sets: 2 }));
+    expect(sets.every((set) => set.optionalLoad === true)).toBe(true);
   });
 
   it('carries the tempo on every set, because the tempo is the exercise', () => {

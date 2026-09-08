@@ -21,6 +21,7 @@ const timed: SetRowConfig = { kind: 'timed', durationS: 30 };
 const rpe: SetRowConfig = { kind: 'rpe', initialLoadLb: null };
 const ladder: SetRowConfig = { kind: 'loadable', promptsLanding: true };
 const perSide: SetRowConfig = { kind: 'rpe', initialLoadLb: null, perSide: true };
+const optionalLoad: SetRowConfig = { kind: 'rpe', initialLoadLb: null, loadOptional: true };
 
 describe('a loadable row', () => {
   it('logs as written on one tap', () => {
@@ -141,6 +142,39 @@ describe('an RPE row', () => {
     expect(state.done).toBe(false);
     expect(state.loadLb).toBe(185);
     expect(state.rpe).toBeNull();
+  });
+});
+
+describe('a row whose load is optional', () => {
+  /**
+   * A tendon row: a bodyweight calf raise is a complete set, and the dumbbell
+   * is offered rather than demanded. An RPE row otherwise refuses to log until
+   * a load is typed, which would refuse the set outright.
+   */
+  it('logs with the load left empty', () => {
+    const expanded = run(optionalLoad, [{ type: 'press' }]);
+    expect(canLog(expanded, optionalLoad)).toBe(true);
+    const state = setRowReducer(expanded, { type: 'log' }, optionalLoad);
+    expect(state.done).toBe(true);
+    expect(state.loadLb).toBeNull();
+  });
+
+  it('still keeps a load when one is typed', () => {
+    const state = run(optionalLoad, [
+      { type: 'press' },
+      { type: 'setLoad', loadLb: 45 },
+      { type: 'setRpe', rpe: 8 },
+      { type: 'log' },
+    ]);
+    expect(state.done).toBe(true);
+    expect(state.loadLb).toBe(45);
+    expect(state.rpe).toBe(8);
+  });
+
+  it('leaves an ordinary RPE row needing its load', () => {
+    const expanded = run(rpe, [{ type: 'press' }]);
+    expect(canLog(expanded, rpe)).toBe(false);
+    expect(setRowReducer(expanded, { type: 'log' }, rpe).done).toBe(false);
   });
 });
 

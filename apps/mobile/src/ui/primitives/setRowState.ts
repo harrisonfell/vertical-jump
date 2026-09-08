@@ -33,6 +33,13 @@ export interface SetRowConfig {
    * it is still one set, logged once, undone once.
    */
   readonly perSide?: boolean;
+  /**
+   * The load may be left blank. A tendon row is a bodyweight set with a
+   * dumbbell the athlete may add, so the row logs with the field empty; every
+   * other RPE row still needs the weight, because there the load is the whole
+   * prescription.
+   */
+  readonly loadOptional?: boolean;
 }
 
 export type SetRowPhase = 'idle' | 'expanded' | 'running' | 'landing';
@@ -94,6 +101,7 @@ export function initialSetRowState(config: SetRowConfig, done = false): SetRowSt
 /** True when the row holds everything it needs to be written to the log. */
 export function canLog(state: SetRowState, config: SetRowConfig): boolean {
   if (config.kind !== 'rpe') return true;
+  if (config.loadOptional === true) return true;
   return state.loadLb !== null;
 }
 

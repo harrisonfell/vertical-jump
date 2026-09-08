@@ -217,6 +217,19 @@ export function formatAddedLoadSet(reps: number, addedLb: number): string {
   return `${base} + ${formatLoadLb(addedLb)}`;
 }
 
+/**
+ * A bodyweight row that may carry a load the athlete adds if they have one:
+ * "8 x BW - RPE 8 - + __ lb".
+ *
+ * The blank is a plus, not a load: bodyweight alone is a complete set, and the
+ * field is there because the same movement becomes heavy slow resistance once
+ * a dumbbell is in the hand.
+ */
+export function formatOptionalAddedLoadRow(reps: number, rpe: number): string {
+  const effort = Number.isInteger(rpe) ? `${rpe}` : `${roundHalfUp(rpe, 1)}`;
+  return `${formatInteger(reps)} ${TIMES} BW \u00b7 RPE ${effort} \u00b7 + __ lb`;
+}
+
 /** A sets-by-reps scheme: "3 × 3". */
 export function formatSetsByReps(sets: number, reps: number): string {
   return `${formatInteger(sets)} ${TIMES} ${formatInteger(reps)}`;

@@ -31,7 +31,13 @@ import type { Athlete } from '../types/athlete.js';
 import type { LoadType } from '../types/core.js';
 import type { Exercise } from '../types/exercise.js';
 import type { SetPrescription } from '../types/plan.js';
-import { formatTempo, kgToLb, lbToKg, type LoadGrid } from '../units.js';
+import {
+  formatOptionalAddedLoadRow,
+  formatTempo,
+  kgToLb,
+  lbToKg,
+  type LoadGrid,
+} from '../units.js';
 import { defaultRole, hasWorkingMax, type PrescribeContext } from './context.js';
 import { resolveCapPctFrom } from './caps.js';
 import {
@@ -289,31 +295,37 @@ function loadableRows(context: RowContext): SetPrescription[] {
 }
 
 /**
- * A tendon row the athlete loads: `tendonMode` is `slow_resistance` and the
- * exercise is loadable, which in the seed is the heavy slow calf raise.
+ * A tendon row whose load is the athlete's to add: `tendonMode` is
+ * `slow_resistance` and the exercise is loadable, which in the seed is the
+ * heavy slow calf raise.
  *
- * Prehab is otherwise unloaded, and reading it that way rendered this row as
- * "8 x BW": the one exercise whose name, its dumbbell and its `loadable` flag
- * all say the load is the point showed no load at all, so a completed set left
- * nothing behind to progress and the last-time line had nothing to say.
+ * Prehab is unloaded as a load type, and reading it that way left this row as
+ * a bare "8 x BW" with nowhere to record a dumbbell and no tempo, so the load
+ * could never climb week to week. It is not a loaded row either: a bodyweight
+ * calf raise is a complete set and is where most athletes start, so the weight
+ * is offered rather than demanded.
  */
-function isLoadedTendonRow(exercise: Exercise, loadType: LoadType): boolean {
+function isTendonRow(exercise: Exercise, loadType: LoadType): boolean {
   return loadType === 'prehab' && exercise.loadable && exercise.tendonMode === 'slow_resistance';
 }
 
 /**
- * The loaded tendon row: reps and a tempo the athlete keeps, at a load they
- * type against one effort target.
+ * The tendon row: reps and a tempo the athlete keeps, at bodyweight, with a
+ * dumbbell they may add on top.
  *
  * There is no working max for a calf raise and an Epley estimate off a tendon
- * row would be noise, so this is RPE mode (R74, R158) exactly as any lift
- * without a working max is, which is what puts the load in the log and lets it
- * climb week to week. The effort is one number across the sets rather than the
- * ascending ladder, because the prehab scheme is straight: heavy slow
- * resistance is the same load every set, and it takes the top of the standing
- * ladder, so the level cap and the week-1 cap both still bind it.
+ * row would be noise, so the effort is stated and the load is typed (R74,
+ * R158), which is what lets a weight reach the log at all. It is one effort
+ * number across the sets rather than the ascending ladder, because the prehab
+ * scheme is straight: the load is meant to be the same on every set. The
+ * effort takes the top of the standing ladder, so the level cap and the week-1
+ * cap both still bind it.
+ *
+ * An effort that comes in well under the target is the row's own signal that
+ * bodyweight has stopped being heavy, which is the point at which a dumbbell
+ * is worth adding.
  */
-function loadedTendonRows(context: RowContext): SetPrescription[] {
+function tendonRows(context: RowContext): SetPrescription[] {
   const { scheme, ctx, athlete } = context;
   const fallback = scheme.repDescent?.[0] ?? DEFAULT_BODYWEIGHT_REPS;
   const reps = ctx.repsPerSet ?? fallback;
@@ -324,15 +336,17 @@ function loadedTendonRows(context: RowContext): SetPrescription[] {
     ctx.isFirstProgramWeek1,
     ctx.ruleset,
   );
-  const rows = rpeRows(
-    context,
-    new Array<number>(context.setCount).fill(reps),
-    () => top,
-  );
   const tempo = scheme.slowResistance;
-  if (tempo === undefined) return rows;
-  const line = formatTempo(tempo.tempoUpS, tempo.tempoDownS);
-  return rows.map((row) => ({ ...row, detailLine: line }));
+  const line = tempo === undefined ? undefined : formatTempo(tempo.tempoUpS, tempo.tempoDownS);
+  return rpeRows(context, new Array<number>(context.setCount).fill(reps), () => top).map((row) => {
+    const next: SetPrescription = {
+      ...row,
+      optionalLoad: true,
+      displayLoad: formatOptionalAddedLoadRow(row.reps ?? reps, row.targetRpe ?? top),
+    };
+    if (line !== undefined) next.detailLine = line;
+    return next;
+  });
 }
 
 function buildRows(context: RowContext): SetPrescription[] {
@@ -340,7 +354,7 @@ function buildRows(context: RowContext): SetPrescription[] {
   if (exercise.displayMode === 'distance') return distanceRows(context);
   if (exercise.displayMode === 'time') return holdRows(context);
   if (exercise.codCutsPerRep !== undefined) return codRows(context);
-  if (isLoadedTendonRow(exercise, loadType)) return loadedTendonRows(context);
+  if (isTendonRow(exercise, loadType)) return tendonRows(context);
   if (
     !exercise.loadable ||
     loadType === 'bodyweight' ||

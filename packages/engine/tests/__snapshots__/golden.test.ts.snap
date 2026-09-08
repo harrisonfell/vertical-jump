@@ -415,9 +415,10 @@ exports[`golden: the whole week, snapshotted > matches the stored WeekPlan 1`] =
               "sets": [
                 {
                   "detailLine": "3 s up, 3 s down",
-                  "displayLoad": "8 reps · RPE 8 · __ lb",
+                  "displayLoad": "8 × BW · RPE 8 · + __ lb",
                   "isHeld": false,
                   "isRamp": false,
+                  "optionalLoad": true,
                   "reps": 8,
                   "restRule": "prehab and mobility",
                   "restS": 60,
@@ -426,9 +427,10 @@ exports[`golden: the whole week, snapshotted > matches the stored WeekPlan 1`] =
                 },
                 {
                   "detailLine": "3 s up, 3 s down",
-                  "displayLoad": "8 reps · RPE 8 · __ lb",
+                  "displayLoad": "8 × BW · RPE 8 · + __ lb",
                   "isHeld": false,
                   "isRamp": false,
+                  "optionalLoad": true,
                   "reps": 8,
                   "restRule": "prehab and mobility",
                   "restS": 60,
@@ -437,9 +439,10 @@ exports[`golden: the whole week, snapshotted > matches the stored WeekPlan 1`] =
                 },
                 {
                   "detailLine": "3 s up, 3 s down",
-                  "displayLoad": "8 reps · RPE 8 · __ lb",
+                  "displayLoad": "8 × BW · RPE 8 · + __ lb",
                   "isHeld": false,
                   "isRamp": false,
+                  "optionalLoad": true,
                   "reps": 8,
                   "restRule": "prehab and mobility",
                   "restS": 60,
@@ -1084,9 +1087,10 @@ exports[`golden: the whole week, snapshotted > matches the stored WeekPlan 1`] =
               "sets": [
                 {
                   "detailLine": "3 s up, 3 s down",
-                  "displayLoad": "8 reps · RPE 8 · __ lb",
+                  "displayLoad": "8 × BW · RPE 8 · + __ lb",
                   "isHeld": false,
                   "isRamp": false,
+                  "optionalLoad": true,
                   "reps": 8,
                   "restRule": "prehab and mobility",
                   "restS": 60,
@@ -1095,9 +1099,10 @@ exports[`golden: the whole week, snapshotted > matches the stored WeekPlan 1`] =
                 },
                 {
                   "detailLine": "3 s up, 3 s down",
-                  "displayLoad": "8 reps · RPE 8 · __ lb",
+                  "displayLoad": "8 × BW · RPE 8 · + __ lb",
                   "isHeld": false,
                   "isRamp": false,
+                  "optionalLoad": true,
                   "reps": 8,
                   "restRule": "prehab and mobility",
                   "restS": 60,
@@ -1106,9 +1111,10 @@ exports[`golden: the whole week, snapshotted > matches the stored WeekPlan 1`] =
                 },
                 {
                   "detailLine": "3 s up, 3 s down",
-                  "displayLoad": "8 reps · RPE 8 · __ lb",
+                  "displayLoad": "8 × BW · RPE 8 · + __ lb",
                   "isHeld": false,
                   "isRamp": false,
+                  "optionalLoad": true,
                   "reps": 8,
                   "restRule": "prehab and mobility",
                   "restS": 60,

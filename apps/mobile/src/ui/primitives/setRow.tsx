@@ -70,6 +70,11 @@ export interface SetRowProps {
    */
   readonly perSide?: boolean;
   /**
+   * The load may be left blank: a bodyweight set with a weight the athlete may
+   * add. The row logs with the field empty and the field reads as a plus.
+   */
+  readonly loadOptional?: boolean;
+  /**
    * How the typed load reads in the RPE panel's field. It must return the bare
    * number, with the unit carried by `loadUnit`: the field is controlled on
    * this string, and "205 lb" is not something the numeric parser will take
@@ -103,6 +108,7 @@ export function SetRow({
   loadStep = 5,
   targetRpe,
   perSide = false,
+  loadOptional = false,
   formatLoad = bareLoad,
   loadUnit = 'lb',
   onLog,
@@ -121,8 +127,9 @@ export function SetRow({
       promptsLanding,
       initialLoadLb: loadLb,
       perSide,
+      loadOptional,
     }),
-    [durationS, kind, loadLb, perSide, promptsLanding],
+    [durationS, kind, loadLb, loadOptional, perSide, promptsLanding],
   );
 
   const [state, dispatch] = useReducer(
@@ -266,6 +273,7 @@ export function SetRow({
           rpeLeft={state.rpeLeft}
           rpeRight={state.rpeRight}
           perSide={perSide}
+          loadOptional={loadOptional}
           step={loadStep}
           format={formatLoad}
           unit={loadUnit}
@@ -353,6 +361,8 @@ interface RpePanelProps {
   readonly rpeRight: number | null;
   /** A unilateral row: two effort rows, one per leg, instead of one. */
   readonly perSide: boolean;
+  /** The load may be left blank, so the field is a plus and never a gate. */
+  readonly loadOptional: boolean;
   readonly step: number;
   readonly format: (lb: number) => string;
   readonly unit: string;
@@ -390,6 +400,7 @@ function RpePanel({
   rpeLeft,
   rpeRight,
   perSide,
+  loadOptional,
   step,
   format,
   unit,
@@ -404,7 +415,7 @@ function RpePanel({
   return (
     <View style={{ paddingBottom: space.md, gap: space.md }}>
       <Stepper
-        label="Load"
+        label={loadOptional ? 'Added load (optional)' : 'Load'}
         value={load ?? 0}
         step={step}
         min={0}
@@ -441,7 +452,13 @@ function RpePanel({
         variant="primary"
         disabled={!loggable}
         onPress={onSubmit}
-        accessibilityHint={loggable ? undefined : 'Enter the load you used first'}
+        accessibilityHint={
+          loggable
+            ? loadOptional
+              ? 'Leave the load empty for a bodyweight set'
+              : undefined
+            : 'Enter the load you used first'
+        }
       />
     </View>
   );
