@@ -139,6 +139,9 @@ export function ownerAthletePatch(today: LocalDate, timezone: string, at: string
     standingReachMm: null,
     timezone,
     inSeason: false,
+    // Volleyball on Tuesday and Thursday trains the legs and the jumping, so
+    // the week's spare day goes to the upper body.
+    emphasis: 'upper_body',
     workingMax: workingMaxesFrom(OWNER_STEP_TWO, at),
     bestSets: bestSetsFrom(OWNER_STEP_TWO.bestSets, today) as unknown as Json,
     readinessConfig: toReadinessTestConfig(OWNER_STEP_TWO.readinessConfig) as unknown as Json,

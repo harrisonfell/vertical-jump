@@ -81,6 +81,12 @@ export interface TemplateOptions {
    * pull beside its jumps, in place of the fourth jump row.
    */
   explosivePullRow?: boolean;
+  /**
+   * The upper-body emphasis: the Upper + Mobility day that replaced Recovery
+   * keeps its accessory rows to pushes and pulls, so the day the athlete gave
+   * to the upper body is spent on it.
+   */
+  upperOnlyAccessories?: boolean;
 }
 
 /**
@@ -407,14 +413,28 @@ function powerTemplate(options: TemplateOptions): RoleSlot[] {
   return slots;
 }
 
-function upperMobilityTemplate(): RoleSlot[] {
-  return [
+/** A push or a pull: what the upper-body emphasis keeps on its spare day. */
+export function isUpperBodyRow(exercise: Exercise): boolean {
+  return exercise.isPush || exercise.isPulling;
+}
+
+function upperMobilityTemplate(options: TemplateOptions): RoleSlot[] {
+  const accessory: RoleSlot = { block: 'accessory', role: 'accessory', count: 2, min: 1, grouped: false, precedence: PRECEDENCE.accessory };
+  if (options.upperOnlyAccessories === true) accessory.filter = isUpperBodyRow;
+  const slots: RoleSlot[] = [
     { block: 'warm_up', role: 'warm_up', count: 3, min: 2, grouped: true, precedence: PRECEDENCE.warmUp },
     { block: 'main_lift', role: 'main_lift', count: 1, min: 1, grouped: false, precedence: PRECEDENCE.mainLift },
-    { block: 'accessory', role: 'accessory', count: 2, min: 1, grouped: false, precedence: PRECEDENCE.accessory },
+    accessory,
+  ];
+  // House `house.sc.rnt_valgus_control`: the upper-body emphasis puts this day
+  // where Recovery was, and the RNT placement may pick it, so it carries the
+  // knee-alignment row when chosen, as the power days do.
+  if (options.rntSlot === true) slots.push(injuryPreventionSlot(options));
+  slots.push(
     { block: 'injury_prevention_core', role: 'core', count: 1, min: 0, grouped: false, precedence: PRECEDENCE.core },
     { block: 'cool_down', role: 'cool_down', count: 2, min: 1, grouped: true, precedence: PRECEDENCE.coolDown },
-  ];
+  );
+  return slots;
 }
 
 function recoveryTemplate(): RoleSlot[] {
@@ -436,7 +456,7 @@ export function templateFor(dayType: DayType, options: TemplateOptions): RoleSlo
     case 'lower_strength':
       return strengthTemplate(options);
     case 'upper_mobility':
-      return upperMobilityTemplate();
+      return upperMobilityTemplate(options);
     case 'power_speed':
     case 'power':
     case 'speed':

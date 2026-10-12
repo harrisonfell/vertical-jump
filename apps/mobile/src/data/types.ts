@@ -14,6 +14,7 @@ import type {
   Instrument,
   Json,
   LocalDate,
+  ProgramEmphasis,
   Side,
   Timestamp,
 } from './typesPrimitives';
@@ -106,6 +107,11 @@ export interface Athlete {
    * per lift, `{ reps, loadKg, rpe?, at }`. Absent means none was ever typed.
    */
   readonly bestSets?: Json;
+  /**
+   * Where the week's spare day goes (migration 7). Null and absent read as
+   * 'balanced', the rule book's template.
+   */
+  readonly emphasis?: ProgramEmphasis | null;
   readonly createdAt: Timestamp;
   readonly updatedAt: Timestamp;
 }

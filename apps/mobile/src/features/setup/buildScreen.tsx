@@ -1,14 +1,15 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { View } from 'react-native';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { formatInteger } from '@vert/engine';
+import { formatInteger, programStartFor, type Weekday } from '@vert/engine';
 import { href } from '@/app';
 import {
   nowIso,
   queryKeys,
   useAthlete,
   useDbOrNull,
+  useCurrentProgram,
   useDbReady,
   usePainStatus,
   useToday,
@@ -24,7 +25,7 @@ import {
   Text,
   space,
 } from '@/ui';
-import { SETUP_COPY, formatDayDate } from './copy';
+import { SETUP_COPY, formatDayDate, restartLines } from './copy';
 import {
   GenerationBlockedError,
   buildFailureLines,
@@ -78,6 +79,15 @@ export function BuildScreen() {
   const athlete = useAthlete();
   const pains = usePainStatus();
   const baseline = useBaselineTest();
+  // A build over an active program is a restart from week 1. Latched the first
+  // time the query settles: once the build lands the current program is the
+  // new one, and a first build must not turn into a restart behind its sheet.
+  const current = useCurrentProgram();
+  const restartLatch = useRef<boolean | null>(null);
+  if (restartLatch.current === null && !current.isPending) {
+    restartLatch.current = current.data != null;
+  }
+  const restart = restartLatch.current === true;
 
   const [plan, setPlan] = useState<BuildPlan | null>(null);
   const [failure, setFailure] = useState<Failure | null>(null);
@@ -139,7 +149,7 @@ export function BuildScreen() {
     },
   });
 
-  if (!ready || athlete.isPending || pains.isPending || baseline.isPending) {
+  if (!ready || athlete.isPending || pains.isPending || baseline.isPending || current.isPending) {
     return (
       <Screen testID="setup-build-loading">
         <Skeleton skeletonFor="header" />
@@ -164,10 +174,25 @@ export function BuildScreen() {
           ),
         });
 
+  const picks = (row?.weekdays ?? []).filter(
+    (day): day is Weekday => Number.isInteger(day) && day >= 0 && day <= 6,
+  );
+  const week1Start = picks.length === 0 ? null : programStartFor(today, picks);
+
   return (
     <Screen testID="setup-build">
-      <StepFrame title={SETUP_COPY.buildTitle} lead={SETUP_COPY.buildLead}>
+      <StepFrame
+        title={restart ? SETUP_COPY.restartTitle : SETUP_COPY.buildTitle}
+        lead={SETUP_COPY.buildLead}
+      >
         <View style={{ gap: space.lg }}>
+          {!restart || week1Start === null
+            ? null
+            : restartLines(week1Start).map((line) => (
+                <Text key={line} variant="body" color="ink2">
+                  {line}
+                </Text>
+              ))}
           {row?.daysPerWeek == null ? null : (
             <Text variant="body" color="ink2">
               {`${formatInteger(row.daysPerWeek)} days a week${
@@ -195,7 +220,13 @@ export function BuildScreen() {
 
           {progress === null ? (
             <Button
-              label={build.isError ? SETUP_COPY.buildRetry : SETUP_COPY.buildAction}
+              label={
+                build.isError
+                  ? SETUP_COPY.buildRetry
+                  : restart
+                    ? SETUP_COPY.restartAction
+                    : SETUP_COPY.buildAction
+              }
               onPress={() => build.mutate()}
               fullWidth
               testID="build-run"

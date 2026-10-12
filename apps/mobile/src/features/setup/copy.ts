@@ -170,6 +170,8 @@ export const SETUP_COPY = {
   buildSummaryTitle: 'Program built',
   buildGoToToday: 'Go to Today',
   buildBackToAnswers: 'Change your answers',
+  restartTitle: 'Restart from week 1',
+  restartAction: 'Restart from week 1',
 
   /* pairing */
   pairTitle: 'Pair this phone',
@@ -216,6 +218,18 @@ export function gymWindowDetail(
 export function formatDayDate(date: LocalDate): string {
   const short = WEEKDAY_SHORT[weekdayOf(date)] ?? '';
   return `${short} ${formatShortDate(date)}`;
+}
+
+/**
+ * What a restart says before it runs: the day the new week 1 starts and what
+ * happens to the program it replaces. Shared by the Settings sheet and the
+ * build screen so the two say it the same way.
+ */
+export function restartLines(week1Start: LocalDate): string[] {
+  return [
+    `Week 1 starts ${formatDayDate(week1Start)}. Every week is built again from your current answers.`,
+    'Sessions you logged or opened stay in your history. Sessions you have not started are replaced.',
+  ];
 }
 
 export interface ProgramBuiltInput {

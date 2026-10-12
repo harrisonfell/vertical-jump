@@ -328,6 +328,21 @@ function* climbingCases(report: GridReport): Generator<Case> {
     }
   }
 
+  report.sampled.push(
+    "speed climbing: the upper-body emphasis on the owner's picks and every owner wall, W 12",
+  );
+  for (const picks of PICK_CASES) {
+    for (const wall of WALL_CASES.slice(3)) {
+      const athlete = climbingAthlete(picks.days);
+      athlete.weekdays = [...picks.weekdays];
+      athlete.sessionWindow = { ...MORNING_WINDOW };
+      athlete.emphasis = 'upper_body';
+      if (wall.wallWork !== undefined) athlete.wallWork = wall.wallWork;
+      athlete.targetDate = addDays(PROGRAM_START, 11 * 7);
+      yield { athlete, label: `sc W12/upper emphasis/${picks.name}/${wall.name}` };
+    }
+  }
+
   report.sampled.push('speed climbing: hangboard present and absent at W 12 x days 4 and 5');
   for (const days of [4, 5] as DaysPerWeek[]) {
     const athlete = climbingAthlete(days);

@@ -13,7 +13,7 @@
  * On Today only the words are shown; the number lives in the Plan summary,
  * and in the setup refusals, which say it out loud.
  */
-import type { DayType, DaysPerWeek, Sport } from './types/core.js';
+import type { DayType, DaysPerWeek, ProgramEmphasis, Sport } from './types/core.js';
 import type { SessionWindow, WallWork } from './types/athlete.js';
 import type { LocalDate, Weekday } from './types/calendar.js';
 import type { MoveDecision } from './types/logs.js';
@@ -190,6 +190,8 @@ function isStrengthDayType(dayType: DayType): boolean {
  */
 export interface WeekdayLayoutContext {
   sport: Sport;
+  /** The athlete's week emphasis; absent reads as `balanced`. */
+  emphasis?: ProgramEmphasis;
   wallWork?: WallWork;
   sessionWindow?: SessionWindow;
 }
@@ -232,7 +234,7 @@ export function validateWeekdayLayout(
     }
   }
 
-  const base = dayTypesFor(daysPerWeek);
+  const base = dayTypesFor(daysPerWeek, context?.emphasis);
   // House `house.sc.sport_requirements`: a climber's picks decide which day
   // carries what, so the spacing rules below are checked against the placement
   // the generator will actually build, not against the template order.
@@ -284,7 +286,7 @@ export function weekdayLayoutNote(
   if (context === undefined || !isDaysPerWeek(daysPerWeek)) return null;
   const picks: Weekday[] = weekdays.filter(isWeekday);
   if (picks.length !== daysPerWeek) return null;
-  const base = dayTypesFor(daysPerWeek);
+  const base = dayTypesFor(daysPerWeek, context.emphasis);
   if (!base.includes('upper_strength')) return null;
   const wall = wallPlacementFor(context, ruleset);
   if (wall === undefined) return null;

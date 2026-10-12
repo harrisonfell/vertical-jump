@@ -33,6 +33,7 @@ const base: ProgramParams = {
   goalHeightMm: 914.4,
   targetDate: '2026-11-29',
   inSeason: false,
+  emphasis: 'balanced',
   bodyweightKg: 82,
   fingerHistory: false,
   gripMode: 'any',
@@ -49,6 +50,14 @@ describe('program parameter changes', () => {
   it('sees nothing when nothing moved', () => {
     expect(diffParams(base, { ...base })).toEqual([]);
     expect(needsRegeneration([])).toBe(false);
+  });
+
+  it('names the week emphasis in the words the row uses, and rebuilds for it', () => {
+    const changes = diffParams(base, { ...base, emphasis: 'upper_body' });
+    expect(changes).toEqual([
+      { field: 'emphasis', label: 'Week emphasis', from: 'Balanced', to: 'Upper body' },
+    ]);
+    expect(needsRegeneration(changes)).toBe(true);
   });
 
   it('names each change in the athlete’s own words', () => {

@@ -1,5 +1,5 @@
 import { kgToLb, roundHalfUp } from '@vert/engine';
-import type { Athlete, LocalDate } from '@/data';
+import type { Athlete, LocalDate, ProgramEmphasis } from '@/data';
 import { readSessionWindow } from '@/lib/engineAthlete';
 import { climbingAnswersFrom } from '../setup/climbing';
 
@@ -24,6 +24,8 @@ export interface ProgramDraft {
   readonly goalHeightMm: number | null;
   readonly targetDate: LocalDate | null;
   readonly inSeason: boolean;
+  /** Where the week's spare day goes: the rule book's Recovery, or the upper body. */
+  readonly emphasis: ProgramEmphasis;
   readonly bodyweightKg: number | null;
   /** What the athlete typed, kept verbatim so an error never clears a field. */
   readonly goalText: string;
@@ -51,6 +53,7 @@ export function draftFrom(athlete: Athlete): ProgramDraft {
     goalHeightMm: athlete.goalHeightMm,
     targetDate: athlete.targetDate,
     inSeason: athlete.inSeason,
+    emphasis: athlete.emphasis === 'upper_body' ? 'upper_body' : 'balanced',
     bodyweightKg: athlete.bodyweightKg,
     goalText: athlete.goalHeightMm === null ? '' : `${roundHalfUp(athlete.goalHeightMm / 25.4, 1)}`,
     targetText: athlete.targetDate ?? '',

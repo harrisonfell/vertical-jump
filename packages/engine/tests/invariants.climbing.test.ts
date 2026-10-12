@@ -66,7 +66,7 @@ describe('invariants over the speed-climbing grid', () => {
       expect(report.programs).toBeGreaterThan(100);
       expect(report.weeks).toBeGreaterThan(700);
       expect(report.sessions).toBeGreaterThan(3000);
-      expect(report.sampled).toHaveLength(5);
+      expect(report.sampled).toHaveLength(6);
     },
     120000,
   );

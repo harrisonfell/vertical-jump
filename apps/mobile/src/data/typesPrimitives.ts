@@ -22,6 +22,9 @@ export type GripMode = 'open_hand' | 'half_crimp' | 'full_crimp' | 'any';
 
 export type Side = 'left' | 'right';
 
+/** Where the week's spare day goes: the rule book's template, or the upper body. */
+export type ProgramEmphasis = 'balanced' | 'upper_body';
+
 /** House `house.sc.readiness_gate`: the swappable neuromuscular test. */
 export type ReadinessTestKind = 'seated_mb_throw' | 'cmj' | 'rsi';
 

@@ -172,6 +172,7 @@ function templateOptionsFor(context: SelectContext, placement: ClimbingPlacement
     allowsConditioning: placement.requirements.allowsConditioningBlock,
     extraPowerRow: placement.requirements.sport === 'speed_climbing',
     explosivePullRow: placement.requirements.sport === 'speed_climbing' && session.dayType === 'speed',
+    upperOnlyAccessories: athlete.emphasis === 'upper_body' && session.dayType === 'upper_mobility',
   };
 }
 

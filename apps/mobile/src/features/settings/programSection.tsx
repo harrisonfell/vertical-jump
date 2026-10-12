@@ -1,9 +1,23 @@
 import { useState } from 'react';
 import { View } from 'react-native';
-import { formatHeightIn, formatInteger, formatLoadLb, kgToLb, roundHalfUp } from '@vert/engine';
-import type { Athlete } from '@/data';
+import {
+  formatHeightIn,
+  formatInteger,
+  formatLoadLb,
+  kgToLb,
+  programStartFor,
+  roundHalfUp,
+  type Weekday,
+} from '@vert/engine';
+import { useToday, type Athlete } from '@/data';
 import { Button, Notice, Sheet, Text, space } from '@/ui';
-import { climbingAnswersFrom, clockWindowLabel, showsGripBlock } from '../setup';
+import {
+  SETUP_COPY,
+  climbingAnswersFrom,
+  clockWindowLabel,
+  restartLines,
+  showsGripBlock,
+} from '../setup';
 import { revisePlanCopy, REVISE_LABEL, useRevise, useRevisionTarget } from '../plan';
 import { RowDivider, SettingRow, SettingSection } from './row';
 import { DATE_SHAPE, draftFrom, wallWindowLabel, type ProgramDraft } from './programDraft';
@@ -14,6 +28,8 @@ import {
   NOT_BUILT_VALUE,
 } from './sections';
 import {
+  EMPHASIS_CAPTION,
+  emphasisLabel,
   formatCalendarDate,
   weekdaysLabel,
   type ParamChange,
@@ -39,6 +55,8 @@ export interface ProgramSectionProps {
   readonly built: boolean;
   /** Opens setup at the step that asks for the days, the goal and the date. */
   readonly onBuild: () => void;
+  /** Opens the build screen, which restarts the program from week 1. */
+  readonly onRestart: () => void;
   /** The pending, unsaved edits laid over the athlete. */
   readonly draft: ProgramDraft;
   readonly onDraft: (draft: ProgramDraft) => void;
@@ -57,6 +75,7 @@ export function ProgramSection({
   athlete,
   built,
   onBuild,
+  onRestart,
   draft,
   onDraft,
   weekdayRefusal,
@@ -151,6 +170,15 @@ export function ProgramSection({
       />
       <RowDivider />
       <SettingRow
+        label="Week emphasis"
+        value={emphasisLabel(draft.emphasis)}
+        caption={EMPHASIS_CAPTION}
+        chevron
+        onPress={() => setEditing(true)}
+        testID="settings-emphasis"
+      />
+      <RowDivider />
+      <SettingRow
         label="Bodyweight"
         value={
           draft.bodyweightKg === null
@@ -225,6 +253,8 @@ export function ProgramSection({
 
       <RowDivider />
       <RevisePlanRow />
+      <RowDivider />
+      <RestartRow weekdays={athlete.weekdays} onRestart={onRestart} />
 
       <Sheet
         visible={editing}
@@ -324,6 +354,65 @@ export function RevisePlanRow() {
             </Text>
           ))}
           {failure === null ? null : <Notice text={failure.message} live />}
+        </View>
+      </Sheet>
+    </View>
+  );
+}
+
+/**
+ * "Restart from week 1": a new program from this week, built from the answers
+ * on file. The sheet says when week 1 starts and what happens to the program
+ * it replaces before the build screen opens; nothing is written here.
+ */
+export function RestartRow({
+  weekdays,
+  onRestart,
+}: {
+  readonly weekdays: readonly number[];
+  readonly onRestart: () => void;
+}) {
+  const today = useToday();
+  const [asking, setAsking] = useState(false);
+  const picks = weekdays.filter(
+    (day): day is Weekday => Number.isInteger(day) && day >= 0 && day <= 6,
+  );
+  if (picks.length === 0) return null;
+  const week1Start = programStartFor(today, picks);
+
+  return (
+    <View>
+      <SettingRow
+        label={SETUP_COPY.restartTitle}
+        caption="A new week 1 from your current answers."
+        chevron
+        onPress={() => setAsking(true)}
+        testID="settings-restart"
+      />
+      <Sheet
+        visible={asking}
+        onClose={() => setAsking(false)}
+        title={`${SETUP_COPY.restartTitle}?`}
+        closeLabel="Keep the current plan"
+        actions={
+          <Button
+            label={SETUP_COPY.restartAction}
+            variant="primary"
+            fullWidth
+            onPress={() => {
+              setAsking(false);
+              onRestart();
+            }}
+            testID="settings-restart-confirm"
+          />
+        }
+      >
+        <View style={{ gap: space.sm }}>
+          {restartLines(week1Start).map((line) => (
+            <Text key={line} variant="body" color="ink2">
+              {line}
+            </Text>
+          ))}
         </View>
       </Sheet>
     </View>

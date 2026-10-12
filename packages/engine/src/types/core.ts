@@ -65,6 +65,15 @@ export type Sport =
   | 'speed_climbing'
   | 'none';
 
+/**
+ * Where the week's spare day goes. `balanced` is the rule book's template
+ * (R133 to R136). `upper_body` is the owner's choice for an athlete whose
+ * lower body and jumping are already trained elsewhere (volleyball, for the
+ * owner): at four and five days the Recovery day becomes a second upper-body
+ * day, and the Lower Strength and Power days stay as they are.
+ */
+export type ProgramEmphasis = 'balanced' | 'upper_body';
+
 /** Onboarding question 1 (R112 to R115 key off this). */
 export type PrimaryGoal =
   | 'vertical_jump'

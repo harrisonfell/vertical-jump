@@ -414,5 +414,8 @@ export function toEngineAthlete(input: EngineAthleteInput): EngineAthlete {
   athlete.readinessConfig = readReadinessConfig(row.readinessConfig ?? null);
   const bestSets = readBestSets(row.bestSets ?? null);
   if (Object.keys(bestSets).length > 0) athlete.bestSets = bestSets;
+  // Only the upper-body emphasis is written onto the engine athlete: absent is
+  // 'balanced', so an athlete who never answered builds the same program.
+  if (row.emphasis === 'upper_body') athlete.emphasis = 'upper_body';
   return athlete;
 }

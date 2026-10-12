@@ -11,6 +11,7 @@ import {
   climbingDefaults,
 } from '../setup';
 import type { ProgramDraft } from './programDraft';
+import { EMPHASIS_CAPTION } from './regenerate';
 import { DATE_SHAPE } from './programDraft';
 
 /**
@@ -171,6 +172,31 @@ export function ProgramSheetBody({
             onPress={() => onDraft({ ...draft, inSeason: false })}
           />
         </View>
+      </View>
+
+      <View style={{ gap: space.sm }}>
+        <Text variant="label" color="ink3">
+          Week emphasis
+        </Text>
+        <View style={{ flexDirection: 'row', gap: space.sm }}>
+          <Chip
+            label="Balanced"
+            role="radio"
+            selected={draft.emphasis === 'balanced'}
+            onPress={() => onDraft({ ...draft, emphasis: 'balanced' })}
+            testID="settings-emphasis-balanced"
+          />
+          <Chip
+            label="Upper body"
+            role="radio"
+            selected={draft.emphasis === 'upper_body'}
+            onPress={() => onDraft({ ...draft, emphasis: 'upper_body' })}
+            testID="settings-emphasis-upper"
+          />
+        </View>
+        <Text variant="caption" color="ink3">
+          {EMPHASIS_CAPTION}
+        </Text>
       </View>
 
       <Field

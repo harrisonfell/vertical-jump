@@ -6,10 +6,16 @@ import { upsertAthlete } from '../../data/store/athlete';
 import {
   getCurrentProgram,
   getLatestProgramVersion,
+  getProgram,
   listBlocks,
   listWeeks,
 } from '../../data/store/program';
-import { listSessionExercises, listSessionsByWeek } from '../../data/store/sessions';
+import {
+  listSessionExercises,
+  listSessionsBetween,
+  listSessionsByWeek,
+  markSessionStarted,
+} from '../../data/store/sessions';
 import type { Athlete } from '../../data/types';
 import { buildProgramPlan, type BuildPlan } from './buildProgram';
 import { buildStepCount, writeStepCount, type WriteProgress } from './buildProgress';
@@ -257,5 +263,49 @@ describe('writeProgramPlan', () => {
     expect(heard[0]?.done).toBe(offset + 1);
     expect(heard[heard.length - 1]?.done).toBe(total);
     expect(heard.every((progress) => progress.total === total)).toBe(true);
+  });
+});
+
+describe('a restart from week 1 over an active program', () => {
+  /** A Monday four weeks into the first program: its week 5. */
+  const RESTART = '2026-10-05';
+
+  it('supersedes the old program and leaves one workout a day from the new week 1 on', async () => {
+    const fresh = await openMigratedTestDb();
+    await upsertAthlete(fresh, { ...athlete });
+    const oldId = await writeProgramPlan(fresh, plan);
+    const oldWeeks = await listWeeks(fresh, oldId);
+
+    // Week 5 holds work: its first session was opened. Week 6 holds none.
+    const fifth = await listSessionsByWeek(fresh, oldWeeks[4]?.id ?? '', RESTART);
+    const opened = fifth[0];
+    if (opened === undefined) throw new Error('week 5 has no sessions');
+    await markSessionStarted(fresh, opened.id, `${RESTART}T12:00:00.000Z`);
+
+    const restart = buildProgramPlan({
+      athlete,
+      pains: [],
+      baseline: { heightMm: inToMm(29.4), instrument: 'ovr_jump_regular' },
+      today: RESTART,
+      generatedAt: `${RESTART}T12:00:00.000Z`,
+    });
+    expect(restart.skeleton.programStart).toBe(RESTART);
+    const newId = await writeProgramPlan(fresh, restart);
+
+    expect((await getCurrentProgram(fresh))?.id).toBe(newId);
+    expect((await getProgram(fresh, oldId))?.status).toBe('superseded');
+
+    const before = await listSessionsBetween(fresh, '2026-09-07', '2026-10-04', RESTART);
+    expect(before.every((session) => session.programId === oldId)).toBe(true);
+    expect(before.length).toBe(
+      plan.weeks.slice(0, 4).reduce((sum, week) => sum + week.sessions.length, 0),
+    );
+
+    const after = await listSessionsBetween(fresh, RESTART, '2027-12-31', RESTART);
+    const kept = after.filter((session) => session.programId === oldId);
+    expect(kept.map((session) => session.id)).toEqual([opened.id]);
+    const fresh1 = after.filter((session) => session.programId === newId);
+    expect(fresh1.length).toBe(restart.weeks.reduce((sum, week) => sum + week.sessions.length, 0));
+    expect(fresh1[0]?.scheduledDate).toBe(RESTART);
   });
 });

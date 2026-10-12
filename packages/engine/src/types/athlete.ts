@@ -14,6 +14,7 @@ import type {
   PainSeverity,
   PainSeverityRaw,
   PrimaryGoal,
+  ProgramEmphasis,
   SecondaryGoal,
   Side,
   Sport,
@@ -217,6 +218,13 @@ export interface Athlete {
    * (house rule `house.sc.sport_requirements`).
    */
   secondaryGoal?: SecondaryGoal;
+  /**
+   * Where the week's spare day goes. Absent reads as `balanced`, so an
+   * athlete who never answered keeps the rule book's template. `upper_body`
+   * turns the Recovery day into a second upper-body day at four and five days
+   * (`dayTypesFor`).
+   */
+  emphasis?: ProgramEmphasis;
   sport: Sport;
   trainingAge: TrainingAge;
   /** Derived from `trainingAge`, never shown as such. */

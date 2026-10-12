@@ -3,6 +3,7 @@
 export {
   SETUP_COPY,
   formatDayDate,
+  restartLines,
   gymWindowDetail,
   lockoutLine,
   programBuiltLine,

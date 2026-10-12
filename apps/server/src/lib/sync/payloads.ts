@@ -81,6 +81,8 @@ export const athletePatch = z.object({
   readinessConfig: doc(),
   /** The best recent set per lift (R73), typed in setup or Settings > Lifts. */
   bestSets: doc(),
+  /** 'balanced' or 'upper_body': where the week's spare day goes. */
+  emphasis: text(),
 });
 
 export const painPatch = z.object({

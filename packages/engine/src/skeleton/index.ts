@@ -22,7 +22,13 @@ import type {
   SkeletonWeek,
 } from '../types/plan.js';
 import type { Ruleset } from '../types/ruleset.js';
-import type { DayType, DaysPerWeek, ExerciseId, Sport } from '../types/core.js';
+import type {
+  DayType,
+  DaysPerWeek,
+  ExerciseId,
+  ProgramEmphasis,
+  Sport,
+} from '../types/core.js';
 import {
   addDays,
   diffDays,
@@ -94,17 +100,26 @@ export class SkeletonInputError extends RangeError {
 /**
  * The weekly template verbatim from R133 to R136, in the order the athlete's
  * chosen weekdays run.
+ *
+ * `upper_body` emphasis swaps the Recovery day at four and five days for an
+ * Upper + Mobility day, so the week carries two upper-body sessions. Lower
+ * Strength, the Power day and its weekly test are untouched. Two and three
+ * days have no Recovery day to give, so their templates stand.
  */
-export function dayTypesFor(daysPerWeek: DaysPerWeek): DayType[] {
+export function dayTypesFor(
+  daysPerWeek: DaysPerWeek,
+  emphasis: ProgramEmphasis = 'balanced',
+): DayType[] {
+  const spare: DayType = emphasis === 'upper_body' ? 'upper_mobility' : 'recovery_mobility';
   switch (daysPerWeek) {
     case 2:
       return ['full_body_strength', 'power_speed'];
     case 3:
       return ['full_body_strength', 'upper_mobility', 'power_speed'];
     case 4:
-      return ['lower_strength', 'upper_strength', 'power_speed', 'recovery_mobility'];
+      return ['lower_strength', 'upper_strength', 'power_speed', spare];
     case 5:
-      return ['lower_strength', 'upper_strength', 'power', 'speed', 'recovery_mobility'];
+      return ['lower_strength', 'upper_strength', 'power', 'speed', spare];
   }
 }
 
@@ -134,7 +149,7 @@ export interface WeekdayLayout {
  * that day's pulls with a line naming the climbing day.
  */
 export function weekdayLayoutFor(athlete: Athlete, ruleset: Ruleset): WeekdayLayout {
-  const base = dayTypesFor(athlete.daysPerWeek);
+  const base = dayTypesFor(athlete.daysPerWeek, athlete.emphasis);
   const fallback = { dayTypes: base, testIndex: testWeekdayIndexFor(athlete.daysPerWeek) };
   const wall = wallPlacementFor(athlete, ruleset);
   if (wall === undefined) return fallback;

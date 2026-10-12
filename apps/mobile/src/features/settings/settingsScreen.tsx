@@ -234,6 +234,7 @@ export function SettingsScreen() {
       goalHeightMm: activeDraft.goalHeightMm,
       targetDate: activeDraft.targetDate,
       inSeason: activeDraft.inSeason,
+      emphasis: activeDraft.emphasis,
       bodyweightKg: activeDraft.bodyweightKg,
       ...climbingPatchFrom(
         {
@@ -325,6 +326,7 @@ export function SettingsScreen() {
         athlete={{ ...athlete, ...answers }}
         built={view.program === 'built'}
         onBuild={() => router.push(href(BUILD_PROGRAM_ROUTE))}
+        onRestart={() => router.push(href('/setup/build'))}
         draft={programDraft}
         onDraft={(next) => {
           setDraft(next);

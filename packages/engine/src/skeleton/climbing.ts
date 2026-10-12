@@ -16,7 +16,8 @@
  *                 gets a clear day where one is going spare.
  *   Power (test)  a pick at least two calendar days after the squat (R91) with
  *                 another pick between them (R93).
- *   Recovery      the first pick left.
+ *   Recovery      the first pick left, or the second upper-body day when the
+ *                 athlete chose the upper-body emphasis (`dayTypesFor`).
  *   Speed         at five days, the pick left after that (R136).
  *
  * When no pick can carry the upper-power day, this returns undefined: the
@@ -217,14 +218,17 @@ export function climbingWeekLayout(
   const powerIndex = powerIndexFor(free, offsets, lowerIndex);
   const left = remaining(weekdays.length, [upperIndex, lowerIndex, powerIndex]);
 
-  const dayTypes: DayType[] = new Array<DayType>(weekdays.length).fill('recovery_mobility');
+  // The spare day is Recovery in the rule book's template and a second
+  // upper-body day under the upper-body emphasis; the base says which.
+  const spare: DayType = base.includes('recovery_mobility') ? 'recovery_mobility' : 'upper_mobility';
+  const dayTypes: DayType[] = new Array<DayType>(weekdays.length).fill(spare);
   dayTypes[lowerIndex] = 'lower_strength';
   dayTypes[upperIndex] = 'upper_strength';
   // Four days runs the combined Power + Speed day (R135); five days splits it,
-  // and the Speed day (R136) takes the last pick left, after Recovery.
+  // and the Speed day (R136) takes the last pick left, after the spare day.
   dayTypes[powerIndex] = base.includes('power') ? 'power' : 'power_speed';
   const recoveryIndex = left[0];
-  if (recoveryIndex !== undefined) dayTypes[recoveryIndex] = 'recovery_mobility';
+  if (recoveryIndex !== undefined) dayTypes[recoveryIndex] = spare;
   const speedIndex = left[1];
   if (speedIndex !== undefined) dayTypes[speedIndex] = 'speed';
 

@@ -10,7 +10,7 @@
  * rest, 'revision' when a later re-materialization replaces them.
  */
 import type { SessionPlan, WeekPlan } from '@vert/engine';
-import { programStore, sessionStore } from '../../data';
+import { programStore, revisionStore, sessionStore } from '../../data';
 import type { DayType, Json, SqlExecutor, Timestamp } from '../../data';
 import type { CreateSessionExerciseInput } from '../../data/store/sessions';
 import type { BuildPlan } from './buildProgram';
@@ -142,6 +142,10 @@ export async function writeWeekPlan(
  * Write the program, its first version, its blocks, and every week of the
  * program with every session it prescribes. Returns the program id.
  *
+ * Built over an active program, this is the restart from week 1: the new
+ * program supersedes it, and the old one's untouched sessions from the new
+ * start on are removed. Logged and started sessions stay where they are.
+ *
  * `onProgress` hears each awaited write land, in order, so the build screen
  * can draw a determinate bar. `done` starts at `offset`, which is the count of
  * steps the caller has already spent materializing, and `total` is the whole
@@ -161,6 +165,11 @@ export async function writeProgramPlan(
     done += 1;
     onProgress?.({ done, total, step });
   };
+
+  // A restart from week 1: the program this build replaces keeps everything
+  // the athlete did, and gives up only the sessions nobody has touched from
+  // the new week 1 on, which would otherwise share their dates with it.
+  const replaced = await programStore.getCurrentProgram(db);
 
   const { program, version } = await programStore.createProgram(db, {
     rulesetVersion: plan.rulesetVersion,
@@ -185,6 +194,9 @@ export async function writeProgramPlan(
       weekEnd: block.weekTo,
     })),
   });
+  if (replaced !== null) {
+    await revisionStore.deleteUnstartedSessionsFrom(db, replaced.id, skeleton.programStart);
+  }
   landed({ kind: 'program' });
 
   // The instant the build ran, not the engine's frozen per-week value: the row

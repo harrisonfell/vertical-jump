@@ -66,6 +66,11 @@ export const athlete = pgTable('athlete', {
    * and nullable, like every climbing column above it.
    */
   bestSets: jsonb('best_sets_json').$type<Json>(),
+  /**
+   * 'balanced' or 'upper_body': where the week's spare day goes. Nullable, so
+   * an athlete who never answered keeps the rule book's template.
+   */
+  emphasis: text('emphasis'),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
   serverUpdatedAt: at('server_updated_at').notNull(),

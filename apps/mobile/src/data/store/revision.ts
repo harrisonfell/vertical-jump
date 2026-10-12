@@ -1,7 +1,7 @@
 import { mmToIn } from '@vert/engine';
 import type { LoadMode, SetLog as EngineSetLog } from '@vert/engine';
 import type { SqlExecutor } from '../executor';
-import type { Json, Landing } from '../types';
+import type { Json, Landing, LocalDate } from '../types';
 import { fromJson, newId, nowIso, oneOf, oneOfOrNull, toJsonRequired } from './rows';
 
 /**
@@ -148,6 +148,36 @@ export async function deleteWeekSessions(db: SqlExecutor, weekId: string): Promi
   const rows = await db.getAllAsync<{ id: string }>(
     'SELECT id FROM session WHERE week_id = ? ORDER BY order_index',
     [weekId],
+  );
+  let removed = 0;
+  for (const row of rows) {
+    if (await deleteSession(db, row.id)) removed += 1;
+  }
+  return removed;
+}
+
+/**
+ * A program's sessions on or after `from` that hold no work, removed: no set
+ * logged, never started, never marked complete. Returns how many went.
+ *
+ * A restart from week 1 calls this on the program it replaces. The old
+ * program's later weeks share dates with the new one's, and every date query
+ * reads sessions without asking which program they belong to, so leaving them
+ * would put two workouts on one day. A session with work in it stays: it is
+ * the athlete's history, whichever program wrote it.
+ */
+export async function deleteUnstartedSessionsFrom(
+  db: SqlExecutor,
+  programId: string,
+  from: LocalDate,
+): Promise<number> {
+  const rows = await db.getAllAsync<{ id: string }>(
+    `SELECT s.id FROM session s
+     WHERE s.program_id = ? AND s.scheduled_date >= ?
+       AND NOT EXISTS (SELECT 1 FROM set_log l WHERE l.session_id = s.id)
+       AND NOT EXISTS (SELECT 1 FROM session_event e WHERE e.session_id = s.id)
+     ORDER BY s.scheduled_date, s.order_index`,
+    [programId, from],
   );
   let removed = 0;
   for (const row of rows) {

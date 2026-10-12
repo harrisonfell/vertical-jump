@@ -192,6 +192,32 @@ describe('planSkeleton calendar', () => {
     expect(testWeekdayIndexFor(4)).toBe(2);
     expect(testWeekdayIndexFor(5)).toBe(2);
   });
+
+  it('gives the Recovery day to the upper body under the upper-body emphasis', () => {
+    expect(dayTypesFor(4, 'upper_body')).toEqual([
+      'lower_strength',
+      'upper_strength',
+      'power_speed',
+      'upper_mobility',
+    ]);
+    expect(dayTypesFor(5, 'upper_body')).toEqual([
+      'lower_strength',
+      'upper_strength',
+      'power',
+      'speed',
+      'upper_mobility',
+    ]);
+    // Two and three days have no Recovery day to give.
+    expect(dayTypesFor(2, 'upper_body')).toEqual(dayTypesFor(2));
+    expect(dayTypesFor(3, 'upper_body')).toEqual(dayTypesFor(3));
+    expect(dayTypesFor(4, 'balanced')).toEqual(dayTypesFor(4));
+
+    const skeleton = planSkeleton({ ...buildAthlete(), emphasis: 'upper_body' }, MONDAY, RULESET_V1);
+    for (const week of skeleton.weeks.filter((entry) => entry.kind !== 'peak')) {
+      expect(week.sessions.map((session) => session.dayType)).toEqual(dayTypesFor(4, 'upper_body'));
+    }
+    expect(skeleton.testWeekdayIndex).toBe(2);
+  });
 });
 
 describe('per-week targets', () => {

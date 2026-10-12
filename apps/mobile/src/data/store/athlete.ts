@@ -8,6 +8,7 @@ import type {
   LocalDate,
   PainSeverity,
   PainStatus,
+  ProgramEmphasis,
   Side,
   Timestamp,
   WorkingMax,
@@ -31,6 +32,7 @@ const LEVELS: readonly Level[] = ['beginner', 'intermediate', 'advanced'];
 const SEVERITIES: readonly PainSeverity[] = ['none', 'mild', 'moderate', 'severe'];
 const GRIP_MODES: readonly GripMode[] = ['open_hand', 'half_crimp', 'full_crimp', 'any'];
 const SIDES: readonly Side[] = ['left', 'right'];
+const EMPHASES: readonly ProgramEmphasis[] = ['balanced', 'upper_body'];
 
 interface AthleteRow {
   readonly id: string;
@@ -64,6 +66,7 @@ interface AthleteRow {
   readonly weaker_side: string | null;
   readonly readiness_config_json: string | null;
   readonly best_sets_json: string | null;
+  readonly emphasis: string | null;
   readonly created_at: string;
   readonly updated_at: string;
 }
@@ -120,6 +123,7 @@ function mapAthlete(row: AthleteRow): Athlete {
     weakerSide: oneOfOrNull(row.weaker_side, SIDES),
     readinessConfig: fromJson(row.readiness_config_json),
     bestSets: fromJson(row.best_sets_json),
+    emphasis: oneOfOrNull(row.emphasis, EMPHASES),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -207,6 +211,7 @@ export async function upsertAthlete(db: SqlExecutor, patch: AthletePatch): Promi
       put('readiness_config_json', toJson(patch.readinessConfig));
     }
     if (patch.bestSets !== undefined) put('best_sets_json', toJson(patch.bestSets));
+    if (patch.emphasis !== undefined) put('emphasis', patch.emphasis);
 
     put('updated_at', at);
     params.push(ATHLETE_ID);

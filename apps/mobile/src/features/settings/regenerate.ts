@@ -33,6 +33,7 @@ export type ProgramParam =
   | 'goalHeight'
   | 'targetDate'
   | 'inSeason'
+  | 'emphasis'
   | 'bodyweight'
   | 'fingerHistory'
   | 'gripMode'
@@ -67,6 +68,8 @@ export interface ProgramParams {
   readonly goalHeightMm: number | null;
   readonly targetDate: LocalDate | null;
   readonly inSeason: boolean;
+  /** 'balanced' or 'upper_body': where the week's spare day goes. */
+  readonly emphasis: string;
   readonly bodyweightKg: number | null;
   /* the climbing answers, each of which moves a house rule */
   readonly fingerHistory: boolean;
@@ -108,6 +111,18 @@ function sportLabel(sport: string | null): string {
 function secondaryGoalLabel(goal: string | null): string {
   if (goal === null || goal === '') return 'none';
   return goal.replace(/_/g, ' ');
+}
+
+/**
+ * What the upper-body emphasis does, in the athlete's words. Read by the row
+ * and the sheet so the two never say it differently.
+ */
+export const EMPHASIS_CAPTION =
+  'Upper body turns your Recovery day into a second upper-body day at 4 or 5 days a week. Lower Strength and the jump day stay.';
+
+/** "Balanced" or "Upper body": the words the Settings row uses. */
+export function emphasisLabel(emphasis: string | null | undefined): string {
+  return emphasis === 'upper_body' ? 'Upper body' : 'Balanced';
 }
 
 function gripLabel(mode: string): string {
@@ -179,6 +194,7 @@ export function diffParams(before: ProgramParams, after: ProgramParams): ParamCh
   push('goalHeight', 'Goal height', heightLabel(before.goalHeightMm), heightLabel(after.goalHeightMm));
   push('targetDate', 'Target date', dateLabel(before.targetDate), dateLabel(after.targetDate));
   push('inSeason', 'In-season', before.inSeason ? 'yes' : 'no', after.inSeason ? 'yes' : 'no');
+  push('emphasis', 'Week emphasis', emphasisLabel(before.emphasis), emphasisLabel(after.emphasis));
   push('bodyweight', 'Bodyweight', weightLabel(before.bodyweightKg), weightLabel(after.bodyweightKg));
   push(
     'fingerHistory',
