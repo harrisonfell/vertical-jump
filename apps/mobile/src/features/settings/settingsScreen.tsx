@@ -225,9 +225,10 @@ export function SettingsScreen() {
     regenerate.reset();
   }, [regenerate]);
 
-  const confirm = useCallback(() => {
-    if (athlete === null || activeDraft === null) return;
-    const patch: Partial<Athlete> = {
+  /** The athlete row as the unsaved edits would leave it, or null with none. */
+  const pendingPatch = useCallback((): Partial<Athlete> | null => {
+    if (athlete === null || activeDraft === null) return null;
+    return {
       ...answers,
       weekdays: activeDraft.weekdays,
       sessionWindow: clockWindowFrom(activeDraft.gymStart, activeDraft.gymEnd) as unknown as Json,
@@ -253,6 +254,11 @@ export function SettingsScreen() {
         ),
       ),
     };
+  }, [athlete, activeDraft, answers]);
+
+  const confirm = useCallback(() => {
+    const patch = pendingPatch();
+    if (athlete === null || patch === null) return;
     regenerate.mutate(
       {
         athlete,
@@ -264,7 +270,19 @@ export function SettingsScreen() {
       },
       { onSuccess: () => discard() },
     );
-  }, [athlete, activeDraft, answers, changes, discard, fromWeek, pain, program, regenerate]);
+  }, [athlete, changes, discard, fromWeek, pain, pendingPatch, program, regenerate]);
+
+  // A restart builds from the athlete row, so an edit still sitting in the
+  // draft would be left out of the new week 1. It is saved first; the rebuild
+  // a confirm would run is skipped, because the restart rebuilds everything.
+  const restart = useCallback(async () => {
+    const patch = pendingPatch();
+    if (patch !== null && changes.length > 0) {
+      await updateAthlete.mutateAsync(patch);
+      discard();
+    }
+    router.push(href('/setup/build'));
+  }, [changes.length, discard, pendingPatch, router, updateAthlete]);
 
   const onSave = useCallback(async (file: ExportFile) => {
     setSavingName(file.name);
@@ -327,7 +345,8 @@ export function SettingsScreen() {
         athlete={{ ...athlete, ...answers }}
         built={view.program === 'built'}
         onBuild={() => router.push(href(BUILD_PROGRAM_ROUTE))}
-        onRestart={() => router.push(href('/setup/build'))}
+        onRestart={() => void restart()}
+        pendingChanges={changes.length}
         draft={programDraft}
         onDraft={(next) => {
           setDraft(next);

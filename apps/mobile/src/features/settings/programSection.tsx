@@ -55,8 +55,10 @@ export interface ProgramSectionProps {
   readonly built: boolean;
   /** Opens setup at the step that asks for the days, the goal and the date. */
   readonly onBuild: () => void;
-  /** Opens the build screen, which restarts the program from week 1. */
+  /** Saves any unsaved edit, then opens the build screen to restart from week 1. */
   readonly onRestart: () => void;
+  /** Unsaved edits in the draft; the restart saves them before it builds. */
+  readonly pendingChanges: number;
   /** The pending, unsaved edits laid over the athlete. */
   readonly draft: ProgramDraft;
   readonly onDraft: (draft: ProgramDraft) => void;
@@ -76,6 +78,7 @@ export function ProgramSection({
   built,
   onBuild,
   onRestart,
+  pendingChanges,
   draft,
   onDraft,
   weekdayRefusal,
@@ -255,7 +258,11 @@ export function ProgramSection({
       <RowDivider />
       <RevisePlanRow />
       <RowDivider />
-      <RestartRow weekdays={athlete.weekdays} onRestart={onRestart} />
+      <RestartRow
+        weekdays={draft.weekdays}
+        pendingChanges={pendingChanges}
+        onRestart={onRestart}
+      />
 
       <Sheet
         visible={editing}
@@ -368,9 +375,11 @@ export function RevisePlanRow() {
  */
 export function RestartRow({
   weekdays,
+  pendingChanges,
   onRestart,
 }: {
   readonly weekdays: readonly number[];
+  readonly pendingChanges: number;
   readonly onRestart: () => void;
 }) {
   const today = useToday();
@@ -409,7 +418,16 @@ export function RestartRow({
         }
       >
         <View style={{ gap: space.sm }}>
-          {restartLines(week1Start).map((line) => (
+          {[
+            ...(pendingChanges > 0
+              ? [
+                  pendingChanges === 1
+                    ? 'Your unsaved change is saved first, so week 1 is built with it.'
+                    : `Your ${pendingChanges} unsaved changes are saved first, so week 1 is built with them.`,
+                ]
+              : []),
+            ...restartLines(week1Start),
+          ].map((line) => (
             <Text key={line} variant="body" color="ink2">
               {line}
             </Text>
