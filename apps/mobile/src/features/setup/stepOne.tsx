@@ -112,6 +112,7 @@ export function SetupStepOne({
     wallFingerHard: initial?.wallFingerHard ?? defaults.wallFingerHard,
     wallGapHours: initial?.wallGapHours ?? defaults.wallGapHours,
     valgusControl: initial?.valgusControl ?? defaults.valgusControl,
+    valgusSessions: initial?.valgusSessions ?? defaults.valgusSessions,
     weakerSide: initial?.weakerSide ?? defaults.weakerSide,
   });
   const [climbTouched, setClimbTouched] = useState<ReadonlySet<ClimbingField>>(new Set());

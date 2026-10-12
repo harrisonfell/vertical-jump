@@ -20,6 +20,11 @@ export interface PlacedRow {
   precedence: number;
   /** A pairing repair or a required slot: never trimmed. */
   required: boolean;
+  /**
+   * An extra the session takes only where it has room: trimmed first and
+   * without a line, because nothing the day asked for was cut.
+   */
+  silent?: boolean;
 }
 
 const LOWER_PATTERNS: readonly MovementPattern[] = ['squat', 'hinge', 'lunge'];
@@ -272,6 +277,7 @@ export function trimToDisplayCap(
     if (index === -1) break;
     const [removed] = out.splice(index, 1);
     if (removed === undefined) break;
+    if (removed.silent === true) continue;
     trimmed.push({
       exerciseId: removed.exercise.id,
       reason: `Trimmed to keep the session at ${maxDisplayed} exercises`,

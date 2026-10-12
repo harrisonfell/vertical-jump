@@ -58,7 +58,10 @@ export const OWNER_INVENTORY: Inventory = {
   weightRoomAccess: true,
 };
 
-/** Wall work: Sunday, Tuesday and Thursday, 18:00 to 20:00, hard on the fingers. */
+/**
+ * Wall work: Sunday, Tuesday and Thursday, 18:00 to 20:00, hard on the fingers.
+ * The knee-alignment row runs on every gym day.
+ */
 const OWNER_CLIMBING: ClimbingAnswers = {
   secondaryGoal: 'speed',
   fingerHistory: true,
@@ -70,6 +73,8 @@ const OWNER_CLIMBING: ClimbingAnswers = {
   wallFingerHard: true,
   wallGapHours: defaultWallGapHours(),
   valgusControl: true,
+  // Every gym day: the owner wants more valgus and stability work, not less.
+  valgusSessions: 4,
   weakerSide: 'unsure',
 };
 

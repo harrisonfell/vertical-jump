@@ -223,6 +223,7 @@ export function speedGoalPreference(
 export function score(exercise: Exercise, slot: RoleSlot, context: SelectContext): number {
   const { athlete, week, session } = context;
   let value = blockPreference(exercise, slot);
+  if (slot.prefer?.(exercise) === true) value += 100;
   if (slot.block === 'power') value += sequencePreference(exercise, context);
   value += speedGoalPreference(exercise, slot, context);
   // House `house.sc.readiness_gate`: the upper-power day's primer is the

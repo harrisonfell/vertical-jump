@@ -52,6 +52,8 @@ export {
   CEILING_MIN,
   WALL_GAP_MAX,
   WALL_GAP_MIN,
+  VALGUS_SESSIONS_MAX,
+  VALGUS_SESSIONS_MIN,
   climbingAnswersFrom,
   climbingDefaults,
   climbingPatchFrom,

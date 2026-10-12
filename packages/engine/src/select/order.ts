@@ -35,6 +35,14 @@ export interface RoleSlot {
    * it would have taken, when the budgets leave it empty.
    */
   dropReason?: string;
+  /**
+   * The row this slot leads with when the pool has it (the owner's own picks,
+   * such as the barbell bent-over row). A score bonus, never a filter, so a
+   * pool without it still fills the slot.
+   */
+  prefer?: (exercise: Exercise) => boolean;
+  /** Its rows are extras: trimmed first, and without a trimmed line. */
+  silentTrim?: boolean;
 }
 
 /** Everything the template needs to branch. */
@@ -82,11 +90,13 @@ export interface TemplateOptions {
    */
   explosivePullRow?: boolean;
   /**
-   * The upper-body emphasis: the Upper + Mobility day that replaced Recovery
-   * keeps its accessory rows to pushes and pulls, so the day the athlete gave
-   * to the upper body is spent on it.
+   * The upper-body emphasis on an upper day. The upper-power day trades the
+   * rotational throw for the kneeling slam and its overhead push for a tricep
+   * extension (strength without loading the shoulder overhead); the Upper +
+   * Mobility day leads with a chest press, rows, and runs the overhead press
+   * light through its full range as shoulder care.
    */
-  upperOnlyAccessories?: boolean;
+  upperEmphasis?: boolean;
 }
 
 /**
@@ -195,7 +205,14 @@ function strengthTemplate(options: TemplateOptions): RoleSlot[] {
     { block: 'secondary', role: 'secondary', count: 1, min: 0, grouped: false, precedence: PRECEDENCE.secondary },
     { block: 'accessory', role: 'accessory', count: options.reducedWeek ? 1 : 2, min: 0, grouped: false, precedence: PRECEDENCE.accessory },
     injuryPreventionSlot(options),
-    { block: 'injury_prevention_core', role: 'core', count: 1, min: 0, grouped: false, precedence: PRECEDENCE.core },
+  );
+  if (options.rntSlot === true) slots.push(stabilitySlot());
+  const core: RoleSlot = { block: 'injury_prevention_core', role: 'core', count: 1, min: 0, grouped: false, precedence: PRECEDENCE.core };
+  // On a knee-alignment day the core row leans to stability work (a Copenhagen
+  // or side plank) so the day keeps one even when the extra row is trimmed.
+  if (options.rntSlot === true) core.prefer = isStabilityRow;
+  slots.push(
+    core,
     { block: 'cool_down', role: 'cool_down', count: 2, min: 1, grouped: true, precedence: PRECEDENCE.coolDown },
   );
   return slots;
@@ -274,9 +291,15 @@ function upperPowerTemplate(options: TemplateOptions): RoleSlot[] {
       count: 1,
       min: 0,
       grouped: false,
-      precedence: PRECEDENCE.accessory + 4,
-      // R50: the rotational throw is the transverse-plane movement.
-      filter: (exercise) => isMedBallThrow(exercise) && exercise.plane !== 'sagittal',
+      // The kneeling slam is one of the owner's picks, so it outranks the
+      // other accessories for the last display rows on this day.
+      precedence: options.upperEmphasis === true ? PRECEDENCE.injuryPrevention : PRECEDENCE.accessory + 4,
+      // R50: the rotational throw is the transverse-plane movement. Under the
+      // upper-body emphasis the kneeling slam takes the slot instead, and R50
+      // is met by the warm-up's lateral work.
+      filter: options.upperEmphasis === true
+        ? isKneelingSlam
+        : (exercise) => isMedBallThrow(exercise) && exercise.plane !== 'sagittal',
     },
     {
       block: 'accessory',
@@ -284,16 +307,25 @@ function upperPowerTemplate(options: TemplateOptions): RoleSlot[] {
       count: 1,
       min: 0,
       grouped: false,
-      precedence: PRECEDENCE.accessory,
+      // The tricep extension is the emphasis's strength push, so the display
+      // cap takes the other accessories before it on this day.
+      precedence: options.upperEmphasis === true ? PRECEDENCE.injuryPrevention + 1 : PRECEDENCE.accessory,
       // R48: the push beside the pull, a push press at strength speed or a
-      // dumbbell press at hypertrophy loads.
-      filter: (exercise) =>
-        exercise.isPush &&
-        exercise.loadable &&
-        exercise.movementPattern === 'push_vertical' &&
-        (exercise.loadType === 'strength_speed' || exercise.loadType === 'hypertrophy'),
+      // dumbbell press at hypertrophy loads. Under the upper-body emphasis the
+      // strength push is a tricep extension, and the overhead press runs light
+      // on the other upper day.
+      filter: options.upperEmphasis === true
+        ? isTricepExtension
+        : (exercise) =>
+            exercise.isPush &&
+            exercise.loadable &&
+            exercise.movementPattern === 'push_vertical' &&
+            (exercise.loadType === 'strength_speed' || exercise.loadType === 'hypertrophy'),
     },
     injuryPreventionSlot(options),
+  );
+  if (options.rntSlot === true) slots.push(stabilitySlot());
+  slots.push(
     { block: 'cool_down', role: 'cool_down', count: 2, min: 1, grouped: true, precedence: PRECEDENCE.coolDown },
   );
   return slots;
@@ -408,30 +440,105 @@ function powerTemplate(options: TemplateOptions): RoleSlot[] {
   // House `house.sc.rnt_valgus_control`: a power or speed day can be one of
   // the two sessions far enough from the wall, and its own template has no
   // injury-prevention slot.
-  if (options.rntSlot === true && !options.peakSession) slots.push(injuryPreventionSlot(options));
+  if (options.rntSlot === true && !options.peakSession) {
+    slots.push(injuryPreventionSlot(options), stabilitySlot());
+  }
   slots.push({ block: 'cool_down', role: 'cool_down', count: 2, min: 1, grouped: true, precedence: PRECEDENCE.coolDown });
   return slots;
 }
 
-/** A push or a pull: what the upper-body emphasis keeps on its spare day. */
-export function isUpperBodyRow(exercise: Exercise): boolean {
-  return exercise.isPush || exercise.isPulling;
+/** The kneeling slam: a med-ball throw driven by the trunk, not the hips. */
+export function isKneelingSlam(exercise: Exercise): boolean {
+  return isMedBallThrow(exercise) && exercise.movementPattern === 'brace';
+}
+
+/** An elbow-extension isolation: the push the strength day keeps off the shoulder. */
+export function isTricepExtension(exercise: Exercise): boolean {
+  return exercise.isPush && exercise.movementPattern === 'isolation';
+}
+
+/** The overhead press run light through its full range, as shoulder care. */
+export function isLightOverheadPress(exercise: Exercise): boolean {
+  return exercise.movementPattern === 'push_vertical' && exercise.intent === 'prehab';
+}
+
+/**
+ * The rows the upper-body emphasis names: the owner asked for these by name,
+ * so R57's rotation leaves them in place rather than swapping them for a
+ * sibling (a light full-range press rotated into a heavy one is the opposite
+ * of what the row is for).
+ */
+export function isEmphasisPick(exercise: Exercise): boolean {
+  return (
+    isKneelingSlam(exercise) ||
+    isTricepExtension(exercise) ||
+    isLightOverheadPress(exercise) ||
+    (exercise.movementPattern === 'pull_horizontal' && exercise.requiresBarbell)
+  );
+}
+
+/**
+ * A stability row beside the knee-alignment one: high stability demand,
+ * prehab intent, and not itself the RNT row.
+ */
+export function isStabilityRow(exercise: Exercise): boolean {
+  return exercise.stabilityDemand === 'high' && exercise.intent === 'prehab' && !exercise.isRnt;
+}
+
+/**
+ * The stability slot that rides with the RNT row (the owner's emphasis on
+ * valgus and stability control). An extra: a day with no display room drops
+ * it first and quietly, and the core slot carries stability work there.
+ */
+function stabilitySlot(): RoleSlot {
+  return {
+    block: 'injury_prevention_core',
+    role: 'injury_prevention',
+    count: 1,
+    min: 0,
+    grouped: false,
+    precedence: PRECEDENCE.accessory - 2,
+    filter: isStabilityRow,
+    silentTrim: true,
+  };
 }
 
 function upperMobilityTemplate(options: TemplateOptions): RoleSlot[] {
-  const accessory: RoleSlot = { block: 'accessory', role: 'accessory', count: 2, min: 1, grouped: false, precedence: PRECEDENCE.accessory };
-  if (options.upperOnlyAccessories === true) accessory.filter = isUpperBodyRow;
   const slots: RoleSlot[] = [
     { block: 'warm_up', role: 'warm_up', count: 3, min: 2, grouped: true, precedence: PRECEDENCE.warmUp },
-    { block: 'main_lift', role: 'main_lift', count: 1, min: 1, grouped: false, precedence: PRECEDENCE.mainLift },
-    accessory,
   ];
+  if (options.upperEmphasis === true) {
+    // Chest first, a row beside it (R48), the overhead press light through its
+    // full range, and the kneeling slam as the trunk work.
+    slots.push(
+      {
+        block: 'main_lift', role: 'main_lift', count: 1, min: 1, grouped: false, precedence: PRECEDENCE.mainLift,
+        filter: (exercise) => exercise.movementPattern === 'push_horizontal' && exercise.loadable,
+      },
+      {
+        block: 'accessory', role: 'accessory', count: 1, min: 1, grouped: false, precedence: PRECEDENCE.accessory + 8,
+        filter: (exercise) => exercise.movementPattern === 'pull_horizontal' && exercise.loadable,
+        prefer: (exercise) => exercise.requiresBarbell,
+      },
+      {
+        block: 'accessory', role: 'accessory', count: 1, min: 0, grouped: false, precedence: PRECEDENCE.accessory + 4,
+        filter: isLightOverheadPress,
+      },
+    );
+  } else {
+    slots.push(
+      { block: 'main_lift', role: 'main_lift', count: 1, min: 1, grouped: false, precedence: PRECEDENCE.mainLift },
+      { block: 'accessory', role: 'accessory', count: 2, min: 1, grouped: false, precedence: PRECEDENCE.accessory },
+    );
+  }
   // House `house.sc.rnt_valgus_control`: the upper-body emphasis puts this day
   // where Recovery was, and the RNT placement may pick it, so it carries the
   // knee-alignment row when chosen, as the power days do.
-  if (options.rntSlot === true) slots.push(injuryPreventionSlot(options));
+  if (options.rntSlot === true) slots.push(injuryPreventionSlot(options), stabilitySlot());
   slots.push(
-    { block: 'injury_prevention_core', role: 'core', count: 1, min: 0, grouped: false, precedence: PRECEDENCE.core },
+    options.upperEmphasis === true
+      ? { block: 'injury_prevention_core', role: 'core', count: 1, min: 0, grouped: false, precedence: PRECEDENCE.core, filter: isKneelingSlam }
+      : { block: 'injury_prevention_core', role: 'core', count: 1, min: 0, grouped: false, precedence: PRECEDENCE.core },
     { block: 'cool_down', role: 'cool_down', count: 2, min: 1, grouped: true, precedence: PRECEDENCE.coolDown },
   );
   return slots;

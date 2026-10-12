@@ -39,6 +39,10 @@ const NEW_EXERCISE_IDS = [
   'med_ball_chest_throw', 'seated_med_ball_throw', 'med_ball_overhead_slam',
   'med_ball_rotational_throw', 'push_press', 'db_press', 'rnt_split_squat', 'rnt_step_down',
   'pull_up_open_hand', 'db_row_open_hand',
+  // The owner's picks: the kneeling slam, the bent-over row, the light
+  // full-range overhead press, the tricep extension and a stability row.
+  'kneeling_med_ball_slam', 'barbell_bent_over_row', 'db_overhead_press_rom',
+  'db_tricep_extension', 'single_leg_balance_reach',
 ];
 
 describe('the climbing seed', () => {

@@ -4723,5 +4723,291 @@
       "upper_mobility"
     ],
     "categoryForCharts": "strength"
+  },
+  {
+    "id": "kneeling_med_ball_slam",
+    "name": "Kneeling med-ball slam",
+    "loadType": "power",
+    "loadable": false,
+    "displayMode": "reps",
+    "stabilityDemand": "moderate",
+    "kneeStress": "low",
+    "spineStress": "low",
+    "shoulderStress": "moderate",
+    "cnsCost": "moderate",
+    "fatigueCost": "low",
+    "equipment": [
+      "med_ball"
+    ],
+    "requiresBarbell": false,
+    "movementPattern": "brace",
+    "plane": "sagittal",
+    "unilateral": false,
+    "isAxialLoad": false,
+    "isOverhead": true,
+    "isPressing": false,
+    "isPush": false,
+    "isPull": false,
+    "isPulling": false,
+    "isRnt": false,
+    "repetitiveImpact": false,
+    "isOlympicLift": false,
+    "technicalSkillHigh": false,
+    "intent": "velocity",
+    "levelMin": "beginner",
+    "roleCandidates": [
+      "power_jump",
+      "accessory",
+      "core"
+    ],
+    "isMainLift": false,
+    "rotationGroup": "throw",
+    "defaultSets": 3,
+    "prefersLoadableInStrengthBlock": false,
+    "readinessRequired": false,
+    "sports": [
+      "speed_climbing"
+    ],
+    "cues": [
+      "Kneel tall with your ribs down.",
+      "Reach overhead, then slam through your trunk, not your hips.",
+      "Every rep at full speed."
+    ],
+    "dayTypes": [
+      "upper_strength",
+      "upper_mobility",
+      "power_speed",
+      "power",
+      "speed"
+    ],
+    "categoryForCharts": "plyometrics"
+  },
+  {
+    "id": "barbell_bent_over_row",
+    "name": "Bent-over row",
+    "loadType": "hypertrophy",
+    "loadable": true,
+    "displayMode": "reps",
+    "stabilityDemand": "moderate",
+    "kneeStress": "low",
+    "spineStress": "moderate",
+    "shoulderStress": "low",
+    "cnsCost": "moderate",
+    "fatigueCost": "moderate",
+    "equipment": [
+      "barbell"
+    ],
+    "requiresBarbell": true,
+    "movementPattern": "pull_horizontal",
+    "plane": "sagittal",
+    "unilateral": false,
+    "isAxialLoad": false,
+    "isOverhead": false,
+    "isPressing": false,
+    "isPush": false,
+    "isPull": true,
+    "isPulling": true,
+    "isRnt": false,
+    "gripMode": "open_hand",
+    "fingerLoad": "light",
+    "repetitiveImpact": false,
+    "isOlympicLift": false,
+    "technicalSkillHigh": false,
+    "intent": "strength",
+    "levelMin": "beginner",
+    "roleCandidates": [
+      "secondary",
+      "accessory"
+    ],
+    "isMainLift": false,
+    "rotationGroup": "pull_horizontal",
+    "defaultSets": 3,
+    "oneRmHintRatio": 0.4,
+    "prefersLoadableInStrengthBlock": true,
+    "readinessRequired": false,
+    "sports": [
+      "speed_climbing"
+    ],
+    "cues": [
+      "Hinge until your torso is near flat and keep your back long.",
+      "Hold the bar in an open hand, thumb around it.",
+      "Pull the bar to your lower ribs."
+    ],
+    "dayTypes": [
+      "full_body_strength",
+      "upper_strength",
+      "upper_mobility"
+    ],
+    "categoryForCharts": "strength"
+  },
+  {
+    "id": "db_overhead_press_rom",
+    "name": "Light overhead press, full range",
+    "loadType": "endurance",
+    "loadable": true,
+    "displayMode": "reps",
+    "stabilityDemand": "moderate",
+    "kneeStress": "low",
+    "spineStress": "low",
+    "shoulderStress": "low",
+    "cnsCost": "low",
+    "fatigueCost": "low",
+    "equipment": [
+      "dumbbell"
+    ],
+    "requiresBarbell": false,
+    "movementPattern": "push_vertical",
+    "plane": "sagittal",
+    "unilateral": false,
+    "isAxialLoad": false,
+    "isOverhead": true,
+    "isPressing": true,
+    "isPush": true,
+    "isPull": false,
+    "isPulling": false,
+    "isRnt": false,
+    "repetitiveImpact": false,
+    "isOlympicLift": false,
+    "technicalSkillHigh": false,
+    "intent": "prehab",
+    "levelMin": "beginner",
+    "roleCandidates": [
+      "accessory",
+      "injury_prevention"
+    ],
+    "isMainLift": false,
+    "rotationGroup": "shoulder_health",
+    "defaultSets": 2,
+    "oneRmHintRatio": 0.15,
+    "prefersLoadableInStrengthBlock": false,
+    "readinessRequired": false,
+    "sports": [
+      "speed_climbing"
+    ],
+    "cues": [
+      "Go light enough to own every inch.",
+      "Lower until your hands reach your shoulders, press to full lockout.",
+      "Keep your ribs down as you press."
+    ],
+    "dayTypes": [
+      "full_body_strength",
+      "upper_strength",
+      "upper_mobility"
+    ],
+    "categoryForCharts": "strength"
+  },
+  {
+    "id": "db_tricep_extension",
+    "name": "Dumbbell tricep extension",
+    "loadType": "hypertrophy",
+    "loadable": true,
+    "displayMode": "reps",
+    "stabilityDemand": "low",
+    "kneeStress": "low",
+    "spineStress": "low",
+    "shoulderStress": "low",
+    "cnsCost": "low",
+    "fatigueCost": "low",
+    "equipment": [
+      "dumbbell",
+      "bench"
+    ],
+    "requiresBarbell": false,
+    "movementPattern": "isolation",
+    "plane": "sagittal",
+    "unilateral": false,
+    "isAxialLoad": false,
+    "isOverhead": false,
+    "isPressing": false,
+    "isPush": true,
+    "isPull": false,
+    "isPulling": false,
+    "isRnt": false,
+    "repetitiveImpact": false,
+    "isOlympicLift": false,
+    "technicalSkillHigh": false,
+    "intent": "strength",
+    "levelMin": "beginner",
+    "roleCandidates": [
+      "accessory"
+    ],
+    "isMainLift": false,
+    "rotationGroup": "triceps",
+    "defaultSets": 3,
+    "oneRmHintRatio": 0.15,
+    "prefersLoadableInStrengthBlock": false,
+    "readinessRequired": false,
+    "sports": [
+      "speed_climbing"
+    ],
+    "cues": [
+      "Lie on the bench with your upper arms still.",
+      "Lower the bells beside your head, then straighten your elbows.",
+      "Control the way down."
+    ],
+    "dayTypes": [
+      "full_body_strength",
+      "upper_strength",
+      "upper_mobility"
+    ],
+    "categoryForCharts": "strength"
+  },
+  {
+    "id": "single_leg_balance_reach",
+    "name": "Single-leg balance reach",
+    "loadType": "prehab",
+    "loadable": false,
+    "displayMode": "reps",
+    "stabilityDemand": "high",
+    "kneeStress": "low",
+    "spineStress": "low",
+    "shoulderStress": "low",
+    "cnsCost": "low",
+    "fatigueCost": "low",
+    "equipment": [],
+    "requiresBarbell": false,
+    "movementPattern": "lunge",
+    "plane": "frontal",
+    "unilateral": true,
+    "isAxialLoad": false,
+    "isOverhead": false,
+    "isPressing": false,
+    "isPush": false,
+    "isPull": false,
+    "isPulling": false,
+    "isRnt": false,
+    "sideOrder": "weaker_first",
+    "repetitiveImpact": false,
+    "isOlympicLift": false,
+    "technicalSkillHigh": false,
+    "intent": "prehab",
+    "levelMin": "beginner",
+    "roleCandidates": [
+      "injury_prevention",
+      "accessory"
+    ],
+    "isMainLift": false,
+    "rotationGroup": "lateral_core",
+    "defaultSets": 2,
+    "prefersLoadableInStrengthBlock": false,
+    "readinessRequired": false,
+    "sports": [
+      "speed_climbing"
+    ],
+    "cues": [
+      "Stand on one leg with your knee over your second toe.",
+      "Reach the other foot forward, sideways, then back.",
+      "Stop the set when the knee drifts in."
+    ],
+    "dayTypes": [
+      "full_body_strength",
+      "lower_strength",
+      "upper_strength",
+      "upper_mobility",
+      "power_speed",
+      "power",
+      "speed"
+    ],
+    "categoryForCharts": "mobility"
   }
 ]

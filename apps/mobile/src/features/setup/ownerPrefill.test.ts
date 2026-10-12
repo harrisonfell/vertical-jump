@@ -84,7 +84,7 @@ describe('the owner prefill', () => {
     });
     expect(athlete?.valgusControl).toMatchObject({
       required: true,
-      sessionsPerWeek: 2,
+      sessionsPerWeek: 4,
       minHoursFromWall: 6,
     });
     expect(athlete?.readinessConfig).toMatchObject({ kind: 'seated_mb_throw' });

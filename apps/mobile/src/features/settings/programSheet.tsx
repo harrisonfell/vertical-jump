@@ -3,6 +3,8 @@ import { inToMm, lbToKg } from '@vert/engine';
 import { formatInteger } from '@vert/engine';
 import { Chip, DateField, Field, Notice, Stepper, Text, space } from '@/ui';
 import {
+  VALGUS_SESSIONS_MAX,
+  VALGUS_SESSIONS_MIN,
   WALL_GAP_MAX,
   WALL_GAP_MIN,
   WEEKDAY_CHIPS,
@@ -297,7 +299,7 @@ export function ProgramSheetBody({
 
           <View style={{ gap: space.sm }}>
             <Text variant="label" color="ink3">
-              Valgus control (RNT) twice a week
+              Valgus control (RNT)
             </Text>
             <View style={{ flexDirection: 'row', gap: space.sm }}>
               <Chip
@@ -314,6 +316,20 @@ export function ProgramSheetBody({
               />
             </View>
           </View>
+
+          {draft.valgusControl ? (
+            <Stepper
+              label="Valgus control sessions a week"
+              value={draft.valgusSessions}
+              onChange={(next) => onDraft({ ...draft, valgusSessions: next })}
+              step={1}
+              min={VALGUS_SESSIONS_MIN}
+              max={VALGUS_SESSIONS_MAX}
+              format={formatInteger}
+              helper="The knee-alignment row, each at least 6 h from wall work, with a stability row beside it."
+              testID="settings-valgus-sessions"
+            />
+          ) : null}
         </View>
       ) : null}
     </View>

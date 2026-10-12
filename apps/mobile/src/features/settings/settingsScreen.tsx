@@ -245,6 +245,7 @@ export function SettingsScreen() {
           wallFingerHard: activeDraft.wallFingerHard,
           wallGapHours: activeDraft.wallGapHours,
           valgusControl: activeDraft.valgusControl,
+          valgusSessions: activeDraft.valgusSessions,
         },
         showsGripBlock(
           answers.sport ?? athlete.sport,

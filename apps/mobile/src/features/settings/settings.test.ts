@@ -44,6 +44,7 @@ const base: ProgramParams = {
   wallFingerHard: true,
   wallGapHours: 6,
   valgusControl: false,
+  valgusSessions: 2,
 };
 
 describe('program parameter changes', () => {
@@ -58,6 +59,14 @@ describe('program parameter changes', () => {
       { field: 'emphasis', label: 'Week emphasis', from: 'Balanced', to: 'Upper body' },
     ]);
     expect(needsRegeneration(changes)).toBe(true);
+  });
+
+  it('names a change in knee-alignment sessions a week only while it is on', () => {
+    const on = { ...base, valgusControl: true };
+    expect(diffParams(on, { ...on, valgusSessions: 4 })).toEqual([
+      { field: 'valgusSessions', label: 'Valgus control sessions a week', from: '2', to: '4' },
+    ]);
+    expect(diffParams(base, { ...base, valgusSessions: 4 })).toEqual([]);
   });
 
   it('names each change in the athlete’s own words', () => {

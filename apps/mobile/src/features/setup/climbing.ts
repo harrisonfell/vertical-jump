@@ -33,6 +33,10 @@ export const CEILING_MAX = 10;
 export const WALL_GAP_MIN = 0;
 export const WALL_GAP_MAX = 12;
 
+/** Knee-alignment sessions a week: at least one when it is on, at most one a gym day. */
+export const VALGUS_SESSIONS_MIN = 1;
+export const VALGUS_SESSIONS_MAX = 5;
+
 export interface ClimbingAnswers {
   readonly secondaryGoal: SecondaryGoalValue | null;
   readonly fingerHistory: boolean;
@@ -48,6 +52,8 @@ export interface ClimbingAnswers {
   /** Hours gym finger work keeps from the wall on a shared day. */
   readonly wallGapHours: number;
   readonly valgusControl: boolean;
+  /** How many sessions a week carry the knee-alignment row when it is on. */
+  readonly valgusSessions: number;
   readonly weakerSide: WeakerSideValue;
 }
 
@@ -68,6 +74,7 @@ export function climbingDefaults(): ClimbingAnswers {
     wallFingerHard: true,
     wallGapHours: defaultWallGapHours(),
     valgusControl: true,
+    valgusSessions: loadRuleset().constants.climbing.rntSessionsPerWeek,
     weakerSide: 'unsure',
   };
 }
@@ -179,7 +186,10 @@ export function climbingPatchFrom(values: ClimbingAnswers, shown: boolean): Clim
     wallWork: wallWorkFrom(answers) as unknown as Json,
     valgusControl: {
       required: answers.valgusControl,
-      sessionsPerWeek: climbing.rntSessionsPerWeek,
+      sessionsPerWeek: Math.min(
+        VALGUS_SESSIONS_MAX,
+        Math.max(VALGUS_SESSIONS_MIN, Math.round(answers.valgusSessions)),
+      ),
       minHoursFromWall: climbing.rntWallGapHours,
     } as unknown as Json,
     weakerSide: answers.weakerSide === 'unsure' ? null : answers.weakerSide,
@@ -216,6 +226,7 @@ export function climbingAnswersFrom(athlete: Athlete | null | undefined): Climbi
     wallFingerHard: wall?.fingerLoad !== 'light',
     wallGapHours: wall?.sameDayGapHours ?? defaults.wallGapHours,
     valgusControl: athlete.valgusControl == null ? defaults.valgusControl : valgus.required,
+    valgusSessions: athlete.valgusControl == null ? defaults.valgusSessions : valgus.sessionsPerWeek,
     weakerSide: athlete.weakerSide ?? 'unsure',
   };
 }

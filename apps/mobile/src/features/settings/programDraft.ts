@@ -40,6 +40,8 @@ export interface ProgramDraft {
   /** Hours gym finger work keeps from the wall on a shared day. */
   readonly wallGapHours: number;
   readonly valgusControl: boolean;
+  /** Sessions a week carrying the knee-alignment row when it is on. */
+  readonly valgusSessions: number;
 }
 
 /** A fresh draft from the saved athlete. */
@@ -65,6 +67,7 @@ export function draftFrom(athlete: Athlete): ProgramDraft {
     wallFingerHard: climbing.wallFingerHard,
     wallGapHours: climbing.wallGapHours,
     valgusControl: climbing.valgusControl,
+    valgusSessions: climbing.valgusSessions,
   };
 }
 

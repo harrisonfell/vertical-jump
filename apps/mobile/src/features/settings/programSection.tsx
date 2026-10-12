@@ -242,8 +242,9 @@ export function ProgramSection({
           />
           <RowDivider />
           <SettingRow
-            label="Valgus control (RNT) twice a week"
-            value={draft.valgusControl ? 'On' : 'Off'}
+            label="Valgus control (RNT)"
+            value={draft.valgusControl ? `${formatInteger(draft.valgusSessions)} a week` : 'Off'}
+            caption="Each knee-alignment row comes with a single-leg stability row where the day has room."
             chevron
             onPress={() => setEditing(true)}
             testID="settings-valgus"

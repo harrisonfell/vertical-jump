@@ -40,6 +40,7 @@ export function paramsOf(athlete: Athlete, draft: ProgramDraft, answers: Partial
     wallFingerHard: draft.wallFingerHard,
     wallGapHours: draft.wallGapHours,
     valgusControl: draft.valgusControl,
+    valgusSessions: draft.valgusSessions,
   };
 }
 
@@ -68,6 +69,7 @@ export function savedParams(athlete: Athlete): ProgramParams {
     wallFingerHard: climbing.wallFingerHard,
     wallGapHours: climbing.wallGapHours,
     valgusControl: climbing.valgusControl,
+    valgusSessions: climbing.valgusSessions,
   };
 }
 

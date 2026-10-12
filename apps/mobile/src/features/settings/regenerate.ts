@@ -43,7 +43,8 @@ export type ProgramParam =
   | 'wallWindow'
   | 'wallFingerLoad'
   | 'wallGapHours'
-  | 'valgusControl';
+  | 'valgusControl'
+  | 'valgusSessions';
 
 /** The parameters that are safe to change without rebuilding anything. */
 const DISPLAY_ONLY: ReadonlySet<ProgramParam> = new Set(['bodyweight']);
@@ -84,6 +85,8 @@ export interface ProgramParams {
   /** Hours gym finger work keeps from the wall on a shared day. */
   readonly wallGapHours: number;
   readonly valgusControl: boolean;
+  /** Knee-alignment sessions a week when it is on. */
+  readonly valgusSessions: number;
 }
 
 const WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
@@ -235,6 +238,16 @@ export function diffParams(before: ProgramParams, after: ProgramParams): ParamCh
     before.valgusControl ? 'on' : 'off',
     after.valgusControl ? 'on' : 'off',
   );
+  // Only while it stays on: turning it on or off is the row above, and the
+  // count means nothing while it is off.
+  if (before.valgusControl && after.valgusControl) {
+    push(
+      'valgusSessions',
+      'Valgus control sessions a week',
+      formatInteger(before.valgusSessions),
+      formatInteger(after.valgusSessions),
+    );
+  }
 
   return changes;
 }

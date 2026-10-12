@@ -18,7 +18,7 @@ import {
   sportAllows,
 } from './sport.js';
 import type { ClimbingPlacement, SportRequirements } from './sport.js';
-import { sprintClassFor, templateFor } from './order.js';
+import { isEmphasisPick, sprintClassFor, templateFor } from './order.js';
 import { estimateSelectedMinutes, groupIntoBlocks } from './rows.js';
 import type { RoleSlot, TemplateOptions } from './order.js';
 import { applyR111Swap, rotateStaleExercises } from './rotation.js';
@@ -172,7 +172,9 @@ function templateOptionsFor(context: SelectContext, placement: ClimbingPlacement
     allowsConditioning: placement.requirements.allowsConditioningBlock,
     extraPowerRow: placement.requirements.sport === 'speed_climbing',
     explosivePullRow: placement.requirements.sport === 'speed_climbing' && session.dayType === 'speed',
-    upperOnlyAccessories: athlete.emphasis === 'upper_body' && session.dayType === 'upper_mobility',
+    upperEmphasis:
+      athlete.emphasis === 'upper_body' &&
+      (session.dayType === 'upper_mobility' || (upperPower && session.dayType === 'upper_strength')),
   };
 }
 
@@ -222,6 +224,7 @@ function fillSlots(
         grouped: slot.grouped,
         precedence: slot.precedence,
         required: taken < slot.min,
+        ...(slot.silentTrim === true ? { silent: true } : {}),
       });
       taken += 1;
     }
@@ -304,7 +307,9 @@ export function selectSession(context: SelectContext): SessionPlan {
       (session.isTestDay && row.block === 'primer') ||
       // House `house.sc.readiness_gate`: the gate's test is the measurement
       // the athlete configured, so R57 never rotates it out from under them.
-      row.exercise.readinessTest !== undefined,
+      row.exercise.readinessTest !== undefined ||
+      // The rows the upper-body emphasis names stay put (`isEmphasisPick`).
+      (options.upperEmphasis === true && isEmphasisPick(row.exercise)),
     allow: (candidate: Exercise, replacing: PlacedRow): boolean => {
       const room: Budget = { highCns: 0, heavy: 0, joint: { knee: 0, spine: 0, shoulder: 0 } };
       for (const row of currentRows) {
