@@ -225,6 +225,12 @@ export interface Athlete {
    * (`dayTypesFor`).
    */
   emphasis?: ProgramEmphasis;
+  /**
+   * The two weekdays the upper days go on under the upper-body emphasis
+   * (`upperDayLayout`). Absent, or anything but two of the picks, leaves the
+   * placement to the template and the wall.
+   */
+  upperWeekdays?: Weekday[];
   sport: Sport;
   trainingAge: TrainingAge;
   /** Derived from `trainingAge`, never shown as such. */

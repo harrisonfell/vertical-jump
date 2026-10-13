@@ -71,6 +71,8 @@ export const athlete = pgTable('athlete', {
    * an athlete who never answered keeps the rule book's template.
    */
   emphasis: text('emphasis'),
+  /** `[1, 3]`: the weekdays the upper days go on under the upper-body emphasis. */
+  upperWeekdays: jsonb('upper_weekdays_json').$type<Json>(),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
   serverUpdatedAt: at('server_updated_at').notNull(),

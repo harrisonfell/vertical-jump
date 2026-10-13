@@ -6,6 +6,7 @@ import { MIGRATION_0004 } from './sql/0004_sync_op_id';
 import { MIGRATION_0005 } from './sql/0005_climber';
 import { MIGRATION_0006 } from './sql/0006_best_sets';
 import { MIGRATION_0007 } from './sql/0007_emphasis';
+import { MIGRATION_0008 } from './sql/0008_upper_weekdays';
 
 /**
  * Migrations are applied in order, each inside its own transaction, and each
@@ -28,6 +29,7 @@ export const MIGRATIONS: readonly Migration[] = [
   { version: 5, name: '0005_climber', sql: MIGRATION_0005 },
   { version: 6, name: '0006_best_sets', sql: MIGRATION_0006 },
   { version: 7, name: '0007_emphasis', sql: MIGRATION_0007 },
+  { version: 8, name: '0008_upper_weekdays', sql: MIGRATION_0008 },
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS[MIGRATIONS.length - 1]?.version ?? 0;

@@ -112,6 +112,8 @@ export interface Athlete {
    * 'balanced', the rule book's template.
    */
   readonly emphasis?: ProgramEmphasis | null;
+  /** Weekday numbers the upper days go on under the upper-body emphasis (migration 8). */
+  readonly upperWeekdays?: readonly number[] | null;
   readonly createdAt: Timestamp;
   readonly updatedAt: Timestamp;
 }

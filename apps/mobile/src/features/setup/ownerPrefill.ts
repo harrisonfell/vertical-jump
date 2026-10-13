@@ -102,7 +102,8 @@ export const OWNER_BOX_SQUAT_SET_DATE = '2026-08-31';
  */
 export const OWNER_STEP_TWO: StepTwoValues = {
   ...stepTwoDefaults(),
-  weekdays: [1, 2, 3, 5],
+  // Sunday, Monday, Wednesday, Friday: volleyball has Tuesday and Thursday.
+  weekdays: [0, 1, 3, 5],
   daysPerWeek: 4,
   // Mornings, ten hours clear of the evening wall, so the week's hard pulling
   // day can sit on a climbing day (`house.sc.sport_requirements`). Without a
@@ -147,6 +148,8 @@ export function ownerAthletePatch(today: LocalDate, timezone: string, at: string
     // Volleyball on Tuesday and Thursday trains the legs and the jumping, so
     // the week's spare day goes to the upper body.
     emphasis: 'upper_body',
+    // The two upper days on Monday and Wednesday, around volleyball.
+    upperWeekdays: [1, 3],
     workingMax: workingMaxesFrom(OWNER_STEP_TWO, at),
     bestSets: bestSetsFrom(OWNER_STEP_TWO.bestSets, today) as unknown as Json,
     readinessConfig: toReadinessTestConfig(OWNER_STEP_TWO.readinessConfig) as unknown as Json,

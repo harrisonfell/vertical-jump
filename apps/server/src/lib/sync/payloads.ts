@@ -83,6 +83,8 @@ export const athletePatch = z.object({
   bestSets: doc(),
   /** 'balanced' or 'upper_body': where the week's spare day goes. */
   emphasis: text(),
+  /** The weekdays the upper days go on under the upper-body emphasis. */
+  upperWeekdays: doc(),
 });
 
 export const painPatch = z.object({

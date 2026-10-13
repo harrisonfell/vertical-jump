@@ -41,6 +41,7 @@ import {
 import { IN_SEASON_LINE, deloadNotice, taperNotice } from '../materialize/copy.js';
 import { blocksFor, chainFor, layoutFor, type LayoutWeek } from './layout.js';
 import { climbingWeekLayout, wallPlacementFor } from './climbing.js';
+import { upperDayLayout } from './upperDays.js';
 import {
   accessoryRotationSlotFor,
   extensiveRangeFor,
@@ -152,6 +153,9 @@ export function weekdayLayoutFor(athlete: Athlete, ruleset: Ruleset): WeekdayLay
   const base = dayTypesFor(athlete.daysPerWeek, athlete.emphasis);
   const fallback = { dayTypes: base, testIndex: testWeekdayIndexFor(athlete.daysPerWeek) };
   const wall = wallPlacementFor(athlete, ruleset);
+  // The athlete's own upper days come first: they named the weekdays.
+  const pinned = upperDayLayout(base, athlete.weekdays, athlete.upperWeekdays, wall);
+  if (pinned !== undefined) return pinned;
   if (wall === undefined) return fallback;
   const placed = climbingWeekLayout(base, athlete.weekdays, wall);
   return placed ?? fallback;
@@ -412,5 +416,6 @@ export function retargetWeek(
 
 export * from './layout.js';
 export * from './climbing.js';
+export * from './upperDays.js';
 export * from './targets.js';
 export * from './advance.js';

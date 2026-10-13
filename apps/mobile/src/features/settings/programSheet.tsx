@@ -55,6 +55,13 @@ export function ProgramSheetBody({
     onDraft({ ...draft, weekdays: next });
   };
 
+  const toggleUpperDay = (day: number): void => {
+    const next = draft.upperWeekdays.includes(day)
+      ? draft.upperWeekdays.filter((entry) => entry !== day)
+      : [...draft.upperWeekdays, day].sort((a, b) => a - b);
+    onDraft({ ...draft, upperWeekdays: next });
+  };
+
   const toggleWallDay = (day: number): void => {
     const next = draft.wallWorkDays.includes(day)
       ? draft.wallWorkDays.filter((entry) => entry !== day)
@@ -200,6 +207,29 @@ export function ProgramSheetBody({
           {EMPHASIS_CAPTION}
         </Text>
       </View>
+
+      {draft.emphasis === 'upper_body' ? (
+        <View style={{ gap: space.sm }}>
+          <Text variant="label" color="ink3">
+            Upper body days
+          </Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
+            {WEEKDAY_LABELS.map((label, index) => (
+              <Chip
+                key={label}
+                label={label}
+                role="checkbox"
+                selected={draft.upperWeekdays.includes(index)}
+                onPress={() => toggleUpperDay(index)}
+                testID={`settings-upper-day-${index}`}
+              />
+            ))}
+          </View>
+          <Text variant="caption" color="ink3">
+            Pick 2 of your training days. Lower Strength and the jump day go on the others.
+          </Text>
+        </View>
+      ) : null}
 
       <Field
         label="Bodyweight"

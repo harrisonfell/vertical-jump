@@ -1,0 +1,1 @@
+ALTER TABLE "athlete" ADD COLUMN "upper_weekdays_json" jsonb;

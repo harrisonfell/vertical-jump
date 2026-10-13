@@ -22,6 +22,7 @@ import type { Ruleset } from './types/ruleset.js';
 import { addDays, dayOffsetInWeek, diffDays, isWithin } from './calendar.js';
 import { dayTypesFor } from './skeleton/index.js';
 import { climbingWeekLayout, upperPowerNote, wallPlacementFor } from './skeleton/climbing.js';
+import { upperDayLayout } from './skeleton/upperDays.js';
 
 /** No rule-book rule refused this; the shape of the week did. */
 const STRUCTURAL = 0;
@@ -192,6 +193,8 @@ export interface WeekdayLayoutContext {
   sport: Sport;
   /** The athlete's week emphasis; absent reads as `balanced`. */
   emphasis?: ProgramEmphasis;
+  /** The weekdays the upper days go on under the upper-body emphasis. */
+  upperWeekdays?: Weekday[];
   wallWork?: WallWork;
   sessionWindow?: SessionWindow;
 }
@@ -239,7 +242,9 @@ export function validateWeekdayLayout(
   // carries what, so the spacing rules below are checked against the placement
   // the generator will actually build, not against the template order.
   const wall = context === undefined ? undefined : wallPlacementFor(context, ruleset);
-  const placed = wall === undefined ? undefined : climbingWeekLayout(base, picks, wall);
+  const placed =
+    upperDayLayout(base, picks, context?.upperWeekdays, wall) ??
+    (wall === undefined ? undefined : climbingWeekLayout(base, picks, wall));
   // No placement means no pick can carry the upper-power day. That is the
   // generator's fallback, not a refusal: it takes the template order and the
   // finger rule demotes that day's pulls (`weekdayLayoutFor`).
@@ -288,6 +293,7 @@ export function weekdayLayoutNote(
   if (picks.length !== daysPerWeek) return null;
   const base = dayTypesFor(daysPerWeek, context.emphasis);
   if (!base.includes('upper_strength')) return null;
+  if (upperDayLayout(base, picks, context.upperWeekdays) !== undefined) return null;
   const wall = wallPlacementFor(context, ruleset);
   if (wall === undefined) return null;
   if (climbingWeekLayout(base, picks, wall) !== undefined) return null;

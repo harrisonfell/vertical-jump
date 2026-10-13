@@ -26,6 +26,8 @@ export interface ProgramDraft {
   readonly inSeason: boolean;
   /** Where the week's spare day goes: the rule book's Recovery, or the upper body. */
   readonly emphasis: ProgramEmphasis;
+  /** The weekdays the two upper days go on under the upper-body emphasis; empty leaves it to the plan. */
+  readonly upperWeekdays: readonly number[];
   readonly bodyweightKg: number | null;
   /** What the athlete typed, kept verbatim so an error never clears a field. */
   readonly goalText: string;
@@ -56,6 +58,7 @@ export function draftFrom(athlete: Athlete): ProgramDraft {
     targetDate: athlete.targetDate,
     inSeason: athlete.inSeason,
     emphasis: athlete.emphasis === 'upper_body' ? 'upper_body' : 'balanced',
+    upperWeekdays: athlete.upperWeekdays ?? [],
     bodyweightKg: athlete.bodyweightKg,
     goalText: athlete.goalHeightMm === null ? '' : `${roundHalfUp(athlete.goalHeightMm / 25.4, 1)}`,
     targetText: athlete.targetDate ?? '',

@@ -416,6 +416,12 @@ export function toEngineAthlete(input: EngineAthleteInput): EngineAthlete {
   if (Object.keys(bestSets).length > 0) athlete.bestSets = bestSets;
   // Only the upper-body emphasis is written onto the engine athlete: absent is
   // 'balanced', so an athlete who never answered builds the same program.
-  if (row.emphasis === 'upper_body') athlete.emphasis = 'upper_body';
+  if (row.emphasis === 'upper_body') {
+    athlete.emphasis = 'upper_body';
+    const upper = (row.upperWeekdays ?? []).filter(
+      (day): day is Weekday => Number.isInteger(day) && day >= 0 && day <= 6,
+    );
+    if (upper.length > 0) athlete.upperWeekdays = [...new Set(upper)];
+  }
   return athlete;
 }

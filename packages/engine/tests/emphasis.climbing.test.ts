@@ -7,7 +7,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { climberAthlete } from '../src/fixtures/climber.js';
-import { loadExercises, loadRuleset, planSkeleton, projectWeeks } from '../src/index.js';
+import { loadExercises, loadRuleset, planSkeleton, projectWeeks, validateWeekdays } from '../src/index.js';
 import type { Athlete } from '../src/types/athlete.js';
 import type { SessionPlan, WeekPlan } from '../src/types/plan.js';
 
@@ -122,5 +122,53 @@ describe('the upper-body emphasis on the owner week', () => {
         expect(trimmed, `week ${week.w} ${day.dayType}`).not.toContain('single_leg_balance_reach');
       }
     }
+  });
+});
+
+describe('upper days on the weekdays the athlete names', () => {
+  const athlete: Athlete = {
+    ...owner(4),
+    weekdays: [0, 1, 3, 5],
+    upperWeekdays: [1, 3],
+    wallWork: undefined,
+  };
+
+  it('puts Upper power on Monday, Upper + Mobility on Wednesday, and Lower and Power around them', () => {
+    const skeleton = planSkeleton(athlete, TODAY, ruleset);
+    for (const week of skeleton.weeks.filter((entry) => entry.kind !== 'peak')) {
+      const byWeekday = new Map(week.sessions.map((session) => [session.weekday, session]));
+      expect(byWeekday.get(0)?.dayType, `week ${week.w}`).toBe('lower_strength');
+      expect(byWeekday.get(1)?.dayType, `week ${week.w}`).toBe('upper_strength');
+      expect(byWeekday.get(3)?.dayType, `week ${week.w}`).toBe('upper_mobility');
+      expect(byWeekday.get(5)?.dayType, `week ${week.w}`).toBe('power_speed');
+      expect(byWeekday.get(5)?.isTestDay, `week ${week.w}`).toBe(true);
+      expect(byWeekday.has(2) || byWeekday.has(4), `week ${week.w}`).toBe(false);
+    }
+  });
+
+  it('refuses picks that would put Lower and Power on consecutive days (R91)', () => {
+    const verdict = validateWeekdays([1, 3, 5, 6], 4, ruleset, {
+      sport: 'speed_climbing',
+      emphasis: 'upper_body',
+      upperWeekdays: [1, 3],
+    });
+    expect(verdict.ok).toBe(false);
+    expect(
+      validateWeekdays([0, 1, 3, 5], 4, ruleset, {
+        sport: 'speed_climbing',
+        emphasis: 'upper_body',
+        upperWeekdays: [1, 3],
+      }).ok,
+    ).toBe(true);
+  });
+
+  it('falls back to the plain placement when the named days are not both among the picks', () => {
+    const skeleton = planSkeleton({ ...athlete, upperWeekdays: [1, 2] }, TODAY, ruleset);
+    expect(skeleton.weeks[0]?.sessions.map((session) => session.dayType)).toEqual([
+      'lower_strength',
+      'upper_strength',
+      'power_speed',
+      'upper_mobility',
+    ]);
   });
 });

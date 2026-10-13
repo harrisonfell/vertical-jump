@@ -67,7 +67,7 @@ describe('the owner prefill', () => {
     expect(athlete?.secondaryGoal).toBe('speed');
     expect(athlete?.level).toBe('advanced');
     expect(athlete?.daysPerWeek).toBe(4);
-    expect(athlete?.weekdays).toEqual([1, 2, 3, 5]);
+    expect(athlete?.weekdays).toEqual([0, 1, 3, 5]);
     // Mornings, so the hard pulling day can share a wall day: without a window
     // the engine assumes an evening gym and refuses every four-day pick.
     expect(athlete?.sessionWindow).toEqual({ start: '08:00', end: '10:00' });
@@ -166,7 +166,7 @@ describe('the owner prefill', () => {
     expect(OWNER_STEP_ONE.daysPerWeek).toBe(4);
     expect(OWNER_STEP_ONE.trainingAge).toBe('4plus');
     expect(OWNER_STEP_ONE.wallWorkDays).toEqual([0, 2, 4]);
-    expect(OWNER_STEP_TWO.weekdays).toEqual([1, 2, 3, 5]);
+    expect(OWNER_STEP_TWO.weekdays).toEqual([0, 1, 3, 5]);
     expect(OWNER_STEP_TWO.gymStart).toBe('08:00');
     expect(OWNER_STEP_TWO.gymEnd).toBe('10:00');
     expect(OWNER_STEP_TWO.boxSquatLb).toBe('320');

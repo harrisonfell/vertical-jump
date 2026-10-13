@@ -67,6 +67,7 @@ interface AthleteRow {
   readonly readiness_config_json: string | null;
   readonly best_sets_json: string | null;
   readonly emphasis: string | null;
+  readonly upper_weekdays_json: string | null;
   readonly created_at: string;
   readonly updated_at: string;
 }
@@ -124,6 +125,7 @@ function mapAthlete(row: AthleteRow): Athlete {
     readinessConfig: fromJson(row.readiness_config_json),
     bestSets: fromJson(row.best_sets_json),
     emphasis: oneOfOrNull(row.emphasis, EMPHASES),
+    upperWeekdays: row.upper_weekdays_json === null ? null : fromJsonArray<number>(row.upper_weekdays_json),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -212,6 +214,9 @@ export async function upsertAthlete(db: SqlExecutor, patch: AthletePatch): Promi
     }
     if (patch.bestSets !== undefined) put('best_sets_json', toJson(patch.bestSets));
     if (patch.emphasis !== undefined) put('emphasis', patch.emphasis);
+    if (patch.upperWeekdays !== undefined) {
+      put('upper_weekdays_json', patch.upperWeekdays === null ? null : toJson(patch.upperWeekdays));
+    }
 
     put('updated_at', at);
     params.push(ATHLETE_ID);

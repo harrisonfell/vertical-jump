@@ -180,6 +180,19 @@ export function ProgramSection({
         onPress={() => setEditing(true)}
         testID="settings-emphasis"
       />
+      {draft.emphasis === 'upper_body' ? (
+        <View>
+          <RowDivider />
+          <SettingRow
+            label="Upper body days"
+            value={draft.upperWeekdays.length === 0 ? "Plan's choice" : weekdaysLabel(draft.upperWeekdays)}
+            caption="Lower Strength and the jump day go on your other training days."
+            chevron
+            onPress={() => setEditing(true)}
+            testID="settings-upper-days"
+          />
+        </View>
+      ) : null}
       <RowDivider />
       <SettingRow
         label="Bodyweight"

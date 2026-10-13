@@ -3,6 +3,7 @@ import {
   diffParams,
   formatCalendarDate,
   needsRegeneration,
+  upperDaysRefusal,
   nextUnstartedWeek,
   regenerationPlan,
   shortCalendarDate,
@@ -34,6 +35,7 @@ const base: ProgramParams = {
   targetDate: '2026-11-29',
   inSeason: false,
   emphasis: 'balanced',
+  upperWeekdays: [],
   bodyweightKg: 82,
   fingerHistory: false,
   gripMode: 'any',
@@ -59,6 +61,23 @@ describe('program parameter changes', () => {
       { field: 'emphasis', label: 'Week emphasis', from: 'Balanced', to: 'Upper body' },
     ]);
     expect(needsRegeneration(changes)).toBe(true);
+  });
+
+  it('names the upper body days, and refuses anything but two training days', () => {
+    expect(
+      diffParams(
+        { ...base, emphasis: 'upper_body' },
+        { ...base, emphasis: 'upper_body', upperWeekdays: [1, 3] },
+      ),
+    ).toEqual([
+      { field: 'upperWeekdays', label: 'Upper body days', from: "plan's choice", to: 'Mon Wed' },
+    ]);
+    expect(upperDaysRefusal('upper_body', 4, [0, 1, 3, 5], [1, 3])).toBeNull();
+    expect(upperDaysRefusal('upper_body', 4, [0, 1, 3, 5], [])).toBeNull();
+    expect(upperDaysRefusal('balanced', 4, [0, 1, 3, 5], [2])).toBeNull();
+    expect(upperDaysRefusal('upper_body', 4, [0, 1, 3, 5], [1])).toBe('Pick 2 upper body days.');
+    expect(upperDaysRefusal('upper_body', 4, [0, 1, 3, 5], [1, 2])).toMatch(/training days/);
+    expect(upperDaysRefusal('upper_body', 3, [1, 3, 5], [1, 3])).toMatch(/4 or 5/);
   });
 
   it('names a change in knee-alignment sessions a week only while it is on', () => {

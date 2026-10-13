@@ -152,7 +152,7 @@ export function upperPowerNote(wall: WallPlacement): string {
 }
 
 /** The pick indexes not yet spent, in the order the athlete trains them. */
-function remaining(count: number, taken: readonly number[]): number[] {
+export function remaining(count: number, taken: readonly number[]): number[] {
   const out: number[] = [];
   for (let index = 0; index < count; index += 1) {
     if (!taken.includes(index)) out.push(index);
@@ -167,7 +167,7 @@ function remaining(count: number, taken: readonly number[]): number[] {
  * either, the last pick left takes it, which is the best the week allows and
  * is what `validateWeekdayLayout` refuses at setup anyway.
  */
-function powerIndexFor(
+export function powerIndexFor(
   free: readonly number[],
   offsets: readonly number[],
   lowerIndex: number,

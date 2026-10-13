@@ -23,7 +23,7 @@ import { stepTwoInitial, type StepTwoInitialInput } from './stepTwoInitial';
 const SATURDAY = '2026-09-05';
 const ZONE = 'America/New_York';
 /** Mon, Tue, Wed, Fri: the owner's four days. */
-const OWNER_DAYS = [1, 2, 3, 5];
+const OWNER_DAYS = [0, 1, 3, 5];
 
 /** Everything resolved, nothing on file. Each test names what it changes. */
 const RESOLVED: StepTwoInitialInput = {
@@ -64,8 +64,8 @@ describe('step 2 opening on the resolved row', () => {
     const picks = orderWeekdays(initial.values.weekdays ?? []);
     expect(
       startAndTargetLine({ today: SATURDAY, weekdays: picks, targetDate: '' }),
-    ).toBe('Starts Mon 7 Sep · 12 weeks to Sun 29 Nov');
-    expect(defaultTargetLabel(SATURDAY, picks)).toBe('Use Sun 29 Nov');
+    ).toBe('Starts Sun 6 Sep · 12 weeks to Sat 28 Nov');
+    expect(defaultTargetLabel(SATURDAY, picks)).toBe('Use Sat 28 Nov');
   });
 
   it('fills from the saved profile when Settings asked for it', () => {

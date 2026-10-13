@@ -34,6 +34,7 @@ export type ProgramParam =
   | 'targetDate'
   | 'inSeason'
   | 'emphasis'
+  | 'upperWeekdays'
   | 'bodyweight'
   | 'fingerHistory'
   | 'gripMode'
@@ -71,6 +72,8 @@ export interface ProgramParams {
   readonly inSeason: boolean;
   /** 'balanced' or 'upper_body': where the week's spare day goes. */
   readonly emphasis: string;
+  /** The weekdays the upper days go on; empty leaves it to the plan. */
+  readonly upperWeekdays: readonly number[];
   readonly bodyweightKg: number | null;
   /* the climbing answers, each of which moves a house rule */
   readonly fingerHistory: boolean;
@@ -122,6 +125,33 @@ function secondaryGoalLabel(goal: string | null): string {
  */
 export const EMPHASIS_CAPTION =
   'Upper body turns your Recovery day into a second upper-body day at 4 or 5 days a week. Lower Strength and the jump day stay.';
+
+/** "Mon Wed", or "plan's choice" when the athlete named none. */
+export function upperDaysLabel(weekdays: readonly number[]): string {
+  return weekdays.length === 0 ? "plan's choice" : weekdaysLabel(weekdays);
+}
+
+/**
+ * The refusal for the upper-day picks, or null. Under the upper-body emphasis
+ * at four or five days the week has two upper days, so either none are named
+ * (the plan places them) or exactly two of the training days are.
+ */
+export function upperDaysRefusal(
+  emphasis: string,
+  daysPerWeek: number | null,
+  weekdays: readonly number[],
+  upperWeekdays: readonly number[],
+): string | null {
+  if (emphasis !== 'upper_body' || upperWeekdays.length === 0) return null;
+  if (daysPerWeek === null || daysPerWeek < 4) {
+    return 'Upper body days need 4 or 5 training days a week.';
+  }
+  if (upperWeekdays.length !== 2) return 'Pick 2 upper body days.';
+  if (!upperWeekdays.every((day) => weekdays.includes(day))) {
+    return 'Upper body days have to be training days. Add them to your training days first.';
+  }
+  return null;
+}
 
 /** "Balanced" or "Upper body": the words the Settings row uses. */
 export function emphasisLabel(emphasis: string | null | undefined): string {
@@ -198,6 +228,12 @@ export function diffParams(before: ProgramParams, after: ProgramParams): ParamCh
   push('targetDate', 'Target date', dateLabel(before.targetDate), dateLabel(after.targetDate));
   push('inSeason', 'In-season', before.inSeason ? 'yes' : 'no', after.inSeason ? 'yes' : 'no');
   push('emphasis', 'Week emphasis', emphasisLabel(before.emphasis), emphasisLabel(after.emphasis));
+  push(
+    'upperWeekdays',
+    'Upper body days',
+    upperDaysLabel(before.upperWeekdays),
+    upperDaysLabel(after.upperWeekdays),
+  );
   push('bodyweight', 'Bodyweight', weightLabel(before.bodyweightKg), weightLabel(after.bodyweightKg));
   push(
     'fingerHistory',

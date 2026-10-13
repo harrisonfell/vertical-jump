@@ -2,7 +2,7 @@ import { Fragment, useCallback, useMemo, useState, type ReactNode } from 'react'
 import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { loadRuleset, validateWeekdays, weekdayLayoutNote } from '@vert/engine';
-import type { Sport } from '@vert/engine';
+import type { Sport, Weekday } from '@vert/engine';
 import { readBestSets } from '@/lib/engineAthlete';
 import { AppHeader, href } from '@/app';
 import {
@@ -47,6 +47,7 @@ import { buildExportFiles, type ExportFile } from './exportData';
 import { SaveFailedError, saveFile } from './download';
 import { deleteAllData, clearDeviceSecret } from './deleteAll';
 import {
+  upperDaysRefusal,
   diffParams,
   needsRegeneration,
   nextUnstartedWeek,
@@ -71,6 +72,10 @@ import {
   type ReadinessConfigValues,
 } from '../setup';
 import type { Json } from '@/data';
+
+function isWeekdayNumber(day: number): day is Weekday {
+  return Number.isInteger(day) && day >= 0 && day <= 6;
+}
 
 /** The app version shown in About and stamped into the JSON export. */
 export const APP_VERSION = '0.1.0';
@@ -179,8 +184,19 @@ export function SettingsScreen() {
     // The gym window as the draft has it, not as the row has it: the picks are
     // read against what the confirm is about to write.
     const window = clockWindowFrom(activeDraft.gymStart, activeDraft.gymEnd);
+    const upperRefusal = upperDaysRefusal(
+      activeDraft.emphasis,
+      athlete.daysPerWeek,
+      activeDraft.weekdays,
+      activeDraft.upperWeekdays,
+    );
+    if (upperRefusal !== null) return { refusal: upperRefusal, note: null };
     const context = {
       sport: (athlete.sport ?? 'none') as Sport,
+      emphasis: activeDraft.emphasis,
+      ...(activeDraft.emphasis === 'upper_body' && activeDraft.upperWeekdays.length > 0
+        ? { upperWeekdays: activeDraft.upperWeekdays.filter(isWeekdayNumber) }
+        : null),
       ...(wall === null ? null : { wallWork: wall }),
       ...(window === null ? null : { sessionWindow: window }),
     };
@@ -236,6 +252,10 @@ export function SettingsScreen() {
       targetDate: activeDraft.targetDate,
       inSeason: activeDraft.inSeason,
       emphasis: activeDraft.emphasis,
+      upperWeekdays:
+        activeDraft.emphasis === 'upper_body' && activeDraft.upperWeekdays.length > 0
+          ? [...activeDraft.upperWeekdays]
+          : null,
       bodyweightKg: activeDraft.bodyweightKg,
       ...climbingPatchFrom(
         {
